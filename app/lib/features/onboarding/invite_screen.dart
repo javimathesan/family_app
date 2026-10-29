@@ -61,33 +61,43 @@ class _InviteScreenState extends State<InviteScreen> {
         children: [
           Text('¿Quién se suma?', style: sectionTitle(context)),
           const SizedBox(height: 8),
-          SegmentedButton<MemberRole>(
-            showSelectedIcon: false,
-            segments: const [
-              ButtonSegment(value: MemberRole.child, label: Text('Hijo/a')),
-              ButtonSegment(value: MemberRole.coAdmin, label: Text('Adulto P2')),
-              ButtonSegment(value: MemberRole.otherAdult, label: Text('Conviviente')),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final (role, label) in const [
+                (MemberRole.child, 'Hijo/a'),
+                (MemberRole.coAdmin, 'Adulto P2'),
+                (MemberRole.otherAdult, 'Conviviente'),
+              ])
+                ChoiceChip(
+                  label: Text(label),
+                  selected: _role == role,
+                  onSelected: (_) {
+                    _role = role;
+                    _regenerate();
+                  },
+                ),
             ],
-            selected: {_role},
-            onSelectionChanged: (s) {
-              _role = s.first;
-              _regenerate();
-            },
           ),
           if (_role == MemberRole.child) ...[
             const SizedBox(height: 16),
             Text('Modo de la app', style: sectionTitle(context)),
             const SizedBox(height: 8),
-            SegmentedButton<AgeMode>(
-              showSelectedIcon: false,
-              segments: [
-                for (final m in AgeMode.values) ButtonSegment(value: m, label: Text('${m.label}\n${m.ages}', textAlign: TextAlign.center)),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final m in AgeMode.values)
+                  ChoiceChip(
+                    label: Text('${m.label} · ${m.ages}'),
+                    selected: _mode == m,
+                    onSelected: (_) {
+                      _mode = m;
+                      _regenerate();
+                    },
+                  ),
               ],
-              selected: {_mode},
-              onSelectionChanged: (s) {
-                _mode = s.first;
-                _regenerate();
-              },
             ),
           ],
           const SizedBox(height: 16),
@@ -123,10 +133,10 @@ class _InviteScreenState extends State<InviteScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(color: AppColors.soft, borderRadius: BorderRadius.circular(12)),
-                  child: Row(
+                  child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('o escribí el código  ', style: mutedText(context).copyWith(fontWeight: FontWeight.w700)),
+                      Text('o escribí el código', style: mutedText(context).copyWith(fontWeight: FontWeight.w700)),
                       SelectableText(inv.code, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: 2)),
                     ],
                   ),
