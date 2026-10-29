@@ -4,10 +4,11 @@ App móvil familiar que convierte la rutina diaria de los hijos en hábitos sano
 
 ## Estado
 
-**Etapa actual: diseño (v1).** Todavía no hay código de la app.
+**Etapa actual: v0.1, primera versión navegable.** La app en Flutter ya tiene todas las pantallas de la v1 con datos de ejemplo; falta backend, persistencia y notificaciones. Ver el [registro de cambios](CHANGELOG.md).
 
 | Carpeta | Contenido |
 | --- | --- |
+| [`app/`](app/) | App Flutter: [cómo correrla y probarla](app/README.md) |
 | [`docs/`](docs/) | [Borrador de la idea v1](docs/borrador-idea-v1.md): funcionalidades, roles, puntos, privacidad, arquitectura y hoja de ruta |
 | [`diseno/`](diseno/) | Maquetas de las 8 pantallas de la v1 en formato de lienzo de diseño (`.dc.html`) |
 
@@ -42,4 +43,8 @@ Flutter (Android e iOS) · NestJS + PostgreSQL · WebSocket + Redis · Firebase 
 
 - [x] Diseñar alta por QR y editor de avatar.
 - [ ] Resolver las preguntas abiertas del borrador.
-- [ ] Crear el proyecto Flutter con la estructura base y los temas de color.
+- [x] Crear el proyecto Flutter con la estructura base y los temas de color.
+- [x] Construir las 8 pantallas de la v1 con datos de ejemplo y pruebas.
+- [ ] Escaneo real del QR con la cámara.
+- [ ] Persistencia local y backend con sincronización.
+- [ ] Notificaciones push al adulto.
