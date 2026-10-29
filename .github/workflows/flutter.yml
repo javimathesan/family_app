@@ -19,4 +19,12 @@ jobs:
           cache: true
       - run: flutter pub get
       - run: flutter analyze
-      - run: flutter test --reporter github
+      - name: flutter test
+        run: |
+          set +e
+          flutter test --machine > test-results.jsonl
+          code=$?
+          # Publica cada fallo como anotación para verlo sin abrir el log.
+          jq -r 'select(.type=="error") | "::error title=Test falló::" + ((.error + "\n" + .stackTrace)[0:1500] | gsub("%";"%25") | gsub("\r";"") | gsub("\n";"%0A"))' test-results.jsonl
+          jq -r 'select(.type=="print") | .message' test-results.jsonl | head -c 4000 | sed 's/^/::notice title=Salida::/' | head -20
+          exit $code
