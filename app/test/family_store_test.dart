@@ -1,5 +1,6 @@
 import 'package:family_app/data/family_store.dart';
 import 'package:family_app/models/models.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -69,6 +70,11 @@ void main() {
     expect(store.isPendingMember(m.id), isTrue);
     store.confirmMember(m.id);
     expect(store.isPendingMember(m.id), isFalse);
+  });
+
+  test('cada miembro puede cambiar su color', () {
+    store.setAccent('tomi', const Color(0xFF7C3AED));
+    expect(store.memberById('tomi')!.accent, const Color(0xFF7C3AED));
   });
 
   test('la invitación vence a los 15 minutos y no lleva datos personales', () {

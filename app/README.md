@@ -54,4 +54,4 @@ test/                       Pruebas de reglas, estado y navegación
 - Persistencia local (SQLite) y backend con sincronización.
 - Notificaciones push al adulto.
 - Fuente redondeada propia (Nunito) incluida en el proyecto.
-- Ajustes de colores por miembro y modo oscuro elegible.
+- Modo oscuro elegible y más opciones de personalización (fondo, tamaño de texto, temas descargables).

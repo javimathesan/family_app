@@ -12,7 +12,9 @@ Formato: fecha · qué se hizo. Lo más nuevo arriba.
 - Pantallas del hijo: Hoy, Rutina, Calendario de caritas y Premios.
 - Pantallas del adulto: Mi familia con aprobaciones y avisos, e Invitar con QR.
 - Alta de miembros: unirse al hogar en 3 pasos y editor de avatar estilo Funko.
-- Pruebas unitarias, de estado y de navegación, y CI con GitHub Actions.
+- Cada miembro elige su color de acento desde Hoy (ícono de paleta).
+- Pruebas unitarias, de estado y de navegación, y CI con GitHub Actions (`flutter analyze` + `flutter test` en verde).
+- Corregido: tarjetas como `Material` para que los `ListTile` muestren el toque, e invitación sin desbordes en pantallas angostas.
 
 ### Diseño (carpeta `diseno/`)
 - 8 maquetas interactivas: Hoy, Rutina, Calendario, Premios, Mi familia, Invitar con QR, Unirse y Avatar.

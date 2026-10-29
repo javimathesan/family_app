@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/family_store.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/accent_picker.dart';
 import '../../widgets/avatar_view.dart';
 import '../../widgets/common.dart';
 
@@ -36,6 +37,11 @@ class TodayScreen extends StatelessWidget {
                   Text('Hola, ${me.nickname}', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
                 ],
               ),
+            ),
+            IconButton(
+              tooltip: 'Mi color',
+              onPressed: () => showAccentPicker(context),
+              icon: const Icon(Icons.palette_outlined),
             ),
             IconButton.filledTonal(
               tooltip: 'Cambiar de usuario',
