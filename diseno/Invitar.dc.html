@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Invitar con QR — panel del adulto</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1E2235;text-decoration:none}a:hover{color:#1E2235}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F5F6FA; font-family: Nunito, system-ui, sans-serif; color: #1E2235; display: flex; flex-direction: column; overflow: hidden">
+  <main style="flex: 1; overflow-y: auto; padding: 56px 20px 24px; display: flex; flex-direction: column; gap: 16px">
+    <header style="display: flex; align-items: center; gap: 12px">
+      <a href="Adulto.dc.html" aria-label="Volver a Mi familia" style="width: 44px; height: 44px; border-radius: 22px; background: #FFFFFF; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1E2235" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+      </a>
+      <div>
+        <p style="margin: 0; font-size: 14px; color: #5B6178">Hogar Los Girasoles</p>
+        <h1 style="margin: 0; font-size: 24px; font-weight: 800">Sumar a alguien</h1>
+      </div>
+    </header>
+
+    <section style="display: flex; flex-direction: column; gap: 8px">
+      <h2 style="margin: 0; font-size: 15px; font-weight: 800">¿Quién se suma?</h2>
+      <div role="radiogroup" aria-label="Rol del nuevo miembro" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{roles}}" as="r" hint-placeholder-count="3">
+          <button role="radio" aria-checked="{{r.checked}}" onClick="{{r.pick}}" style="min-height: 64px; border-radius: 16px; border: 2px solid {{r.border}}; background: {{r.bg}}; padding: 8px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px">
+            <span style="font-size: 15px; font-weight: 800; color: #1E2235">{{r.name}}</span>
+            <span style="font-size: 12px; font-weight: 700; color: #5B6178">{{r.hint}}</span>
+          </button>
+        </sc-for>
+      </div>
+    </section>
+
+    <sc-if value="{{isChild}}" hint-placeholder-val="{{ true }}">
+      <section style="display: flex; flex-direction: column; gap: 8px">
+        <h2 style="margin: 0; font-size: 15px; font-weight: 800">Modo de la app</h2>
+        <div role="radiogroup" aria-label="Modo según la edad" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; background: #E9ECF4; padding: 4px; border-radius: 16px">
+          <sc-for list="{{modes}}" as="m" hint-placeholder-count="3">
+            <button role="radio" aria-checked="{{m.checked}}" onClick="{{m.pick}}" style="min-height: 44px; border: 0; border-radius: 12px; background: {{m.bg}}; font-size: 14px; font-weight: 800; color: {{m.ink}}; display: flex; flex-direction: column; align-items: center; justify-content: center">
+              {{m.name}}<span style="font-size: 11px; font-weight: 700; color: #5B6178">{{m.ages}}</span>
+            </button>
+          </sc-for>
+        </div>
+      </section>
+    </sc-if>
+
+    <section style="background: #FFFFFF; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 12px">
+      <p style="margin: 0; font-size: 15px; font-weight: 700; text-align: center">Pedile que abra family_app en su celular y escanee este código</p>
+      <div style="padding: 14px; border-radius: 20px; border: 3px solid {{accent}}; background: #FFFFFF">
+        <svg width="196" height="196" viewBox="0 0 25 25" role="img" aria-label="Código QR de invitación como {{roleName}}" shape-rendering="crispEdges">
+          <rect width="25" height="25" fill="#FFFFFF"></rect>
+          <path d="{{qrPath}}" fill="#1E2235"></path>
+        </svg>
+      </div>
+      <p style="margin: 0; font-size: 14px; font-weight: 700; color: #5B6178">Invitación como <span style="color: #1E2235">{{roleName}}</span></p>
+      <div style="display: flex; align-items: center; gap: 8px; background: #F0F2F8; border-radius: 12px; padding: 8px 14px">
+        <span style="font-size: 13px; font-weight: 700; color: #5B6178">o escribí el código</span>
+        <span style="font-size: 18px; font-weight: 800; letter-spacing: 2px">{{code}}</span>
+      </div>
+      <p role="timer" style="margin: 0; font-size: 14px; font-weight: 800; color: {{timerInk}}">{{timerText}}</p>
+      <button onClick="{{regen}}" style="min-height: 44px; padding: 0 18px; border-radius: 14px; border: 2px solid #E3E6EF; background: #FFFFFF; font-size: 14px; font-weight: 800; color: #1E2235; display: flex; align-items: center; gap: 8px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"></path><path d="M21 3v5h-5"></path></svg>
+        Generar código nuevo
+      </button>
+    </section>
+
+    <section style="background: #EEF3FF; border-radius: 18px; padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 2px"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"></path></svg>
+      <p style="margin: 0; font-size: 14px; font-weight: 600; color: #1E3A8A">El código sirve una sola vez y vence en 15 minutos. Antes de que entre al hogar, vas a tener que confirmar el alta.</p>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#2563EB","options":["#2563EB","#0F766E","#7C3AED","#C2410C"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { role: 0, mode: 1, seconds: 872, seed: 7 };
+  }
+  componentDidMount() {
+    this.timer = setInterval(() => {
+      if (this.state.seconds > 0) this.setState({ seconds: this.state.seconds - 1 });
+    }, 1000);
+  }
+  componentWillUnmount() {
+    clearInterval(this.timer);
+  }
+  buildQr(seed) {
+    const n = 25;
+    const dark = [];
+    const finder = (r, c) => {
+      const spots = [[0, 0], [0, n - 7], [n - 7, 0]];
+      for (const [fr, fc] of spots) {
+        if (r >= fr && r < fr + 7 && c >= fc && c < fc + 7) {
+          const y = r - fr, x = c - fc;
+          const ring = y === 0 || y === 6 || x === 0 || x === 6;
+          const core = y >= 2 && y <= 4 && x >= 2 && x <= 4;
+          return ring || core ? 1 : 0;
+        }
+        if (r >= fr - 1 && r <= fr + 7 && c >= fc - 1 && c <= fc + 7) return 0;
+      }
+      return -1;
+    };
+    let s = seed * 9301 + 49297;
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        const f = finder(r, c);
+        let on;
+        if (f >= 0) on = f === 1;
+        else if (r === 6 || c === 6) on = (r + c) % 2 === 0;
+        else { s = (s * 9301 + 49297) % 233280; on = s / 233280 > 0.52; }
+        if (on) dark.push('M' + c + ' ' + r + 'h1v1h-1z');
+      }
+    }
+    return dark.join('');
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#2563EB';
+    const roleList = [
+      { name: 'Hijo/a', hint: 'Menor a cargo', label: 'hijo/a' },
+      { name: 'Adulto P2', hint: 'Co-administra', label: 'co-administrador (P2)' },
+      { name: 'Conviviente', hint: 'Abuelos, tíos', label: 'otro adulto conviviente' }
+    ];
+    const roles = roleList.map((r, i) => {
+      const on = this.state.role === i;
+      return { ...r, checked: on ? 'true' : 'false', border: on ? accent : '#E3E6EF', bg: on ? '#EEF3FF' : '#FFFFFF', pick: () => this.setState({ role: i }) };
+    });
+    const modeList = [
+      { name: 'Peques', ages: '4 a 8' },
+      { name: 'Junior', ages: '9 a 12' },
+      { name: 'Teen', ages: '13 a 17' }
+    ];
+    const modes = modeList.map((m, i) => {
+      const on = this.state.mode === i;
+      return { ...m, checked: on ? 'true' : 'false', bg: on ? '#FFFFFF' : 'transparent', ink: on ? '#1E2235' : '#5B6178', pick: () => this.setState({ mode: i }) };
+    });
+    const sec = this.state.seconds;
+    const mm = Math.floor(sec / 60);
+    const ss = String(sec % 60).padStart(2, '0');
+    const codes = ['FAM-7K3Q', 'FAM-R2DX', 'FAM-9PLM', 'FAM-H4TW'];
+    const role = roleList[this.state.role];
+    return {
+      accent,
+      roles,
+      modes,
+      isChild: this.state.role === 0,
+      roleName: this.state.role === 0 ? role.label + ' · modo ' + modeList[this.state.mode].name : role.label,
+      qrPath: this.buildQr(this.state.seed + this.state.role * 3 + this.state.mode),
+      code: codes[(this.state.seed + this.state.role) % codes.length],
+      timerText: sec > 0 ? 'Vence en ' + mm + ':' + ss : 'Código vencido · generá uno nuevo',
+      timerInk: sec > 60 ? '#5B6178' : '#B42318',
+      regen: () => this.setState({ seed: this.state.seed + 1, seconds: 900 })
+    };
+  }
+}
+</script>
+</body>
+</html>

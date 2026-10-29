@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Crear avatar — miembro</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1E2235;text-decoration:none}a:hover{color:#1E2235}
+button{font-family:inherit;cursor:pointer}
+button:disabled{cursor:not-allowed}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F5F6FA; font-family: Nunito, system-ui, sans-serif; color: #1E2235; display: flex; flex-direction: column; overflow: hidden">
+  <header style="padding: 56px 20px 8px; display: flex; align-items: center; justify-content: space-between">
+    <div>
+      <p style="margin: 0; font-size: 14px; color: #5B6178">Así te van a ver en tu hogar</p>
+      <h1 style="margin: 0; font-size: 24px; font-weight: 800">Mi avatar</h1>
+    </div>
+    <button onClick="{{random}}" style="min-height: 44px; padding: 0 14px; border-radius: 14px; border: 2px solid #E3E6EF; background: #FFFFFF; font-size: 14px; font-weight: 800; color: #1E2235; display: flex; align-items: center; gap: 6px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"></rect><circle cx="8.5" cy="8.5" r="1.2" fill="currentColor"></circle><circle cx="15.5" cy="15.5" r="1.2" fill="currentColor"></circle><circle cx="15.5" cy="8.5" r="1.2" fill="currentColor"></circle><circle cx="8.5" cy="15.5" r="1.2" fill="currentColor"></circle></svg>
+      Sorpresa
+    </button>
+  </header>
+
+  <section style="margin: 0 20px; height: 268px; border-radius: 28px; background: {{stageBg}}; display: flex; align-items: center; justify-content: center; position: relative">
+    <svg width="300" height="252" viewBox="0 0 300 252" role="img" aria-label="Vista previa de tu avatar">
+      <ellipse cx="150" cy="240" rx="70" ry="8" fill="#1E2235" opacity="0.12"></ellipse>
+      <path d="{{hairBack}}" fill="{{hairColor}}"></path>
+      <rect x="126" y="214" width="20" height="22" rx="8" fill="#3B3F55"></rect>
+      <rect x="154" y="214" width="20" height="22" rx="8" fill="#3B3F55"></rect>
+      <rect x="104" y="174" width="18" height="40" rx="9" fill="{{skin}}"></rect>
+      <rect x="178" y="174" width="18" height="40" rx="9" fill="{{skin}}"></rect>
+      <rect x="116" y="166" width="68" height="56" rx="18" fill="{{shirt}}"></rect>
+      <circle cx="74" cy="112" r="13" fill="{{skin}}"></circle>
+      <circle cx="226" cy="112" r="13" fill="{{skin}}"></circle>
+      <rect x="75" y="36" width="150" height="138" rx="62" fill="{{skin}}"></rect>
+      <circle cx="106" cy="138" r="9" fill="#F28AA5" opacity="0.45"></circle>
+      <circle cx="194" cy="138" r="9" fill="#F28AA5" opacity="0.45"></circle>
+      <g visibility="{{eyesRound}}">
+        <circle cx="125" cy="112" r="14" fill="#1E2235"></circle>
+        <circle cx="175" cy="112" r="14" fill="#1E2235"></circle>
+        <circle cx="130" cy="106" r="4.5" fill="#FFFFFF"></circle>
+        <circle cx="180" cy="106" r="4.5" fill="#FFFFFF"></circle>
+      </g>
+      <g visibility="{{eyesHappy}}" fill="none" stroke="#1E2235" stroke-width="6" stroke-linecap="round">
+        <path d="M111 116 Q125 98 139 116"></path>
+        <path d="M161 116 Q175 98 189 116"></path>
+      </g>
+      <g visibility="{{eyesSleepy}}" fill="none" stroke="#1E2235" stroke-width="6" stroke-linecap="round">
+        <path d="M111 110 Q125 124 139 110"></path>
+        <path d="M161 110 Q175 124 189 110"></path>
+      </g>
+      <path d="M140 142 Q150 150 160 142" fill="none" stroke="#1E2235" stroke-width="4" stroke-linecap="round"></path>
+      <path d="{{hairFront}}" fill="{{hairColor}}"></path>
+      <g visibility="{{glassesVis}}" fill="none" stroke="#1E2235" stroke-width="4">
+        <circle cx="125" cy="112" r="22"></circle>
+        <circle cx="175" cy="112" r="22"></circle>
+        <path d="M147 110 H153"></path>
+      </g>
+      <g visibility="{{accCap}}">
+        <path d="M70 86 Q72 20 150 20 Q228 20 230 86 Z" fill="#DC2626"></path>
+        <rect x="64" y="78" width="172" height="14" rx="7" fill="#991B1B"></rect>
+      </g>
+      <path visibility="{{accBand}}" d="M78 88 Q86 38 150 36 Q214 38 222 88" fill="none" stroke="#EC4899" stroke-width="11" stroke-linecap="round"></path>
+      <g visibility="{{accPhones}}">
+        <path d="M66 112 Q66 16 150 16 Q234 16 234 112" fill="none" stroke="#1E2235" stroke-width="9" stroke-linecap="round"></path>
+        <rect x="54" y="94" width="24" height="40" rx="11" fill="#2563EB"></rect>
+        <rect x="222" y="94" width="24" height="40" rx="11" fill="#2563EB"></rect>
+      </g>
+      <path visibility="{{accCrown}}" d="M102 42 L112 10 L130 30 L150 4 L170 30 L188 10 L198 42 Z" fill="#F5B800" stroke="#B88A00" stroke-width="2" stroke-linejoin="round"></path>
+    </svg>
+    <span style="position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); background: #FFFFFF; border-radius: 12px; padding: 4px 14px; font-size: 15px; font-weight: 800">Tomi</span>
+  </section>
+
+  <div role="tablist" aria-label="Partes del avatar" style="margin: 14px 20px 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; background: #E9ECF4; padding: 4px; border-radius: 16px">
+    <sc-for list="{{tabs}}" as="t" hint-placeholder-count="5">
+      <button role="tab" aria-selected="{{t.selected}}" onClick="{{t.pick}}" style="min-height: 40px; border: 0; border-radius: 12px; background: {{t.bg}}; font-size: 13px; font-weight: 800; color: {{t.ink}}">{{t.name}}</button>
+    </sc-for>
+  </div>
+
+  <main style="flex: 1; overflow-y: auto; padding: 14px 20px 12px; display: flex; flex-direction: column; gap: 12px">
+    <sc-if value="{{tabPiel}}" hint-placeholder-val="{{ true }}">
+      <h2 style="margin: 0; font-size: 15px; font-weight: 800">Tono de piel</h2>
+      <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px">
+        <sc-for list="{{skins}}" as="o" hint-placeholder-count="6">
+          <button aria-label="{{o.label}}" aria-pressed="{{o.checked}}" onClick="{{o.pick}}" style="aspect-ratio: 1; min-height: 44px; border-radius: 50%; border: 3px solid {{o.ring}}; background: {{o.swatch}}; box-shadow: inset 0 0 0 3px #FFFFFF"></button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{tabPelo}}" hint-placeholder-val="{{ false }}">
+      <h2 style="margin: 0; font-size: 15px; font-weight: 800">Peinado</h2>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{hairs}}" as="o" hint-placeholder-count="5">
+          <button aria-pressed="{{o.checked}}" onClick="{{o.pick}}" style="min-height: 44px; border-radius: 14px; border: 2px solid {{o.ring}}; background: #FFFFFF; font-size: 14px; font-weight: 800; color: #1E2235">{{o.label}}</button>
+        </sc-for>
+      </div>
+      <h2 style="margin: 4px 0 0; font-size: 15px; font-weight: 800">Color de pelo</h2>
+      <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px">
+        <sc-for list="{{hairColors}}" as="o" hint-placeholder-count="6">
+          <button aria-label="{{o.label}}" aria-pressed="{{o.checked}}" onClick="{{o.pick}}" style="aspect-ratio: 1; min-height: 44px; border-radius: 50%; border: 3px solid {{o.ring}}; background: {{o.swatch}}; box-shadow: inset 0 0 0 3px #FFFFFF"></button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{tabOjos}}" hint-placeholder-val="{{ false }}">
+      <h2 style="margin: 0; font-size: 15px; font-weight: 800">Ojos</h2>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{eyes}}" as="o" hint-placeholder-count="3">
+          <button aria-pressed="{{o.checked}}" onClick="{{o.pick}}" style="min-height: 44px; border-radius: 14px; border: 2px solid {{o.ring}}; background: #FFFFFF; font-size: 14px; font-weight: 800; color: #1E2235">{{o.label}}</button>
+        </sc-for>
+      </div>
+      <button aria-pressed="{{glassesPressed}}" onClick="{{toggleGlasses}}" style="min-height: 52px; border-radius: 16px; border: 2px solid {{glassesRing}}; background: #FFFFFF; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; font-size: 15px; font-weight: 800; color: #1E2235">
+        Anteojos
+        <span style="width: 48px; height: 28px; border-radius: 14px; background: {{switchBg}}; display: flex; align-items: center; padding: 3px; box-sizing: border-box; justify-content: {{switchSide}}"><span style="width: 22px; height: 22px; border-radius: 11px; background: #FFFFFF"></span></span>
+      </button>
+    </sc-if>
+
+    <sc-if value="{{tabRopa}}" hint-placeholder-val="{{ false }}">
+      <h2 style="margin: 0; font-size: 15px; font-weight: 800">Color de la remera</h2>
+      <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px">
+        <sc-for list="{{shirts}}" as="o" hint-placeholder-count="6">
+          <button aria-label="{{o.label}}" aria-pressed="{{o.checked}}" onClick="{{o.pick}}" style="aspect-ratio: 1; min-height: 44px; border-radius: 50%; border: 3px solid {{o.ring}}; background: {{o.swatch}}; box-shadow: inset 0 0 0 3px #FFFFFF"></button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{tabExtras}}" hint-placeholder-val="{{ false }}">
+      <h2 style="margin: 0; font-size: 15px; font-weight: 800">Accesorios</h2>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{accs}}" as="o" hint-placeholder-count="5">
+          <button aria-pressed="{{o.checked}}" onClick="{{o.pick}}" disabled="{{o.locked}}" style="min-height: 52px; border-radius: 14px; border: 2px solid {{o.ring}}; background: {{o.bg}}; padding: 6px 12px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; text-align: left">
+            <span style="font-size: 14px; font-weight: 800; color: #1E2235">{{o.label}}</span>
+            <span style="font-size: 12px; font-weight: 700; color: #5B6178">{{o.note}}</span>
+          </button>
+        </sc-for>
+      </div>
+      <p style="margin: 0; font-size: 13px; font-weight: 600; color: #5B6178">Los accesorios bloqueados se ganan con puntos en la tienda de premios.</p>
+    </sc-if>
+  </main>
+
+  <div style="padding: 8px 20px 28px">
+    <a href="Main.dc.html" style="min-height: 56px; border-radius: 18px; background: {{accent}}; color: #FFFFFF; font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center">Guardar mi avatar</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#2563EB","options":["#2563EB","#0F766E","#7C3AED","#C2410C"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: 0, skin: 1, hair: 0, hairColor: 1, eyes: 0, glasses: false, shirt: 0, acc: 0 };
+  }
+  options(list, key, accent) {
+    return list.map((o, i) => {
+      const on = this.state[key] === i;
+      return { ...o, checked: on ? 'true' : 'false', ring: on ? accent : '#E3E6EF', pick: () => this.setState({ [key]: i }) };
+    });
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#2563EB';
+    const skinList = [
+      { label: 'Piel muy clara', swatch: '#FCE3D0' },
+      { label: 'Piel clara', swatch: '#F2C9A5' },
+      { label: 'Piel media', swatch: '#E0A97E' },
+      { label: 'Piel trigueña', swatch: '#C98E62' },
+      { label: 'Piel morena', swatch: '#9C6440' },
+      { label: 'Piel oscura', swatch: '#6B4128' }
+    ];
+    const top = 'M72 104 Q70 30 150 28 Q230 30 228 104 Q214 66 150 64 Q86 66 72 104 Z';
+    const hairList = [
+      { label: 'Corto', front: top, back: '' },
+      { label: 'Flequillo', front: 'M70 112 Q66 26 150 26 Q234 26 230 112 Q222 74 196 62 Q170 84 128 78 Q96 74 78 104 Z', back: '' },
+      { label: 'Largo', front: top, back: 'M64 204 Q50 28 150 24 Q250 28 236 204 Z' },
+      { label: 'Rulos', front: 'M70 110 Q58 84 74 70 Q66 44 94 40 Q102 20 128 28 Q150 12 172 28 Q198 20 206 40 Q234 44 226 70 Q242 84 230 110 Q220 76 150 70 Q80 76 70 110 Z', back: '' },
+      { label: 'Rapado', front: 'M78 92 Q82 40 150 38 Q218 40 222 92 Q200 64 150 62 Q100 64 78 92 Z', back: '' }
+    ];
+    const hairColorList = [
+      { label: 'Negro', swatch: '#1E1E1E' },
+      { label: 'Castaño oscuro', swatch: '#4A3426' },
+      { label: 'Castaño claro', swatch: '#8A5A35' },
+      { label: 'Rubio', swatch: '#D9A93F' },
+      { label: 'Pelirrojo', swatch: '#B4471F' },
+      { label: 'Azul fantasía', swatch: '#3B6FD8' }
+    ];
+    const eyeList = [{ label: 'Redondos' }, { label: 'Felices' }, { label: 'Dormilones' }];
+    const shirtList = [
+      { label: 'Azul', swatch: '#2563EB' },
+      { label: 'Verde agua', swatch: '#0F766E' },
+      { label: 'Violeta', swatch: '#7C3AED' },
+      { label: 'Naranja', swatch: '#EA7A2B' },
+      { label: 'Rosa', swatch: '#DB2777' },
+      { label: 'Gris', swatch: '#5B6178' }
+    ];
+    const accList = [
+      { label: 'Ninguno', note: 'Libre', locked: false },
+      { label: 'Gorra', note: 'Libre', locked: false },
+      { label: 'Vincha', note: 'Libre', locked: false },
+      { label: 'Auriculares', note: 'Libre', locked: false },
+      { label: 'Corona', note: 'Bloqueado · 120 pts', locked: true }
+    ];
+    const tabNames = ['Piel', 'Pelo', 'Ojos', 'Ropa', 'Extras'];
+    const tabs = tabNames.map((name, i) => {
+      const on = this.state.tab === i;
+      return { name, selected: on ? 'true' : 'false', bg: on ? '#FFFFFF' : 'transparent', ink: on ? '#1E2235' : '#5B6178', pick: () => this.setState({ tab: i }) };
+    });
+    const accs = this.options(accList, 'acc', accent).map((o) => ({ ...o, bg: o.locked ? '#F0F2F8' : '#FFFFFF' }));
+    const hair = hairList[this.state.hair];
+    const vis = (b) => (b ? 'visible' : 'hidden');
+    const s = this.state;
+    return {
+      accent,
+      stageBg: '#DCE7FF',
+      tabs,
+      tabPiel: s.tab === 0, tabPelo: s.tab === 1, tabOjos: s.tab === 2, tabRopa: s.tab === 3, tabExtras: s.tab === 4,
+      skins: this.options(skinList, 'skin', accent),
+      hairs: this.options(hairList, 'hair', accent),
+      hairColors: this.options(hairColorList, 'hairColor', accent),
+      eyes: this.options(eyeList, 'eyes', accent),
+      shirts: this.options(shirtList, 'shirt', accent),
+      accs,
+      skin: skinList[s.skin].swatch,
+      hairColor: hairColorList[s.hairColor].swatch,
+      hairFront: hair.front,
+      hairBack: hair.back || 'M0 0',
+      shirt: shirtList[s.shirt].swatch,
+      eyesRound: vis(s.eyes === 0), eyesHappy: vis(s.eyes === 1), eyesSleepy: vis(s.eyes === 2),
+      glassesVis: vis(s.glasses),
+      glassesPressed: s.glasses ? 'true' : 'false',
+      glassesRing: s.glasses ? accent : '#E3E6EF',
+      switchBg: s.glasses ? accent : '#B9BFCE',
+      switchSide: s.glasses ? 'flex-end' : 'flex-start',
+      toggleGlasses: () => this.setState({ glasses: !this.state.glasses }),
+      accCap: vis(s.acc === 1), accBand: vis(s.acc === 2), accPhones: vis(s.acc === 3), accCrown: vis(s.acc === 4),
+      random: () => {
+        const r = (n) => Math.floor(Math.random() * n);
+        this.setState({ skin: r(6), hair: r(5), hairColor: r(6), eyes: r(3), glasses: Math.random() > 0.6, shirt: r(6), acc: r(4) });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

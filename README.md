@@ -9,7 +9,7 @@ App móvil familiar que convierte la rutina diaria de los hijos en hábitos sano
 | Carpeta | Contenido |
 | --- | --- |
 | [`docs/`](docs/) | [Borrador de la idea v1](docs/borrador-idea-v1.md): funcionalidades, roles, puntos, privacidad, arquitectura y hoja de ruta |
-| [`diseno/`](diseno/) | Maquetas de las primeras 5 pantallas en formato de lienzo de diseño (`.dc.html`) |
+| [`diseno/`](diseno/) | Maquetas de las 8 pantallas de la v1 en formato de lienzo de diseño (`.dc.html`) |
 
 ## Pantallas diseñadas (v1)
 
@@ -20,6 +20,9 @@ App móvil familiar que convierte la rutina diaria de los hijos en hábitos sano
 | `Calendario.dc.html` | Calendario mensual de caritas según cumplimiento | Hijo |
 | `Premios.dc.html` | Tienda de premios semanal, alcancía del mes y reto | Hijo |
 | `Adulto.dc.html` | Mi familia: miembros, aprobaciones y avisos | Adulto |
+| `Invitar.dc.html` | Invitar con QR: rol, modo por edad, código de un solo uso que vence en 15 min | Adulto |
+| `Unirse.dc.html` | Unirse al hogar en 3 pasos: escanear, elegir apodo, esperar confirmación | Nuevo miembro |
+| `Avatar.dc.html` | Editor de avatar estilo Funko: piel, pelo, ojos, anteojos, ropa y accesorios | Miembro |
 
 Los nombres y números de las maquetas son datos de ejemplo.
 
@@ -37,6 +40,6 @@ Flutter (Android e iOS) · NestJS + PostgreSQL · WebSocket + Redis · Firebase 
 
 ## Próximos pasos
 
-- [ ] Diseñar alta por QR y editor de avatar.
+- [x] Diseñar alta por QR y editor de avatar.
 - [ ] Resolver las preguntas abiertas del borrador.
 - [ ] Crear el proyecto Flutter con la estructura base y los temas de color.

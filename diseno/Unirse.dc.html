@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Unirse al hogar — nuevo miembro</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1E2235;text-decoration:none}a:hover{color:#1E2235}
+button{font-family:inherit;cursor:pointer}
+input{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F5F6FA; font-family: Nunito, system-ui, sans-serif; color: #1E2235; display: flex; flex-direction: column; overflow: hidden">
+  <div style="padding: 56px 20px 0; display: flex; flex-direction: column; gap: 10px">
+    <p style="margin: 0; font-size: 13px; font-weight: 800; color: #5B6178">PASO {{stepNum}} DE 3</p>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px" aria-hidden="true">
+      <div style="height: 6px; border-radius: 3px; background: {{bar1}}"></div>
+      <div style="height: 6px; border-radius: 3px; background: {{bar2}}"></div>
+      <div style="height: 6px; border-radius: 3px; background: {{bar3}}"></div>
+    </div>
+  </div>
+
+  <sc-if value="{{isScan}}" hint-placeholder-val="{{ true }}">
+    <main style="flex: 1; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+      <h1 style="margin: 0; font-size: 26px; font-weight: 800">Unirme a mi hogar</h1>
+      <p style="margin: 0; font-size: 16px; font-weight: 600; color: #5B6178">Apuntá la cámara al código QR que te muestra tu papá, mamá o el adulto a cargo.</p>
+      <div style="flex: 1; min-height: 300px; border-radius: 28px; background: #1E2235; display: flex; align-items: center; justify-content: center">
+        <svg width="220" height="220" viewBox="0 0 220 220" role="img" aria-label="Visor de la cámara para escanear el código">
+          <path d="M10 60V22a12 12 0 0 1 12-12h38M160 10h38a12 12 0 0 1 12 12v38M210 160v38a12 12 0 0 1-12 12h-38M60 210H22a12 12 0 0 1-12-12v-38" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"></path>
+          <rect x="30" y="108" width="160" height="4" rx="2" fill="{{accent}}"></rect>
+        </svg>
+      </div>
+      <button onClick="{{scan}}" style="min-height: 56px; border-radius: 18px; border: 0; background: {{accent}}; color: #FFFFFF; font-size: 17px; font-weight: 800">Simular escaneo</button>
+      <button onClick="{{scan}}" style="min-height: 48px; border-radius: 16px; border: 2px solid #E3E6EF; background: #FFFFFF; color: #1E2235; font-size: 15px; font-weight: 800">Prefiero escribir el código</button>
+    </main>
+  </sc-if>
+
+  <sc-if value="{{isConfirm}}" hint-placeholder-val="{{ false }}">
+    <main style="flex: 1; padding: 20px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto">
+      <h1 style="margin: 0; font-size: 26px; font-weight: 800">¡Te invitaron!</h1>
+      <section style="background: #FFFFFF; border-radius: 22px; padding: 18px; display: flex; align-items: center; gap: 14px">
+        <div style="width: 56px; height: 56px; border-radius: 18px; background: #FFF4D6; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#9A6700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l9-7 9 7v10a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"></path></svg>
+        </div>
+        <div>
+          <p style="margin: 0; font-size: 18px; font-weight: 800">Hogar Los Girasoles</p>
+          <p style="margin: 0; font-size: 14px; font-weight: 700; color: #5B6178">Entrás como hijo/a · modo Junior</p>
+          <p style="margin: 0; font-size: 13px; font-weight: 600; color: #5B6178">Ya hay 3 miembros</p>
+        </div>
+      </section>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <label for="apodo" style="font-size: 15px; font-weight: 800">¿Cómo querés que te llamen?</label>
+        <input id="apodo" value="{{nick}}" onInput="{{typeNick}}" maxlength="16" placeholder="Tu apodo" style="min-height: 52px; border-radius: 16px; border: 2px solid #D5D9E4; background: #FFFFFF; padding: 0 16px; font-size: 17px; font-weight: 700; color: #1E2235">
+        <p style="margin: 0; font-size: 13px; font-weight: 600; color: #5B6178">Usá un apodo, no tu nombre completo. Nadie fuera de tu hogar ve tu nombre real.</p>
+      </div>
+      <div style="flex: 1"></div>
+      <button onClick="{{join}}" disabled="{{noNick}}" style="min-height: 56px; border-radius: 18px; border: 0; background: {{joinBg}}; color: {{joinInk}}; font-size: 17px; font-weight: 800">Unirme al hogar</button>
+      <button onClick="{{back}}" style="min-height: 44px; border: 0; background: none; color: #5B6178; font-size: 15px; font-weight: 800">No es mi hogar</button>
+    </main>
+  </sc-if>
+
+  <sc-if value="{{isWait}}" hint-placeholder-val="{{ false }}">
+    <main style="flex: 1; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; text-align: center">
+      <div style="width: 120px; height: 120px; border-radius: 60px; background: {{waitBg}}; display: flex; align-items: center; justify-content: center">
+        <sc-if value="{{approved}}" hint-placeholder-val="{{ false }}">
+          <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>
+        </sc-if>
+        <sc-if value="{{pending}}" hint-placeholder-val="{{ true }}">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+        </sc-if>
+      </div>
+      <h1 style="margin: 0; font-size: 26px; font-weight: 800">{{waitTitle}}</h1>
+      <p style="margin: 0; font-size: 16px; font-weight: 600; color: #5B6178; max-width: 300px">{{waitText}}</p>
+      <sc-if value="{{pending}}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{approve}}" style="min-height: 48px; padding: 0 20px; border-radius: 16px; border: 2px dashed #B9BFCE; background: #FFFFFF; color: #5B6178; font-size: 14px; font-weight: 800">Simular: el adulto aprueba</button>
+      </sc-if>
+      <sc-if value="{{approved}}" hint-placeholder-val="{{ false }}">
+        <a href="Avatar.dc.html" style="min-height: 56px; padding: 0 28px; border-radius: 18px; background: {{accent}}; color: #FFFFFF; font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center">Crear mi avatar</a>
+      </sc-if>
+    </main>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#2563EB","options":["#2563EB","#0F766E","#7C3AED","#C2410C"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { step: 0, nick: '', approved: false };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#2563EB';
+    const step = this.state.step;
+    const nick = this.state.nick.trim();
+    const on = (i) => (step >= i ? accent : '#D5D9E4');
+    return {
+      accent,
+      stepNum: step + 1,
+      bar1: on(0), bar2: on(1), bar3: on(2),
+      isScan: step === 0,
+      isConfirm: step === 1,
+      isWait: step === 2,
+      nick: this.state.nick,
+      typeNick: (e) => this.setState({ nick: e.target.value }),
+      noNick: nick.length === 0,
+      joinBg: nick.length ? accent : '#E3E6EF',
+      joinInk: nick.length ? '#FFFFFF' : '#5B6178',
+      scan: () => this.setState({ step: 1 }),
+      back: () => this.setState({ step: 0 }),
+      join: () => this.setState({ step: 2 }),
+      approved: this.state.approved,
+      pending: !this.state.approved,
+      approve: () => this.setState({ approved: true }),
+      waitBg: this.state.approved ? '#16A34A' : '#EEF3FF',
+      waitTitle: this.state.approved ? '¡Bienvenido, ' + (nick || 'campeón') + '!' : 'Casi listo',
+      waitText: this.state.approved ? 'Ya sos parte del Hogar Los Girasoles. Ahora armá tu avatar.' : 'Le avisamos al adulto del hogar. Cuando confirme tu alta, vas a poder empezar.'
+    };
+  }
+}
+</script>
+</body>
+</html>
