@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Premios — app del hijo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1E2235;text-decoration:none}a:hover{color:#1E2235}
+button{font-family:inherit;cursor:pointer}
+button:disabled{cursor:not-allowed}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F5F6FA; font-family: Nunito, system-ui, sans-serif; color: #1E2235; display: flex; flex-direction: column; overflow: hidden">
+  <main style="flex: 1; overflow-y: auto; padding: 56px 20px 24px; display: flex; flex-direction: column; gap: 16px">
+    <header>
+      <p style="margin: 0; font-size: 14px; color: #5B6178">Tienda abierta · viernes a domingo</p>
+      <h1 style="margin: 0; font-size: 26px; font-weight: 800">Mis premios</h1>
+    </header>
+
+    <section style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+      <div style="background: {{accent}}; color: #FFFFFF; border-radius: 22px; padding: 16px">
+        <p style="margin: 0; font-size: 14px; font-weight: 700">Para gastar</p>
+        <p style="margin: 0; font-size: 36px; font-weight: 800; line-height: 1.1">{{balance}}</p>
+        <p style="margin: 0; font-size: 13px; font-weight: 700">puntos de la semana</p>
+      </div>
+      <div style="background: #FFFFFF; border-radius: 22px; padding: 16px; display: flex; flex-direction: column; gap: 6px">
+        <p style="margin: 0; font-size: 14px; font-weight: 700; color: #5B6178">Alcancía del mes</p>
+        <p style="margin: 0; font-size: 28px; font-weight: 800; line-height: 1.1">640</p>
+        <div style="height: 8px; border-radius: 4px; background: #E9ECF4; overflow: hidden"><div style="width: 64%; height: 8px; background: #EA7A2B"></div></div>
+        <p style="margin: 0; font-size: 12px; font-weight: 700; color: #5B6178">Premio grande: [a definir en familia]</p>
+      </div>
+    </section>
+
+    <sc-if value="{{hasPending}}" hint-placeholder-val="{{ false }}">
+      <section role="status" style="background: #FFF4E8; border-radius: 18px; padding: 12px 16px; display: flex; align-items: center; gap: 10px">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9A3412" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+        <p style="margin: 0; font-size: 14px; font-weight: 700; color: #7C2D12">{{pendingText}}</p>
+      </section>
+    </sc-if>
+
+    <h2 style="margin: 4px 0 0; font-size: 18px; font-weight: 800">Elegí tu premio</h2>
+    <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px">
+      <sc-for list="{{rewards}}" as="r" hint-placeholder-count="5">
+        <li style="background: #FFFFFF; border-radius: 20px; padding: 12px 14px; display: flex; align-items: center; gap: 12px">
+          <div style="width: 48px; height: 48px; border-radius: 14px; background: {{r.tint}}; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1E2235" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{r.icon}}"></path></svg>
+          </div>
+          <div style="flex: 1">
+            <p style="margin: 0; font-size: 16px; font-weight: 800">{{r.name}}</p>
+            <p style="margin: 0; font-size: 14px; font-weight: 700; color: #5B6178">{{r.cost}} pts</p>
+          </div>
+          <button onClick="{{r.redeem}}" disabled="{{r.disabled}}" style="min-height: 44px; min-width: 96px; padding: 0 14px; border-radius: 14px; border: 0; background: {{r.btnBg}}; color: {{r.btnInk}}; font-size: 14px; font-weight: 800">{{r.btnText}}</button>
+        </li>
+      </sc-for>
+    </ul>
+
+    <section style="background: #FFFFFF; border-radius: 20px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; border: 2px dashed #B9BFCE">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z"></path></svg>
+      <div style="flex: 1">
+        <p style="margin: 0; font-size: 15px; font-weight: 800">Reto de la semana</p>
+        <p style="margin: 0; font-size: 13px; font-weight: 600; color: #5B6178">Tender la cama 5 días seguidos · +40 pts · vas 3 de 5</p>
+      </div>
+    </section>
+  </main>
+
+  <nav aria-label="Principal" style="height: 84px; flex-shrink: 0; background: #FFFFFF; border-top: 1px solid #E3E6EF; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 8px 8px 20px; box-sizing: border-box">
+    <a href="Main.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12px; font-weight: 700; color: #5B6178">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l9-7 9 7v10a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"></path></svg>Hoy</a>
+    <a href="Rutina.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12px; font-weight: 700; color: #5B6178">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"></path><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"></path></svg>Rutina</a>
+    <a href="Calendario.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12px; font-weight: 700; color: #5B6178">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="3"></rect><path d="M8 2v4M16 2v4M3 10h18"></path></svg>Calendario</a>
+    <a href="Premios.dc.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12px; font-weight: 800; color: {{accent}}">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="13" rx="2"></rect><path d="M12 8v13M3 12h18M12 8c-2-4-6-4-6-1s6 1 6 1zM12 8c2-4 6-4 6-1s-6 1-6 1z"></path></svg>Premios</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#2563EB","options":["#2563EB","#0F766E","#7C3AED","#C2410C"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { balance: 210, pending: [] };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#2563EB';
+    const list = [
+      { id: 'helado', name: 'Helado', cost: 50, tint: '#FDE7F0', icon: 'M8 11a4 4 0 1 1 8 0zM8 11l4 10 4-10' },
+      { id: 'peli', name: 'Elijo la película del sábado', cost: 60, tint: '#E8EEFF', icon: 'M3 6h18v12H3zM3 10h18M8 6v4M16 6v4' },
+      { id: 'pantalla', name: '1 hora extra de pantalla', cost: 80, tint: '#E6F6F3', icon: 'M4 5h16v11H4zM9 20h6M12 16v4' },
+      { id: 'salida', name: 'Salida especial', cost: 150, tint: '#FFF1E2', icon: 'M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11zM12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z' },
+      { id: 'libre', name: 'Pase libre: finde sin tareas', cost: 300, tint: '#F1EAFE', icon: 'M5 12h14M12 5l7 7-7 7' }
+    ];
+    const pending = this.state.pending;
+    const rewards = list.map((r) => {
+      const asked = pending.indexOf(r.id) >= 0;
+      const can = !asked && this.state.balance >= r.cost;
+      return {
+        ...r,
+        disabled: !can,
+        btnText: asked ? 'Pedido' : can ? 'Canjear' : 'Faltan ' + (r.cost - this.state.balance),
+        btnBg: asked ? '#FFF4E8' : can ? accent : '#EEF0F5',
+        btnInk: asked ? '#9A3412' : can ? '#FFFFFF' : '#5B6178',
+        redeem: () => this.setState({ balance: this.state.balance - r.cost, pending: [...this.state.pending, r.id] })
+      };
+    });
+    return {
+      accent,
+      balance: this.state.balance,
+      rewards,
+      hasPending: pending.length > 0,
+      pendingText: pending.length === 1 ? 'Le avisamos a tu papá o mamá. Esperando que lo apruebe.' : 'Tenés ' + pending.length + ' premios esperando aprobación.'
+    };
+  }
+}
+</script>
+</body>
+</html>

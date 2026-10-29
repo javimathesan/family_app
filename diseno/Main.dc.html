@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Hoy — app del hijo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1E2235;text-decoration:none}a:hover{color:#1E2235}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F5F6FA; font-family: Nunito, system-ui, sans-serif; color: #1E2235; display: flex; flex-direction: column; overflow: hidden">
+  <main style="flex: 1; overflow-y: auto; padding: 56px 20px 24px; display: flex; flex-direction: column; gap: 16px">
+    <header style="display: flex; align-items: center; gap: 12px">
+      <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true">
+        <circle cx="28" cy="28" r="28" fill="#DCE7FF"></circle>
+        <rect x="21" y="38" width="14" height="14" rx="5" fill="#2563EB"></rect>
+        <circle cx="28" cy="25" r="15" fill="#F2C9A5"></circle>
+        <path d="M13 23 Q14 9 28 9 Q42 9 43 23 Q36 15 28 16 Q20 15 13 23 Z" fill="#4A3426"></path>
+        <circle cx="22.5" cy="27" r="3.2" fill="#1E2235"></circle>
+        <circle cx="33.5" cy="27" r="3.2" fill="#1E2235"></circle>
+      </svg>
+      <div style="flex: 1">
+        <p style="margin: 0; font-size: 14px; color: #5B6178">Jueves 29 de octubre</p>
+        <h1 style="margin: 0; font-size: 26px; font-weight: 800">Hola, Tomi</h1>
+      </div>
+      <button aria-label="Notificaciones" style="width: 44px; height: 44px; border-radius: 22px; border: 0; background: #FFFFFF; display: flex; align-items: center; justify-content: center">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1E2235" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+      </button>
+    </header>
+
+    <section style="background: {{accent}}; color: #FFFFFF; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end">
+        <div>
+          <p style="margin: 0; font-size: 14px; font-weight: 600">Puntos de hoy</p>
+          <p style="margin: 0; font-size: 44px; font-weight: 800; line-height: 1.05">45 <span style="font-size: 18px; font-weight: 700">pts</span></p>
+        </div>
+        <div style="text-align: right">
+          <p style="margin: 0; font-size: 14px; font-weight: 600">Racha</p>
+          <p style="margin: 0; font-size: 22px; font-weight: 800">4 días</p>
+        </div>
+      </div>
+      <div style="height: 12px; border-radius: 6px; background: rgba(255,255,255,0.3); overflow: hidden">
+        <div style="width: 50%; height: 12px; border-radius: 6px; background: #FFFFFF"></div>
+      </div>
+      <p style="margin: 0; font-size: 14px; font-weight: 600">8 de 16 tareas hechas · faltan 2 para el emoticón feliz</p>
+    </section>
+
+    <section style="background: #FFFFFF; border-radius: 20px; padding: 16px; display: flex; align-items: center; gap: 14px">
+      <div style="width: 48px; height: 48px; border-radius: 14px; background: #FFE9D6; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#9A3412" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+      </div>
+      <div style="flex: 1">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; color: #9A3412">AHORA · 15:00</p>
+        <p style="margin: 0; font-size: 17px; font-weight: 700">Fútbol en el club</p>
+        <p style="margin: 0; font-size: 13px; color: #5B6178">+10 pts al marcarla a tiempo</p>
+      </div>
+      <a href="Rutina.dc.html" style="padding: 12px 16px; border-radius: 14px; background: #F0F2F8; font-size: 15px; font-weight: 700; min-height: 44px; box-sizing: border-box; display: flex; align-items: center">Ver</a>
+    </section>
+
+    <h2 style="margin: 4px 0 0; font-size: 18px; font-weight: 800">Mi cuerpo hoy</h2>
+
+    <section style="background: #FFFFFF; border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; align-items: center; justify-content: space-between">
+        <div>
+          <p style="margin: 0; font-size: 16px; font-weight: 700">Vasos de agua</p>
+          <p style="margin: 0; font-size: 13px; color: #5B6178">Meta: 8 vasos</p>
+        </div>
+        <button onClick="{{addGlass}}" style="min-height: 44px; padding: 0 18px; border-radius: 14px; border: 0; background: {{accent}}; color: #FFFFFF; font-size: 16px; font-weight: 800">+1 vaso</button>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px">
+        <sc-for list="{{glasses}}" as="g" hint-placeholder-count="8">
+          <svg viewBox="0 0 24 30" style="width: 100%; height: 34px" aria-hidden="true"><path d="M3 2h18l-2.5 25h-13z" fill="{{g.fill}}" stroke="#7FA6F5" stroke-width="1.5" stroke-linejoin="round"></path></svg>
+        </sc-for>
+      </div>
+      <p style="margin: 0; font-size: 14px; font-weight: 700; color: #5B6178">{{glassText}}</p>
+    </section>
+
+    <section style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+      <button onClick="{{togglePopo}}" aria-pressed="{{popo}}" style="min-height: 96px; border-radius: 20px; border: 2px solid {{popoBorder}}; background: #FFFFFF; padding: 14px; text-align: left; display: flex; flex-direction: column; gap: 6px">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#7C4A1E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19h14a3 3 0 0 0 0-6 3 3 0 0 0-2-5 3 3 0 0 0-5-3c1 2-1 3-3 3a3 3 0 0 0-2 5 3 3 0 0 0-2 6z"></path></svg>
+        <span style="font-size: 16px; font-weight: 800; color: #1E2235">¿Hiciste popó?</span>
+        <span style="font-size: 14px; font-weight: 700; color: #5B6178">{{popoText}}</span>
+      </button>
+      <button onClick="{{addPipi}}" style="min-height: 96px; border-radius: 20px; border: 2px solid #E3E6EF; background: #FFFFFF; padding: 14px; text-align: left; display: flex; flex-direction: column; gap: 6px">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#B7791F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"></path></svg>
+        <span style="font-size: 16px; font-weight: 800; color: #1E2235">Pipí</span>
+        <span style="font-size: 14px; font-weight: 700; color: #5B6178">{{pipiText}}</span>
+      </button>
+    </section>
+  </main>
+
+  <nav aria-label="Principal" style="height: 84px; flex-shrink: 0; background: #FFFFFF; border-top: 1px solid #E3E6EF; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 8px 8px 20px; box-sizing: border-box">
+    <a href="Main.dc.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12px; font-weight: 800; color: {{accent}}">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l9-7 9 7v10a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"></path></svg>Hoy</a>
+    <a href="Rutina.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12px; font-weight: 700; color: #5B6178">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"></path><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"></path></svg>Rutina</a>
+    <a href="Calendario.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12px; font-weight: 700; color: #5B6178">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="3"></rect><path d="M8 2v4M16 2v4M3 10h18"></path></svg>Calendario</a>
+    <a href="Premios.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12px; font-weight: 700; color: #5B6178">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="13" rx="2"></rect><path d="M12 8v13M3 12h18M12 8c-2-4-6-4-6-1s6 1 6 1zM12 8c2-4 6-4 6-1s-6 1-6 1z"></path></svg>Premios</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#2563EB","options":["#2563EB","#0F766E","#7C3AED","#C2410C"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { glasses: 4, popo: false, pipi: 3 };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#2563EB';
+    const n = this.state.glasses;
+    const glasses = [0,1,2,3,4,5,6,7].map((i) => ({ fill: i < n ? '#93B7FA' : '#FFFFFF' }));
+    return {
+      accent,
+      glasses,
+      glassText: n >= 8 ? '¡Meta cumplida! +5 pts' : n + ' de 8 vasos',
+      addGlass: () => this.setState({ glasses: Math.min(8, this.state.glasses + 1) }),
+      popo: this.state.popo ? 'true' : 'false',
+      popoBorder: this.state.popo ? accent : '#E3E6EF',
+      popoText: this.state.popo ? 'Sí, ¡bien!' : 'Todavía no',
+      togglePopo: () => this.setState({ popo: !this.state.popo }),
+      pipiText: this.state.pipi + ' veces hoy · tocá para sumar',
+      addPipi: () => this.setState({ pipi: this.state.pipi + 1 })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Rutina — app del hijo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1E2235;text-decoration:none}a:hover{color:#1E2235}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F5F6FA; font-family: Nunito, system-ui, sans-serif; color: #1E2235; display: flex; flex-direction: column; overflow: hidden">
+  <main style="flex: 1; overflow-y: auto; padding: 56px 20px 24px; display: flex; flex-direction: column; gap: 16px">
+    <header style="display: flex; justify-content: space-between; align-items: flex-end">
+      <div>
+        <p style="margin: 0; font-size: 14px; color: #5B6178">Jueves · día de colegio</p>
+        <h1 style="margin: 0; font-size: 26px; font-weight: 800">Mi rutina</h1>
+      </div>
+      <div style="text-align: right">
+        <p style="margin: 0; font-size: 28px; font-weight: 800; color: {{accent}}">{{points}} pts</p>
+        <p style="margin: 0; font-size: 13px; font-weight: 700; color: #5B6178">{{doneText}}</p>
+      </div>
+    </header>
+
+    <div role="tablist" aria-label="Bloque del día" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; background: #E9ECF4; padding: 4px; border-radius: 16px">
+      <button role="tab" aria-selected="true" style="min-height: 40px; border: 0; border-radius: 12px; background: #FFFFFF; font-size: 14px; font-weight: 800; color: #1E2235">Mañana</button>
+      <button role="tab" aria-selected="false" style="min-height: 40px; border: 0; border-radius: 12px; background: transparent; font-size: 14px; font-weight: 700; color: #5B6178">Colegio</button>
+      <button role="tab" aria-selected="false" style="min-height: 40px; border: 0; border-radius: 12px; background: transparent; font-size: 14px; font-weight: 700; color: #5B6178">Tarde</button>
+      <button role="tab" aria-selected="false" style="min-height: 40px; border: 0; border-radius: 12px; background: transparent; font-size: 14px; font-weight: 700; color: #5B6178">Noche</button>
+    </div>
+
+    <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px">
+      <sc-for list="{{tasks}}" as="t" hint-placeholder-count="8">
+        <li>
+          <button onClick="{{t.toggle}}" aria-pressed="{{t.pressed}}" style="width: 100%; min-height: 64px; border-radius: 18px; border: 2px solid {{t.border}}; background: {{t.bg}}; padding: 10px 14px; display: flex; align-items: center; gap: 12px; text-align: left">
+            <span style="width: 30px; height: 30px; border-radius: 10px; border: 2px solid {{t.boxBorder}}; background: {{t.boxBg}}; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>
+            </span>
+            <span style="flex: 1; display: flex; flex-direction: column">
+              <span style="font-size: 16px; font-weight: 700; color: #1E2235">{{t.name}}</span>
+              <span style="font-size: 13px; color: #5B6178">{{t.time}} · {{t.check}}</span>
+            </span>
+            <span style="font-size: 15px; font-weight: 800; color: {{t.ptsColor}}">+{{t.pts}}</span>
+          </button>
+        </li>
+      </sc-for>
+    </ul>
+
+    <section style="background: #FFF4E8; border-radius: 18px; padding: 14px 16px; display: flex; gap: 12px; align-items: center">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#9A3412" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+      <p style="margin: 0; font-size: 14px; font-weight: 600; color: #7C2D12">Marcala dentro de su horario para ganar los puntos completos. Fuera de horario suma la mitad.</p>
+    </section>
+  </main>
+
+  <nav aria-label="Principal" style="height: 84px; flex-shrink: 0; background: #FFFFFF; border-top: 1px solid #E3E6EF; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 8px 8px 20px; box-sizing: border-box">
+    <a href="Main.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12px; font-weight: 700; color: #5B6178">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l9-7 9 7v10a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"></path></svg>Hoy</a>
+    <a href="Rutina.dc.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12px; font-weight: 800; color: {{accent}}">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"></path><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"></path></svg>Rutina</a>
+    <a href="Calendario.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12px; font-weight: 700; color: #5B6178">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="3"></rect><path d="M8 2v4M16 2v4M3 10h18"></path></svg>Calendario</a>
+    <a href="Premios.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12px; font-weight: 700; color: #5B6178">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="13" rx="2"></rect><path d="M12 8v13M3 12h18M12 8c-2-4-6-4-6-1s6 1 6 1zM12 8c2-4 6-4 6-1s-6 1-6 1z"></path></svg>Premios</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#2563EB","options":["#2563EB","#0F766E","#7C3AED","#C2410C"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { done: { 0: true, 1: true, 2: true, 3: true, 4: true, 5: false, 6: false, 7: false } };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#2563EB';
+    const base = [
+      { name: 'Levantarme', time: '07:00', pts: 5, check: 'lo marco yo' },
+      { name: 'Aseo personal', time: '07:10', pts: 5, check: 'lo marco yo' },
+      { name: 'Tender la cama', time: '07:20', pts: 5, check: 'con foto' },
+      { name: 'Desayunar', time: '07:30', pts: 5, check: 'lo marco yo' },
+      { name: 'Recoger la mesa', time: '07:45', pts: 3, check: 'lo marco yo' },
+      { name: 'Lavar mi vajilla', time: '07:50', pts: 5, check: 'valida un adulto' },
+      { name: 'Cepillarme los dientes', time: '07:55', pts: 5, check: 'lo marco yo' },
+      { name: 'Útiles del colegio listos', time: '08:00', pts: 5, check: 'lo marco yo' }
+    ];
+    let points = 0;
+    let count = 0;
+    const tasks = base.map((t, i) => {
+      const on = !!this.state.done[i];
+      if (on) { points += t.pts; count += 1; }
+      return {
+        ...t,
+        pressed: on ? 'true' : 'false',
+        border: on ? accent : '#E3E6EF',
+        bg: '#FFFFFF',
+        boxBorder: on ? accent : '#B9BFCE',
+        boxBg: on ? accent : '#FFFFFF',
+        ptsColor: on ? accent : '#5B6178',
+        toggle: () => this.setState({ done: { ...this.state.done, [i]: !this.state.done[i] } })
+      };
+    });
+    return { accent, tasks, points, doneText: count + ' de ' + base.length + ' hechas' };
+  }
+}
+</script>
+</body>
+</html>
