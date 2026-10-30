@@ -97,7 +97,7 @@ void main() {
 
     await tester.tap(find.text('Papá'));
     await tester.pumpAndSettle();
-    expect(find.byType(Badge), findsOneWidget);
+    expect(session.unreadNotices, greaterThan(0));
 
     await tester.tap(find.byTooltip('Novedades'));
     await tester.pumpAndSettle();

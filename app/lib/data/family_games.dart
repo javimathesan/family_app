@@ -78,12 +78,13 @@ extension FamilyGames on FamilyStore {
   }) {
     final m = matchById(matchId);
     if (m == null || m.finished) return;
+    final mover = by ?? m.currentPlayer;
     m
       ..state = state
       ..turn = nextTurn
       ..winner = winner
       ..draw = draw
-      ..lastBy = by ?? m.currentPlayer
+      ..lastBy = mover
       ..updatedAt = _clock();
     sync?.matchSaved(m);
     if (m.finished) {
