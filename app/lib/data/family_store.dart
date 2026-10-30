@@ -23,8 +23,8 @@ class FamilyStore extends ChangeNotifier {
     List<FamilyNotice>? notices,
     DateTime Function()? clock,
   })  : _members = members,
-        _templates = templates,
-        _rewards = rewards,
+        _templates = [...templates],
+        _rewards = [...rewards],
         _balances = balances ?? {},
         _piggy = piggyBank ?? {},
         _history = history ?? {},
@@ -274,6 +274,55 @@ class FamilyStore extends ChangeNotifier {
 
   static int _minutes(TimeOfDay t) => t.hour * 60 + t.minute;
 
+  // ---------------------------------------------------- editar la rutina
+
+  String newTemplateId() => _newId('t');
+  String newRewardId() => _newId('p');
+
+  static int _byTime(TaskTemplate a, TaskTemplate b) => _minutes(a.time).compareTo(_minutes(b.time));
+
+  /// Crea o actualiza una tarea de la rutina (solo adultos).
+  void saveTemplate(TaskTemplate template) {
+    final i = _templates.indexWhere((t) => t.id == template.id);
+    if (i >= 0) {
+      _templates[i] = template;
+    } else {
+      _templates.add(template);
+    }
+    _templates.sort(_byTime);
+    sync?.routineChanged(List.unmodifiable(_templates));
+    notifyListeners();
+  }
+
+  void removeTemplate(String id) {
+    final before = _templates.length;
+    _templates.removeWhere((t) => t.id == id);
+    if (_templates.length == before) return;
+    sync?.routineChanged(List.unmodifiable(_templates));
+    notifyListeners();
+  }
+
+  /// Crea o actualiza un premio de la tienda (solo adultos).
+  void saveReward(Reward reward) {
+    final i = _rewards.indexWhere((r) => r.id == reward.id);
+    if (i >= 0) {
+      _rewards[i] = reward;
+    } else {
+      _rewards.add(reward);
+    }
+    _rewards.sort((a, b) => a.cost.compareTo(b.cost));
+    sync?.rewardsChanged(List.unmodifiable(_rewards));
+    notifyListeners();
+  }
+
+  void removeReward(String id) {
+    final before = _rewards.length;
+    _rewards.removeWhere((r) => r.id == id);
+    if (_rewards.length == before) return;
+    sync?.rewardsChanged(List.unmodifiable(_rewards));
+    notifyListeners();
+  }
+
   // ------------------------------------------------------------------ salud
 
   HealthLog healthOf(String memberId) => _health.putIfAbsent(memberId, HealthLog.new);
@@ -422,8 +471,22 @@ class FamilyStore extends ChangeNotifier {
     Map<String, List<DaySummary>>? history,
     List<Redemption>? redemptions,
     List<FamilyNotice>? notices,
+    List<TaskTemplate>? templates,
+    List<Reward>? rewards,
   }) {
     if (homeName != null) this.homeName = homeName;
+    if (templates != null) {
+      _templates
+        ..clear()
+        ..addAll(templates)
+        ..sort(_byTime);
+    }
+    if (rewards != null) {
+      _rewards
+        ..clear()
+        ..addAll(rewards)
+        ..sort((a, b) => a.cost.compareTo(b.cost));
+    }
     if (members != null) {
       _members
         ..clear()
@@ -486,6 +549,8 @@ class FamilyStore extends ChangeNotifier {
       history: const {},
       redemptions: const [],
       notices: const [],
+      templates: defaultTemplates,
+      rewards: defaultRewards,
     );
   }
 
@@ -503,6 +568,8 @@ class FamilyStore extends ChangeNotifier {
         'v': schemaVersion,
         'day': dayKey(_clock()),
         'homeName': homeName,
+        'templates': [for (final t in _templates) templateToJson(t)],
+        'rewards': [for (final r in _rewards) rewardToJson(r)],
         'members': [for (final m in _members) memberToJson(m)],
         'pending': _pendingMembers.toList(),
         'balances': _balances,
@@ -548,6 +615,17 @@ class FamilyStore extends ChangeNotifier {
     if (json['v'] != schemaVersion) return;
 
     if (json['homeName'] is String) homeName = json['homeName'] as String;
+    if (json['templates'] is List) {
+      _templates
+        ..clear()
+        ..addAll([for (final t in json['templates'] as List) templateFromJson((t as Map).cast<String, dynamic>())])
+        ..sort(_byTime);
+    }
+    if (json['rewards'] is List) {
+      _rewards
+        ..clear()
+        ..addAll([for (final r in json['rewards'] as List) rewardFromJson((r as Map).cast<String, dynamic>())]);
+    }
     _members
       ..clear()
       ..addAll([for (final m in json['members'] as List) memberFromJson(m as Map<String, dynamic>)]);
@@ -695,6 +773,43 @@ class FamilyStore extends ChangeNotifier {
     );
   }
 
+  static Map<String, dynamic> templateToJson(TaskTemplate t) => {
+        'id': t.id,
+        'name': t.name,
+        'block': t.block.name,
+        'hour': t.time.hour,
+        'minute': t.time.minute,
+        'points': t.points,
+        'validation': t.validation.name,
+        'window': t.windowMinutes,
+      };
+
+  static TaskTemplate templateFromJson(Map<String, dynamic> j) => TaskTemplate(
+        id: j['id'] as String,
+        name: j['name'] as String,
+        block: DayBlock.values.asNameMap()[j['block']] ?? DayBlock.morning,
+        time: TimeOfDay(hour: (j['hour'] as num).toInt(), minute: (j['minute'] as num).toInt()),
+        points: (j['points'] as num).toInt(),
+        validation: Validation.values.asNameMap()[j['validation']] ?? Validation.self,
+        windowMinutes: (j['window'] as num?)?.toInt() ?? 30,
+      );
+
+  static Map<String, dynamic> rewardToJson(Reward r) => {
+        'id': r.id,
+        'name': r.name,
+        'cost': r.cost,
+        'icon': r.iconKey,
+        'monthly': r.monthly,
+      };
+
+  static Reward rewardFromJson(Map<String, dynamic> j) => Reward(
+        id: j['id'] as String,
+        name: j['name'] as String,
+        cost: (j['cost'] as num).toInt(),
+        iconKey: j['icon'] as String? ?? 'regalo',
+        monthly: j['monthly'] as bool? ?? false,
+      );
+
   static Map<String, dynamic> _summaryToJson(DaySummary s) => {
         'date': s.date.toIso8601String(),
         'ratio': s.completionRatio,
@@ -742,11 +857,11 @@ class FamilyStore extends ChangeNotifier {
 
   /// Premios por defecto de un hogar nuevo.
   static const List<Reward> defaultRewards = [
-    Reward(id: 'helado', name: 'Helado', cost: 50, icon: Icons.icecream_outlined),
-    Reward(id: 'peli', name: 'Elijo la película del sábado', cost: 60, icon: Icons.movie_outlined),
-    Reward(id: 'pantalla', name: '1 hora extra de pantalla', cost: 80, icon: Icons.tv_outlined),
-    Reward(id: 'salida', name: 'Salida especial', cost: 150, icon: Icons.park_outlined),
-    Reward(id: 'libre', name: 'Pase libre: finde sin tareas', cost: 300, icon: Icons.beach_access_outlined),
+    Reward(id: 'helado', name: 'Helado', cost: 50, iconKey: 'helado'),
+    Reward(id: 'peli', name: 'Elijo la película del sábado', cost: 60, iconKey: 'pelicula'),
+    Reward(id: 'pantalla', name: '1 hora extra de pantalla', cost: 80, iconKey: 'pantalla'),
+    Reward(id: 'salida', name: 'Salida especial', cost: 150, iconKey: 'paseo'),
+    Reward(id: 'libre', name: 'Pase libre: finde sin tareas', cost: 300, iconKey: 'libre'),
   ];
 
   /// Hogar de ejemplo con los mismos datos que las maquetas.

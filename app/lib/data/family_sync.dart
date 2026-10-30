@@ -15,4 +15,10 @@ abstract class FamilySync {
   void balanceChanged(String memberId, int delta);
   void redemptionSaved(Redemption redemption);
   void noticeAdded(FamilyNotice notice);
+
+  /// El adulto cambió la rutina (se envía la lista completa).
+  void routineChanged(List<TaskTemplate> templates);
+
+  /// El adulto cambió los premios (se envía la lista completa).
+  void rewardsChanged(List<Reward> rewards);
 }

@@ -146,6 +146,24 @@ class TaskTemplate {
 
   /// Minutos después de [time] en los que la tarea todavía cuenta "a tiempo".
   final int windowMinutes;
+
+  TaskTemplate copyWith({
+    String? name,
+    DayBlock? block,
+    TimeOfDay? time,
+    int? points,
+    Validation? validation,
+    int? windowMinutes,
+  }) =>
+      TaskTemplate(
+        id: id,
+        name: name ?? this.name,
+        block: block ?? this.block,
+        time: time ?? this.time,
+        points: points ?? this.points,
+        validation: validation ?? this.validation,
+        windowMinutes: windowMinutes ?? this.windowMinutes,
+      );
 }
 
 /// Registro de una tarea hecha en un día.
@@ -181,16 +199,44 @@ class Reward {
     required this.id,
     required this.name,
     required this.cost,
-    required this.icon,
+    this.iconKey = 'regalo',
     this.monthly = false,
   });
 
   final String id;
   final String name;
   final int cost;
-  final IconData icon;
+
+  /// Clave del ícono en [rewardIcons] (se guarda como texto en la nube).
+  final String iconKey;
   final bool monthly;
+
+  IconData get icon => rewardIcons[iconKey] ?? Icons.card_giftcard_outlined;
+
+  Reward copyWith({String? name, int? cost, String? iconKey}) => Reward(
+        id: id,
+        name: name ?? this.name,
+        cost: cost ?? this.cost,
+        iconKey: iconKey ?? this.iconKey,
+        monthly: monthly,
+      );
 }
+
+/// Íconos que el adulto puede elegir para un premio.
+const rewardIcons = <String, IconData>{
+  'regalo': Icons.card_giftcard_outlined,
+  'helado': Icons.icecream_outlined,
+  'pelicula': Icons.movie_outlined,
+  'pantalla': Icons.tv_outlined,
+  'juego': Icons.sports_esports_outlined,
+  'paseo': Icons.park_outlined,
+  'comida': Icons.lunch_dining_outlined,
+  'dinero': Icons.savings_outlined,
+  'libre': Icons.beach_access_outlined,
+  'juguete': Icons.toys_outlined,
+  'deporte': Icons.sports_soccer_outlined,
+  'estrella': Icons.star_outline,
+};
 
 enum RedemptionStatus { pending, approved, rejected }
 

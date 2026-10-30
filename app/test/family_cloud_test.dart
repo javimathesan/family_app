@@ -211,4 +211,33 @@ void main() {
     expect(approvals.last, isNull);
     await sub.cancel();
   });
+
+  test('la rutina y los premios que edita el adulto le llegan al hijo', () async {
+    final ids = await familyWithOneChild();
+    adultStore.saveTemplate(TaskTemplate(
+      id: 'perro',
+      name: 'Pasear al perro',
+      block: DayBlock.afternoon,
+      time: const TimeOfDay(hour: 16, minute: 0),
+      points: 8,
+    ));
+    adultStore.removeTemplate('aseo');
+    adultStore.saveReward(const Reward(id: 'pizza', name: 'Pizza', cost: 70, iconKey: 'comida'));
+    await settle();
+
+    expect(childStore.templates.any((t) => t.id == 'perro'), isTrue);
+    expect(childStore.templates.any((t) => t.id == 'aseo'), isFalse);
+    expect(childStore.rewardById('pizza')!.name, 'Pizza');
+
+    childStore.toggleTask(ids.childId, 'perro');
+    await settle();
+    expect(adultStore.balanceOf(ids.childId), 8);
+  });
+
+  test('un hogar nuevo arranca con la rutina y los premios por defecto en la nube', () async {
+    final home = await adultCloud.createHome(homeName: 'Familia Test', nickname: 'Papá');
+    final doc = await db.collection('homes').doc(home.homeId).get();
+    expect((doc.data()!['templates'] as List).length, FamilyStore.defaultTemplates.length);
+    expect((doc.data()!['rewards'] as List).length, FamilyStore.defaultRewards.length);
+  });
 }

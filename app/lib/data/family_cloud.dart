@@ -104,6 +104,8 @@ class FamilyCloud implements FamilySync {
       'createdAt': FieldValue.serverTimestamp(),
       'adminUids': [uid],
       'memberUids': [uid],
+      'templates': [for (final t in FamilyStore.defaultTemplates) FamilyStore.templateToJson(t)],
+      'rewards': [for (final r in FamilyStore.defaultRewards) FamilyStore.rewardToJson(r)],
     });
     final memberId = _newMemberId();
     final admin = Member(id: memberId, nickname: nickname, role: MemberRole.admin, uid: uid);
@@ -207,8 +209,19 @@ class FamilyCloud implements FamilySync {
     void onError(Object error) => debugPrint('Error de sincronización: $error');
 
     _subs.add(_homeRef(homeId).snapshots().listen((snap) {
-      final name = snap.data()?['name'] as String?;
-      if (name != null) store.applyRemote(homeName: name);
+      final data = snap.data();
+      if (data == null) return;
+      final templates = data['templates'];
+      final rewards = data['rewards'];
+      store.applyRemote(
+        homeName: data['name'] as String?,
+        templates: templates is List
+            ? [for (final t in templates) FamilyStore.templateFromJson((t as Map).cast<String, dynamic>())]
+            : null,
+        rewards: rewards is List
+            ? [for (final r in rewards) FamilyStore.rewardFromJson((r as Map).cast<String, dynamic>())]
+            : null,
+      );
     }, onError: onError));
 
     _subs.add(_members(homeId).snapshots().listen((snap) {
@@ -404,5 +417,15 @@ class FamilyCloud implements FamilySync {
         'time': Timestamp.fromDate(notice.time),
         'text': notice.text,
         'alert': notice.isAlert,
+      }));
+
+  @override
+  void routineChanged(List<TaskTemplate> templates) => _write((h) => _homeRef(h).update({
+        'templates': [for (final t in templates) FamilyStore.templateToJson(t)],
+      }));
+
+  @override
+  void rewardsChanged(List<Reward> rewards) => _write((h) => _homeRef(h).update({
+        'rewards': [for (final r in rewards) FamilyStore.rewardToJson(r)],
       }));
 }

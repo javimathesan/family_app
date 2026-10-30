@@ -32,8 +32,9 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
 
   void _set(AvatarConfig c) => setState(() => _config = c);
 
+  /// Los adultos tienen todo libre; los chicos desbloquean con puntos.
   bool _owns(FamilyStore store, Member? me, AvatarItem item) =>
-      item.free || (me != null && store.hasUnlocked(me.id, item.id));
+      item.free || (me != null && (me.role.isAdult || store.hasUnlocked(me.id, item.id)));
 
   void _surprise(FamilyStore store, Member? me) {
     final outfits = [

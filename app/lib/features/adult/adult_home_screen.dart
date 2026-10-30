@@ -20,6 +20,9 @@ class AdultHomeScreen extends StatelessWidget {
     final session = SessionScope.of(context);
     final accent = Theme.of(context).colorScheme.primary;
     final pendingMembers = store.members.where((m) => store.isPendingMember(m.id)).toList();
+    final me = store.currentMember ?? session.deviceMember;
+    final children = store.children.where((c) => !store.isPendingMember(c.id)).toList();
+    final adults = store.members.where((m) => m.role.isAdult && !store.isPendingMember(m.id)).toList();
     final hasApprovals = pendingMembers.isNotEmpty ||
         store.pendingRedemptions.isNotEmpty ||
         store.pendingTaskApprovals.isNotEmpty;
@@ -31,11 +34,29 @@ class AdultHomeScreen extends StatelessWidget {
           children: [
             Row(
               children: [
+                Tooltip(
+                  message: 'Cambiar mi avatar',
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: me == null ? null : () => Navigator.of(context).pushNamed(Routes.avatar),
+                    child: AvatarView(
+                      config: me?.avatar ?? const AvatarConfig(),
+                      size: 52,
+                      background: (me?.accent ?? accent).withValues(alpha: 0.15),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('${store.homeName} · ${store.members.length} miembros', style: mutedText(context)),
+                      Text(
+                        me == null ? store.homeName : 'Hola, ${me.nickname} · ${store.homeName}',
+                        style: mutedText(context),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       Text('Mi familia', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
                     ],
                   ),
@@ -58,7 +79,7 @@ class AdultHomeScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Icon(session.isCloud ? Icons.cloud_done_outlined : Icons.phone_android, size: 16, color: AppColors.muted),
@@ -80,18 +101,61 @@ class AdultHomeScreen extends StatelessWidget {
                 label: const Text('Invitar con QR'),
               ),
               const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: () => _addChildWithoutPhone(context),
-                icon: const Icon(Icons.person_add_alt),
-                label: const Text('Hijo sin celular'),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => Navigator.of(context).pushNamed(Routes.routine),
+                      icon: const Icon(Icons.checklist),
+                      label: const Text('Rutina y premios'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _addChildWithoutPhone(context),
+                      icon: const Icon(Icons.person_add_alt),
+                      label: const Text('Hijo sin celular'),
+                    ),
+                  ),
+                ],
               ),
             ],
-            const SizedBox(height: 16),
-            for (final child in store.children.where((c) => !store.isPendingMember(c.id))) ...[
+            const SizedBox(height: 20),
+            Text('Hijos', style: sectionTitle(context)),
+            const SizedBox(height: 10),
+            if (children.isEmpty)
+              InfoCard(
+                child: Text(
+                  session.isAdmin
+                      ? 'Todavía no hay hijos en el hogar. Sumalos con "Invitar con QR" si tienen celular, o con "Hijo sin celular" para manejarlos desde tu teléfono.'
+                      : 'Todavía no hay hijos en el hogar.',
+                  style: mutedText(context).copyWith(fontSize: 15),
+                ),
+              ),
+            for (final child in children) ...[
               _ChildCard(member: child, accent: accent),
               const SizedBox(height: 10),
             ],
             const SizedBox(height: 10),
+            Text('Adultos del hogar', style: sectionTitle(context)),
+            const SizedBox(height: 10),
+            InfoCard(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  for (final a in adults)
+                    ListTile(
+                      leading: AvatarView(config: a.avatar, size: 40, background: a.accent.withValues(alpha: 0.15)),
+                      title: Text(a.id == me?.id ? '${a.nickname} (vos)' : a.nickname, style: const TextStyle(fontWeight: FontWeight.w700)),
+                      subtitle: Text(a.role.label),
+                      trailing: a.id == me?.id ? const Icon(Icons.edit_outlined, size: 20) : null,
+                      onTap: a.id == me?.id ? () => Navigator.of(context).pushNamed(Routes.avatar) : null,
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
             Text('Para aprobar', style: sectionTitle(context)),
             const SizedBox(height: 10),
             if (!hasApprovals)
@@ -120,26 +184,34 @@ class AdultHomeScreen extends StatelessWidget {
             const SizedBox(height: 10),
             Text('Últimos avisos', style: sectionTitle(context)),
             const SizedBox(height: 10),
-            InfoCard(
-              padding: EdgeInsets.zero,
-              child: Column(
-                children: [
-                  for (final n in store.notices.take(6))
-                    ListTile(
-                      dense: true,
-                      leading: Text(
-                        n.isAlert ? 'Aviso' : hhmm(TimeOfDay.fromDateTime(n.time)),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 12,
-                          color: n.isAlert ? AppColors.warmInk : AppColors.muted,
+            if (store.notices.isEmpty)
+              InfoCard(
+                child: Text(
+                  'Acá vas a ver cuando tus hijos completen tareas, lleguen a su meta de agua o pidan premios.',
+                  style: mutedText(context).copyWith(fontSize: 15),
+                ),
+              )
+            else
+              InfoCard(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: [
+                    for (final n in store.notices.take(6))
+                      ListTile(
+                        dense: true,
+                        leading: Text(
+                          n.isAlert ? 'Aviso' : hhmm(TimeOfDay.fromDateTime(n.time)),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                            color: n.isAlert ? AppColors.warmInk : AppColors.muted,
+                          ),
                         ),
+                        title: Text(n.text, style: const TextStyle(fontWeight: FontWeight.w600)),
                       ),
-                      title: Text(n.text, style: const TextStyle(fontWeight: FontWeight.w600)),
-                    ),
-                ],
+                  ],
+                ),
               ),
-            ),
           ],
         ),
       ),

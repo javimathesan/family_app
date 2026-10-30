@@ -35,7 +35,7 @@ class _CreateHomeScreenState extends State<CreateHomeScreen> {
     try {
       await SessionScope.of(context).createHome(homeName: _home.text, nickname: _nick.text);
       if (!mounted) return;
-      Navigator.of(context).pushNamedAndRemoveUntil(Routes.adult, (_) => false);
+      Navigator.of(context).pushNamedAndRemoveUntil(Routes.avatar, (_) => false);
     } catch (error) {
       if (!mounted) return;
       setState(() {
