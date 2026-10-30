@@ -1,6 +1,6 @@
 {
-    "name": "family_app",
-    "short_name": "family_app",
+    "name": "Family App",
+    "short_name": "Family App",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
