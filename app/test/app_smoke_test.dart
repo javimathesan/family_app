@@ -67,6 +67,11 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.text('Sumar a alguien'), findsOneWidget);
+    await tester.dragUntilVisible(
+      find.textContaining('Estás en la demostración'),
+      find.byType(ListView),
+      const Offset(0, -300),
+    );
     expect(find.textContaining('Estás en la demostración'), findsOneWidget);
   });
 
