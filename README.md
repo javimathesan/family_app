@@ -4,7 +4,7 @@ App móvil familiar que convierte la rutina diaria de los hijos en hábitos sano
 
 ## Estado
 
-**Etapa actual: v0.1, primera versión navegable.** La app en Flutter ya tiene todas las pantallas de la v1 con datos de ejemplo; falta backend, persistencia y notificaciones. Ver el [registro de cambios](CHANGELOG.md).
+**Etapa actual: v0.2.** La app (Family App, `com.javimathesan.familyapp`) corre en Android con todas las pantallas de la v1, escaneo de QR con la cámara y datos guardados en el teléfono. Falta backend para sincronizar varios teléfonos y notificaciones. Ver el [registro de cambios](CHANGELOG.md).
 
 | Carpeta | Contenido |
 | --- | --- |
@@ -45,6 +45,9 @@ Flutter (Android e iOS) · NestJS + PostgreSQL · WebSocket + Redis · Firebase 
 - [ ] Resolver las preguntas abiertas del borrador.
 - [x] Crear el proyecto Flutter con la estructura base y los temas de color.
 - [x] Construir las 8 pantallas de la v1 con datos de ejemplo y pruebas.
-- [ ] Escaneo real del QR con la cámara.
-- [ ] Persistencia local y backend con sincronización.
+- [x] Escaneo real del QR con la cámara.
+- [x] Guardar los datos en el teléfono.
+- [x] Identificador definitivo para publicar en tiendas.
+- [ ] Backend y cuentas para sincronizar los teléfonos del hogar.
+- [ ] Que el adulto edite tareas, horarios, puntos y premios.
 - [ ] Notificaciones push al adulto.

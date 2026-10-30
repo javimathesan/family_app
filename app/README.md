@@ -1,57 +1,78 @@
-# family_app · app Flutter
+# Family App · app Flutter
 
-Primera versión navegable de la app. Usa datos de ejemplo en memoria: todavía no hay backend ni base de datos.
+App familiar de hábitos y puntos. Funciona sin backend: los datos se guardan en el propio teléfono.
+
+- Identificador: `com.javimathesan.familyapp`
+- Nombre visible: **Family App**
 
 ## Cómo correrla en tu PC
 
-Requisitos: [Flutter](https://docs.flutter.dev/get-started/install) estable (3.22 o superior) y un emulador Android, un iPhone/simulador o Chrome.
+Requisitos: [Flutter](https://docs.flutter.dev/get-started/install) estable y un celular Android con depuración USB (o un emulador).
+
+Cada vez que retomes el proyecto:
 
 ```bash
+git pull
 cd app
-flutter create . --org com.familyapp --platforms android,ios,web   # solo la primera vez: genera las carpetas de cada plataforma
 flutter pub get
 flutter run
 ```
 
-Para correr las pruebas:
+Si `flutter run` falla después de un cambio grande (por ejemplo, el cambio de identificador), limpiá y volvé a intentar:
+
+```bash
+flutter clean
+flutter pub get
+flutter run
+```
+
+Para correr las verificaciones:
 
 ```bash
 flutter analyze
 flutter test
 ```
 
+### APK de prueba sin compilar
+
+Cada vez que se sube un cambio, GitHub compila la app. En la pestaña **Actions** del repositorio, abrí la última ejecución y descargá **family-app-debug-apk** (se guarda 7 días). Ese APK se puede instalar directo en un Android.
+
 ## Cómo probarla
 
 Al abrir aparece "¿Quién usa la app?". En la app real cada persona usa su propio celular; acá podés entrar como cualquiera para probar:
 
-- **Papá** (adulto P1): panel Mi familia, aprobaciones e Invitar con QR.
-- **Tomi, Luli o Mati** (hijos): Hoy, Rutina, Calendario y Premios.
-- **Me invitaron: unirme a un hogar**: flujo de alta con código (`FAM-` + 4 letras o números, o "Simular escaneo") y luego el editor de avatar.
+- **Papá** (adulto P1): panel Mi familia, aprobaciones, Invitar con QR y, en el menú de tres puntos, "Restablecer datos de ejemplo".
+- **Tomi, Luli o Mati** (hijos): Hoy, Rutina, Calendario y Premios. El ícono de paleta en Hoy cambia el color.
+- **Me invitaron: unirme a un hogar**: tocá "Abrir la cámara" y escaneá el QR que muestra la pantalla Invitar en otro teléfono, o escribí el código `FAM-XXXX`. Después se crea el avatar.
 
-La tienda de premios solo deja canjear de viernes a domingo, como dice el borrador.
+Todo lo que hagas queda guardado aunque cierres la app. Al abrirla otro día, el día anterior pasa al calendario y la rutina empieza de cero.
+
+La tienda de premios solo deja canjear de viernes a domingo.
 
 ## Estructura
 
 ```
 lib/
-├── main.dart               Punto de entrada
+├── main.dart               Punto de entrada: carga los datos guardados
 ├── app.dart                MaterialApp, rutas y tema
 ├── theme/                  Colores y tema claro/oscuro
 ├── models/                 Modelos del dominio
 ├── domain/                 Reglas puras (puntos, caritas, salud)
-├── data/                   FamilyStore: estado en memoria + datos demo
-├── widgets/                Avatar Funko, caritas y tarjetas comunes
+├── data/
+│   ├── family_store.dart   Estado del hogar + datos de ejemplo + formato de guardado
+│   └── family_storage.dart Guardado en el teléfono (shared_preferences)
+├── widgets/                Avatar Funko, caritas, selector de color, tarjetas
 └── features/
     ├── child/              Hoy, Rutina, Calendario, Premios
     ├── adult/              Mi familia
-    └── onboarding/         Perfil, Invitar QR, Unirse, Avatar
-test/                       Pruebas de reglas, estado y navegación
+    └── onboarding/         Perfil, Invitar QR, Escanear QR, Unirse, Avatar
+test/                       Pruebas de reglas, estado, guardado y navegación
 ```
 
 ## Pendiente para próximas iteraciones
 
-- Escaneo real del QR con la cámara (`mobile_scanner`).
-- Persistencia local (SQLite) y backend con sincronización.
+- Backend y cuentas reales, para que cada miembro use su propio teléfono y se sincronicen.
 - Notificaciones push al adulto.
-- Fuente redondeada propia (Nunito) incluida en el proyecto.
-- Modo oscuro elegible y más opciones de personalización (fondo, tamaño de texto, temas descargables).
+- Que el adulto pueda editar tareas, horarios, puntos y premios.
+- Ícono propio de la app y pantalla de inicio.
+- Modo oscuro elegible y más personalización (fondo, tamaño de texto, temas).

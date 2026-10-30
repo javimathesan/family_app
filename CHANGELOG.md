@@ -2,6 +2,22 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.2.0 — 2026-10-30 · Cámara, guardado y listo para tiendas
+
+### Cambios importantes
+- **Nuevo identificador:** `com.javimathesan.familyapp` (antes `com.example.family_app`, que las tiendas no aceptan). En el teléfono se instala como una app nueva llamada **Family App**: desinstalá la vieja "family_app".
+
+### Agregado
+- Escaneo real del QR de invitación con la cámara (`mobile_scanner`), con linterna y aviso si el QR no es de Family App.
+- Permiso de cámara en Android, iOS y macOS con texto que explica para qué se usa.
+- Los datos se guardan en el teléfono (`shared_preferences`): miembros, avatares, colores, puntos, alcancía, tareas del día, salud, canjes, avisos y calendario.
+- Cierre del día: al abrir la app otro día, el día anterior pasa al calendario y la rutina arranca vacía.
+- Opción "Restablecer datos de ejemplo" en el panel del adulto (menú de tres puntos).
+- La verificación de GitHub ahora también compila la app para Android y deja un APK de prueba para descargar.
+
+### Cambiado
+- El botón "Simular escaneo" solo aparece en modo desarrollo.
+
 ## 0.1.1 — 2026-10-30 · Primera corrida en un celular real
 - Carpetas de plataformas generadas con `flutter create` (Android, iOS, web, Windows, macOS, Linux).
 - `pubspec.lock` versionado para que todos usen las mismas versiones de paquetes.
