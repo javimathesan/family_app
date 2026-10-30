@@ -31,7 +31,7 @@ class LocalNotifier with WidgetsBindingObserver {
   Future<void> start() async {
     try {
       await _plugin.initialize(
-        const InitializationSettings(android: AndroidInitializationSettings('@mipmap/ic_launcher')),
+        const InitializationSettings(android: AndroidInitializationSettings('ic_stat_notify')),
       );
       _ready = true;
     } catch (error) {
