@@ -57,6 +57,7 @@ class AvatarConfig {
     this.glasses = false,
     this.shirt = 0,
     this.accessory = 0,
+    this.outfit = 0,
   });
 
   final int skin;
@@ -67,6 +68,9 @@ class AvatarConfig {
   final int shirt;
   final int accessory;
 
+  /// Disfraz (0 = remera). Ver `AvatarOptions.outfits`.
+  final int outfit;
+
   AvatarConfig copyWith({
     int? skin,
     int? hairStyle,
@@ -75,6 +79,7 @@ class AvatarConfig {
     bool? glasses,
     int? shirt,
     int? accessory,
+    int? outfit,
   }) {
     return AvatarConfig(
       skin: skin ?? this.skin,
@@ -84,6 +89,7 @@ class AvatarConfig {
       glasses: glasses ?? this.glasses,
       shirt: shirt ?? this.shirt,
       accessory: accessory ?? this.accessory,
+      outfit: outfit ?? this.outfit,
     );
   }
 }
@@ -98,7 +104,8 @@ class Member {
     this.avatar = const AvatarConfig(),
     this.accent = const Color(0xFF2563EB),
     this.uid,
-  });
+    Set<String>? unlocked,
+  }) : unlocked = unlocked ?? {};
 
   final String id;
 
@@ -110,6 +117,9 @@ class Member {
   AgeMode? mode;
   AvatarConfig avatar;
   Color accent;
+
+  /// Disfraces y accesorios que desbloqueó con puntos.
+  final Set<String> unlocked;
 }
 
 /// Plantilla de una tarea de la rutina.

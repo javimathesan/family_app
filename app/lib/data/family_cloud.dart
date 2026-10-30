@@ -83,6 +83,7 @@ class FamilyCloud implements FamilySync {
         'accent': m.accent.toARGB32(),
         'avatar': FamilyStore.avatarToJson(m.avatar),
         'uid': m.uid,
+        'unlocked': m.unlocked.toList(),
         'pending': pending,
         if (inviteCode != null) 'inviteCode': inviteCode,
         'balance': 0,
@@ -329,6 +330,7 @@ class FamilyCloud implements FamilySync {
         'mode': member.mode?.name,
         'accent': member.accent.toARGB32(),
         'avatar': FamilyStore.avatarToJson(member.avatar),
+        'unlocked': member.unlocked.toList(),
       }));
 
   @override

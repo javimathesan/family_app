@@ -101,6 +101,22 @@ class FamilyStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool hasUnlocked(String memberId, String itemId) =>
+      memberById(memberId)?.unlocked.contains(itemId) ?? false;
+
+  /// Desbloquea un disfraz o accesorio pagando con puntos.
+  /// Devuelve `false` si ya lo tenía o no le alcanzan los puntos.
+  bool unlockItem(String memberId, String itemId, int cost) {
+    final m = memberById(memberId);
+    if (m == null || m.unlocked.contains(itemId) || balanceOf(memberId) < cost) return false;
+    _addBalance(memberId, -cost);
+    m.unlocked.add(itemId);
+    sync?.memberUpdated(m);
+    _addNotice('${m.nickname} desbloqueó algo nuevo para su avatar');
+    notifyListeners();
+    return true;
+  }
+
   String _newId(String prefix) => '$prefix${_clock().microsecondsSinceEpoch.toRadixString(36)}${_random.nextInt(1296).toRadixString(36)}';
 
   /// Agrega un miembro aprobado, por ejemplo un hijo sin celular propio que
@@ -642,6 +658,7 @@ class FamilyStore extends ChangeNotifier {
         'accent': m.accent.toARGB32(),
         'uid': m.uid,
         'avatar': avatarToJson(m.avatar),
+        'unlocked': m.unlocked.toList(),
       };
 
   static Map<String, dynamic> avatarToJson(AvatarConfig a) => {
@@ -652,6 +669,7 @@ class FamilyStore extends ChangeNotifier {
         'glasses': a.glasses,
         'shirt': a.shirt,
         'accessory': a.accessory,
+        'outfit': a.outfit,
       };
 
   static Member memberFromJson(Map<String, dynamic> j) {
@@ -663,6 +681,7 @@ class FamilyStore extends ChangeNotifier {
       mode: j['mode'] == null ? null : AgeMode.values.byName(j['mode'] as String),
       accent: Color((j['accent'] as num?)?.toInt() ?? 0xFF2563EB),
       uid: j['uid'] as String?,
+      unlocked: {...?(j['unlocked'] as List?)?.cast<String>()},
       avatar: AvatarConfig(
         skin: (a['skin'] as num?)?.toInt() ?? 1,
         hairStyle: (a['hairStyle'] as num?)?.toInt() ?? 0,
@@ -671,6 +690,7 @@ class FamilyStore extends ChangeNotifier {
         glasses: a['glasses'] as bool? ?? false,
         shirt: (a['shirt'] as num?)?.toInt() ?? 0,
         accessory: (a['accessory'] as num?)?.toInt() ?? 0,
+        outfit: (a['outfit'] as num?)?.toInt() ?? 0,
       ),
     );
   }

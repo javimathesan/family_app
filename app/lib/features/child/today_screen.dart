@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app.dart';
 import '../../data/family_store.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/accent_picker.dart';
@@ -27,7 +28,14 @@ class TodayScreen extends StatelessWidget {
       children: [
         Row(
           children: [
-            AvatarView(config: me.avatar, background: const Color(0xFFDCE7FF)),
+            Tooltip(
+              message: 'Cambiar mi avatar',
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: () => Navigator.of(context).pushNamed(Routes.avatar),
+                child: AvatarView(config: me.avatar, background: const Color(0xFFDCE7FF)),
+              ),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
