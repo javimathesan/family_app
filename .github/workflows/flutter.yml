@@ -46,6 +46,13 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      # Configuración de Firebase de prueba (la real no está en el repo) para
+      # verificar que el plugin google-services compila con Gradle.
+      - name: google-services.json de prueba
+        run: |
+          cat > android/app/google-services.json <<'JSON'
+          {"project_info":{"project_number":"000000000000","project_id":"ci-placeholder","storage_bucket":"ci-placeholder.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:000000000000:android:0000000000000000","android_client_info":{"package_name":"com.javimathesan.familyapp"}},"oauth_client":[],"api_key":[{"current_key":"AIzaPlaceholderPlaceholderPlaceholder00"}],"services":{"appinvite_service":{"other_platform_oauth_client":[]}}}],"configuration_version":"1"}
+          JSON
       - run: flutter build apk --debug
       - uses: actions/upload-artifact@v4
         with:

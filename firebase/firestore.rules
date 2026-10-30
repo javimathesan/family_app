@@ -1,0 +1,77 @@
+rules_version = '2';
+
+// Reglas de seguridad de Family App.
+// Cada teléfono inicia sesión de forma anónima; solo los teléfonos aprobados
+// de un hogar pueden leer y escribir los datos de ese hogar.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function homeData(homeId) {
+      return get(/databases/$(database)/documents/homes/$(homeId)).data;
+    }
+
+    function isMember(homeId) {
+      return signedIn() && request.auth.uid in homeData(homeId).memberUids;
+    }
+
+    function isAdmin(homeId) {
+      return signedIn() && request.auth.uid in homeData(homeId).adminUids;
+    }
+
+    // Invitaciones de un solo uso. Se leen por código (no se pueden listar).
+    match /invites/{code} {
+      allow get: if signedIn();
+      allow create: if isAdmin(request.resource.data.homeId)
+        && request.resource.data.usedBy == null;
+      // Quien escanea solo puede marcarla como usada por sí mismo, una vez.
+      allow update: if signedIn()
+        && resource.data.usedBy == null
+        && resource.data.expiresAt > request.time
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedBy'])
+        && request.resource.data.usedBy == request.auth.uid;
+      allow delete: if isAdmin(resource.data.homeId);
+    }
+
+    match /homes/{homeId} {
+      // Quien crea el hogar queda como único administrador y miembro.
+      allow create: if signedIn()
+        && request.resource.data.adminUids == [request.auth.uid]
+        && request.resource.data.memberUids == [request.auth.uid];
+      allow read: if isMember(homeId);
+      allow update, delete: if isAdmin(homeId);
+
+      match /members/{memberId} {
+        // Un teléfono pendiente de aprobación puede ver su propio perfil.
+        allow read: if isMember(homeId)
+          || (signedIn() && resource.data.uid == request.auth.uid);
+        // Los adultos agregan miembros; quien escanea una invitación válida
+        // se agrega como pendiente (en el mismo lote en que la marca usada).
+        allow create: if isAdmin(homeId)
+          || (signedIn()
+            && request.resource.data.uid == request.auth.uid
+            && request.resource.data.pending == true
+            && getAfter(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.homeId == homeId
+            && getAfter(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.usedBy == request.auth.uid);
+        allow update: if isMember(homeId);
+        allow delete: if isAdmin(homeId);
+      }
+
+      match /days/{dayId} {
+        allow read, write: if isMember(homeId);
+      }
+
+      match /redemptions/{redemptionId} {
+        allow read, write: if isMember(homeId);
+      }
+
+      match /notices/{noticeId} {
+        allow read, create: if isMember(homeId);
+        allow delete: if isAdmin(homeId);
+      }
+    }
+  }
+}

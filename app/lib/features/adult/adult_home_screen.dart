@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app.dart';
+import '../../data/app_session.dart';
 import '../../data/family_store.dart';
 import '../../domain/points.dart';
 import '../../models/models.dart';
@@ -16,6 +17,7 @@ class AdultHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final store = FamilyScope.of(context);
+    final session = SessionScope.of(context);
     final accent = Theme.of(context).colorScheme.primary;
     final pendingMembers = store.members.where((m) => store.isPendingMember(m.id)).toList();
     final hasApprovals = pendingMembers.isNotEmpty ||
@@ -45,36 +47,51 @@ class AdultHomeScreen extends StatelessWidget {
                 ),
                 PopupMenuButton<String>(
                   tooltip: 'Más opciones',
-                  onSelected: (value) async {
-                    if (value != 'reset') return;
-                    final ok = await showDialog<bool>(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: const Text('¿Volver a los datos de ejemplo?'),
-                        content: const Text('Se borran los puntos, tareas, premios y miembros guardados en este teléfono.'),
-                        actions: [
-                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-                          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Restablecer')),
-                        ],
-                      ),
-                    );
-                    if (ok != true || !context.mounted) return;
-                    store.resetToDemo();
-                    Navigator.of(context).pushReplacementNamed(Routes.welcome);
-                  },
-                  itemBuilder: (_) => const [
-                    PopupMenuItem(value: 'reset', child: Text('Restablecer datos de ejemplo')),
+                  onSelected: (value) => _onMenu(context, value),
+                  itemBuilder: (_) => [
+                    if (session.isDemo) ...const [
+                      PopupMenuItem(value: 'reset', child: Text('Restablecer datos de ejemplo')),
+                      PopupMenuItem(value: 'leave', child: Text('Salir de la demostración')),
+                    ] else
+                      const PopupMenuItem(value: 'leave', child: Text('Desvincular este teléfono')),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: () => Navigator.of(context).pushNamed(Routes.invite),
-              style: FilledButton.styleFrom(backgroundColor: AppColors.ink),
-              icon: const Icon(Icons.qr_code_2),
-              label: const Text('Invitar con QR'),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(session.isCloud ? Icons.cloud_done_outlined : Icons.phone_android, size: 16, color: AppColors.muted),
+                const SizedBox(width: 6),
+                Text(
+                  session.isCloud ? 'Sincronizado con los teléfonos del hogar' : 'Demostración: solo en este teléfono',
+                  style: mutedText(context),
+                ),
+              ],
             ),
+            if (session.isAdmin) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: () => Navigator.of(context).pushNamed(Routes.invite),
+                      style: FilledButton.styleFrom(backgroundColor: AppColors.ink),
+                      icon: const Icon(Icons.qr_code_2),
+                      label: const Text('Invitar con QR'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _addChildWithoutPhone(context),
+                      icon: const Icon(Icons.person_add_alt),
+                      label: const Text('Hijo sin celular'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 16),
             for (final child in store.children.where((c) => !store.isPendingMember(c.id))) ...[
               _ChildCard(member: child, accent: accent),
@@ -89,13 +106,13 @@ class AdultHomeScreen extends StatelessWidget {
               _ApprovalCard(
                 kind: 'ALTA NUEVA',
                 text: '${m.nickname} quiere unirse como ${m.role.label.toLowerCase()}',
-                onApprove: () => store.confirmMember(m.id),
-                onReject: null,
+                onApprove: session.isAdmin ? () => store.confirmMember(m.id) : null,
+                onReject: session.isAdmin ? () => store.removeMember(m.id) : null,
               ),
             for (final r in store.pendingRedemptions)
               _ApprovalCard(
                 kind: 'PREMIO PEDIDO · ${store.memberById(r.memberId)?.nickname ?? ''}',
-                text: '${store.rewardById(r.rewardId).name} (${store.rewardById(r.rewardId).cost} pts)',
+                text: '${store.rewardById(r.rewardId)?.name ?? 'Premio'} (${store.rewardById(r.rewardId)?.cost ?? 0} pts)',
                 onApprove: () => store.approveRedemption(r.id),
                 onReject: () => store.rejectRedemption(r.id),
               ),
@@ -132,6 +149,106 @@ class AdultHomeScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _onMenu(BuildContext context, String value) async {
+    final session = SessionScope.of(context);
+    final store = FamilyScope.of(context);
+    final reset = value == 'reset';
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(reset
+            ? '¿Volver a los datos de ejemplo?'
+            : session.isDemo
+                ? '¿Salir de la demostración?'
+                : '¿Desvincular este teléfono?'),
+        content: Text(reset
+            ? 'Se borran los puntos, tareas, premios y miembros guardados en este teléfono.'
+            : session.isDemo
+                ? 'Vas a poder crear tu hogar real o unirte a uno. La demostración queda guardada.'
+                : 'El hogar y sus datos siguen en la nube. Para volver a entrar vas a necesitar una invitación nueva.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(reset ? 'Restablecer' : 'Confirmar')),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    if (reset) {
+      store.resetToDemo();
+    } else {
+      await session.leave();
+    }
+    if (!context.mounted) return;
+    Navigator.of(context).pushNamedAndRemoveUntil(Routes.welcome, (_) => false);
+  }
+
+  Future<void> _addChildWithoutPhone(BuildContext context) async {
+    final store = FamilyScope.of(context);
+    final result = await showDialog<(String, AgeMode)>(
+      context: context,
+      builder: (_) => const _AddChildDialog(),
+    );
+    if (result == null) return;
+    store.addMember(nickname: result.$1, role: MemberRole.child, mode: result.$2);
+  }
+}
+
+class _AddChildDialog extends StatefulWidget {
+  const _AddChildDialog();
+
+  @override
+  State<_AddChildDialog> createState() => _AddChildDialogState();
+}
+
+class _AddChildDialogState extends State<_AddChildDialog> {
+  final _nick = TextEditingController();
+  AgeMode _mode = AgeMode.peques;
+
+  @override
+  void dispose() {
+    _nick.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final nick = _nick.text.trim();
+    return AlertDialog(
+      title: const Text('Hijo sin celular'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Lo manejás desde tu teléfono: elegís su perfil en "¿Quién usa la app?".'),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _nick,
+            maxLength: 16,
+            autofocus: true,
+            textCapitalization: TextCapitalization.words,
+            decoration: const InputDecoration(labelText: 'Apodo', border: OutlineInputBorder()),
+            onChanged: (_) => setState(() {}),
+          ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final m in AgeMode.values)
+                ChoiceChip(label: Text(m.label), selected: _mode == m, onSelected: (_) => setState(() => _mode = m)),
+            ],
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+        FilledButton(
+          onPressed: nick.isEmpty ? null : () => Navigator.pop(context, (nick, _mode)),
+          child: const Text('Agregar'),
+        ),
+      ],
     );
   }
 }
@@ -185,7 +302,7 @@ class _ApprovalCard extends StatelessWidget {
 
   final String kind;
   final String text;
-  final VoidCallback onApprove;
+  final VoidCallback? onApprove;
   final VoidCallback? onReject;
 
   @override

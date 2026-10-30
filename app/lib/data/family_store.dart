@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 
 import '../domain/points.dart';
 import '../models/models.dart';
+import 'family_sync.dart';
 
 /// Estado del hogar en memoria.
 ///
-/// En la v1 sirve de fuente de datos de ejemplo para la UI. Más adelante se
-/// reemplaza por un repositorio con base local (SQLite) y sincronización con
-/// el backend, manteniendo esta misma interfaz pública.
+/// Es la fuente de datos de la UI. En modo demostración se guarda en el
+/// teléfono ([toJson]); conectado a la nube, cada cambio se avisa a [sync] y
+/// lo que llega de otros teléfonos entra por [applyRemote].
 class FamilyStore extends ChangeNotifier {
   FamilyStore({
     required this.homeName,
@@ -30,7 +31,16 @@ class FamilyStore extends ChangeNotifier {
         _notices = notices ?? [],
         _clock = clock ?? DateTime.now;
 
-  final String homeName;
+  /// Hogar vacío con la rutina y los premios por defecto.
+  factory FamilyStore.empty({String homeName = '', DateTime Function()? clock}) => FamilyStore(
+        homeName: homeName,
+        members: [],
+        templates: defaultTemplates,
+        rewards: defaultRewards,
+        clock: clock,
+      );
+
+  String homeName;
   final List<Member> _members;
   final List<TaskTemplate> _templates;
   final List<Reward> _rewards;
@@ -43,11 +53,17 @@ class FamilyStore extends ChangeNotifier {
   final Map<String, Map<String, TaskCompletion>> _today = {};
   final Map<String, HealthLog> _health = {};
   final List<Redemption> _redemptions = [];
+  final Set<String> _pendingMembers = {};
   final _random = Random();
+
+  /// Destino de los cambios locales cuando el hogar está en la nube.
+  FamilySync? sync;
 
   String? _currentMemberId;
 
   static const waterGoal = 8;
+
+  String get _todayKey => dayKey(_clock());
 
   // ---------------------------------------------------------------- miembros
 
@@ -70,50 +86,72 @@ class FamilyStore extends ChangeNotifier {
   }
 
   void updateAvatar(String memberId, AvatarConfig avatar) {
-    memberById(memberId)?.avatar = avatar;
+    final m = memberById(memberId);
+    if (m == null) return;
+    m.avatar = avatar;
+    sync?.memberUpdated(m);
     notifyListeners();
   }
 
   void setAccent(String memberId, Color accent) {
-    memberById(memberId)?.accent = accent;
+    final m = memberById(memberId);
+    if (m == null) return;
+    m.accent = accent;
+    sync?.memberUpdated(m);
     notifyListeners();
   }
 
-  /// Alta de un miembro nuevo que escaneó el QR. Queda pendiente hasta que
-  /// un adulto lo confirme ([confirmMember]).
-  Member addPendingMember({required String nickname, required MemberRole role, AgeMode? mode}) {
-    final member = Member(
-      id: 'm${_members.length + 1}-${_random.nextInt(9999)}',
-      nickname: nickname.trim(),
-      role: role,
-      mode: mode,
-    );
+  String _newId(String prefix) => '$prefix${_clock().microsecondsSinceEpoch.toRadixString(36)}${_random.nextInt(1296).toRadixString(36)}';
+
+  /// Agrega un miembro aprobado, por ejemplo un hijo sin celular propio que
+  /// se maneja desde el teléfono de un adulto.
+  Member addMember({required String nickname, required MemberRole role, AgeMode? mode, String? uid}) {
+    final member = Member(id: _newId('m'), nickname: nickname.trim(), role: role, mode: mode, uid: uid);
     _members.add(member);
-    _pendingMembers.add(member.id);
-    _notices.insert(0, FamilyNotice(time: _clock(), text: '${member.nickname} quiere unirse al hogar'));
+    sync?.memberAdded(member);
     notifyListeners();
     return member;
   }
 
-  final Set<String> _pendingMembers = {};
+  /// Alta pendiente en modo demostración (en la nube la crea quien escanea).
+  Member addPendingMember({required String nickname, required MemberRole role, AgeMode? mode}) {
+    final member = Member(id: _newId('m'), nickname: nickname.trim(), role: role, mode: mode);
+    _members.add(member);
+    _pendingMembers.add(member.id);
+    _addNotice('${member.nickname} quiere unirse al hogar');
+    notifyListeners();
+    return member;
+  }
+
   bool isPendingMember(String id) => _pendingMembers.contains(id);
 
   void confirmMember(String id) {
+    final m = memberById(id);
+    if (m == null || !_pendingMembers.remove(id)) return;
+    sync?.memberConfirmed(m);
+    notifyListeners();
+  }
+
+  /// Rechaza un alta pendiente o quita a un miembro del hogar.
+  void removeMember(String id) {
+    final m = memberById(id);
+    if (m == null) return;
+    _members.remove(m);
     _pendingMembers.remove(id);
+    sync?.memberRemoved(m);
     notifyListeners();
   }
 
   // ------------------------------------------------------------- invitaciones
 
-  /// Código de invitación de un solo uso. Vence a los 15 minutos.
+  /// Código de invitación local (modo demostración). Vence a los 15 minutos.
   Invitation createInvitation({required MemberRole role, AgeMode? mode}) {
-    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    final suffix = List.generate(4, (_) => alphabet[_random.nextInt(alphabet.length)]).join();
     return Invitation(
-      code: 'FAM-$suffix',
+      code: Invitation.randomCode(_random),
       role: role,
       mode: mode,
-      expiresAt: _clock().add(const Duration(minutes: 15)),
+      expiresAt: _clock().add(Invitation.lifetime),
+      homeName: homeName,
     );
   }
 
@@ -134,6 +172,7 @@ class FamilyStore extends ChangeNotifier {
     final existing = day.remove(taskId);
     if (existing != null) {
       if (!existing.pendingApproval) _addBalance(memberId, -existing.pointsAwarded);
+      sync?.taskChanged(memberId, _todayKey, taskId, null);
       notifyListeners();
       return 0;
     }
@@ -141,15 +180,17 @@ class FamilyStore extends ChangeNotifier {
     final now = _clock();
     final points = PointsRules.pointsFor(task, now);
     final needsAdult = task.validation != Validation.self;
-    day[taskId] = TaskCompletion(
+    final completion = TaskCompletion(
       taskId: taskId,
       completedAt: now,
       pointsAwarded: points,
       pendingApproval: needsAdult,
     );
+    day[taskId] = completion;
+    sync?.taskChanged(memberId, _todayKey, taskId, completion);
     if (!needsAdult) _addBalance(memberId, points);
     final who = memberById(memberId)?.nickname ?? 'Alguien';
-    _notices.insert(0, FamilyNotice(time: now, text: '$who completó: ${task.name}'));
+    _addNotice('$who completó: ${task.name}');
     notifyListeners();
     return points;
   }
@@ -161,26 +202,37 @@ class FamilyStore extends ChangeNotifier {
       final member = memberById(memberId);
       if (member == null) return;
       for (final c in day.values.where((c) => c.pendingApproval)) {
-        result.add((member: member, task: _templates.firstWhere((t) => t.id == c.taskId)));
+        final task = _templateById(c.taskId);
+        if (task != null) result.add((member: member, task: task));
       }
     });
     return result;
   }
 
+  TaskTemplate? _templateById(String id) {
+    for (final t in _templates) {
+      if (t.id == id) return t;
+    }
+    return null;
+  }
+
   void approveTask(String memberId, String taskId) {
     final c = _today[memberId]?[taskId];
     if (c == null || !c.pendingApproval) return;
-    _today[memberId]![taskId] = TaskCompletion(
+    final approved = TaskCompletion(
       taskId: taskId,
       completedAt: c.completedAt,
       pointsAwarded: c.pointsAwarded,
     );
+    _today[memberId]![taskId] = approved;
+    sync?.taskChanged(memberId, _todayKey, taskId, approved);
     _addBalance(memberId, c.pointsAwarded);
     notifyListeners();
   }
 
   void rejectTask(String memberId, String taskId) {
-    _today[memberId]?.remove(taskId);
+    if (_today[memberId]?.remove(taskId) == null) return;
+    sync?.taskChanged(memberId, _todayKey, taskId, null);
     notifyListeners();
   }
 
@@ -214,10 +266,11 @@ class FamilyStore extends ChangeNotifier {
     final log = healthOf(memberId);
     if (log.glasses >= waterGoal) return;
     log.glasses++;
+    sync?.healthChanged(memberId, _todayKey, log);
     if (HealthRules.reachedWaterGoal(log.glasses, waterGoal)) {
       _addBalance(memberId, 5);
       final who = memberById(memberId)?.nickname ?? 'Alguien';
-      _notices.insert(0, FamilyNotice(time: _clock(), text: '$who llegó a su meta de agua'));
+      _addNotice('$who llegó a su meta de agua');
     }
     notifyListeners();
   }
@@ -225,16 +278,21 @@ class FamilyStore extends ChangeNotifier {
   void togglePoop(String memberId) {
     final log = healthOf(memberId);
     log.poop = !log.poop;
+    sync?.healthChanged(memberId, _todayKey, log);
     notifyListeners();
   }
 
   void addPee(String memberId) {
-    healthOf(memberId).pee++;
+    final log = healthOf(memberId);
+    log.pee++;
+    sync?.healthChanged(memberId, _todayKey, log);
     notifyListeners();
   }
 
   void setMood(String memberId, String mood) {
-    healthOf(memberId).mood = mood;
+    final log = healthOf(memberId);
+    log.mood = mood;
+    sync?.healthChanged(memberId, _todayKey, log);
     notifyListeners();
   }
 
@@ -245,7 +303,16 @@ class FamilyStore extends ChangeNotifier {
   int piggyOf(String memberId) => _piggy[memberId] ?? 0;
 
   void _addBalance(String memberId, int delta) {
-    _balances[memberId] = max(0, balanceOf(memberId) + delta);
+    final before = balanceOf(memberId);
+    final after = max(0, before + delta);
+    _balances[memberId] = after;
+    if (after != before) sync?.balanceChanged(memberId, after - before);
+  }
+
+  void _addNotice(String text, {bool alert = false}) {
+    final notice = FamilyNotice(time: _clock(), text: text, isAlert: alert);
+    _notices.insert(0, notice);
+    sync?.noticeAdded(notice);
   }
 
   List<Redemption> redemptionsOf(String memberId) =>
@@ -260,35 +327,53 @@ class FamilyStore extends ChangeNotifier {
 
   /// El hijo pide un premio: se descuentan los puntos y queda pendiente.
   bool requestReward(String memberId, String rewardId) {
-    final reward = _rewards.firstWhere((r) => r.id == rewardId);
-    if (!PointsRules.canRedeem(balance: balanceOf(memberId), reward: reward)) return false;
+    final reward = rewardById(rewardId);
+    if (reward == null || !PointsRules.canRedeem(balance: balanceOf(memberId), reward: reward)) return false;
     _addBalance(memberId, -reward.cost);
-    _redemptions.add(Redemption(
-      id: 'r${_redemptions.length + 1}',
+    final redemption = Redemption(
+      id: _newId('r'),
       memberId: memberId,
       rewardId: rewardId,
       requestedAt: _clock(),
-    ));
+    );
+    _redemptions.add(redemption);
+    sync?.redemptionSaved(redemption);
     notifyListeners();
     return true;
   }
 
   void approveRedemption(String redemptionId) {
-    _redemptions.firstWhere((r) => r.id == redemptionId).status = RedemptionStatus.approved;
+    final r = _redemptionById(redemptionId);
+    if (r == null || r.status != RedemptionStatus.pending) return;
+    r.status = RedemptionStatus.approved;
+    sync?.redemptionSaved(r);
     notifyListeners();
   }
 
   /// Si el adulto rechaza, se devuelven los puntos.
   void rejectRedemption(String redemptionId) {
-    final r = _redemptions.firstWhere((r) => r.id == redemptionId);
-    if (r.status != RedemptionStatus.pending) return;
+    final r = _redemptionById(redemptionId);
+    if (r == null || r.status != RedemptionStatus.pending) return;
     r.status = RedemptionStatus.rejected;
-    final reward = _rewards.firstWhere((w) => w.id == r.rewardId);
-    _addBalance(r.memberId, reward.cost);
+    sync?.redemptionSaved(r);
+    final reward = rewardById(r.rewardId);
+    if (reward != null) _addBalance(r.memberId, reward.cost);
     notifyListeners();
   }
 
-  Reward rewardById(String id) => _rewards.firstWhere((r) => r.id == id);
+  Redemption? _redemptionById(String id) {
+    for (final r in _redemptions) {
+      if (r.id == id) return r;
+    }
+    return null;
+  }
+
+  Reward? rewardById(String id) {
+    for (final r in _rewards) {
+      if (r.id == id) return r;
+    }
+    return null;
+  }
 
   // ------------------------------------------------------- calendario/avisos
 
@@ -298,6 +383,96 @@ class FamilyStore extends ChangeNotifier {
 
   DateTime get now => _clock();
 
+  /// Resumen de un día terminado para el calendario de caritas.
+  DaySummary summarizeDay(DateTime date, Map<String, TaskCompletion> done, HealthLog? log) => DaySummary(
+        date: date,
+        completionRatio: _templates.isEmpty ? 0 : (done.length / _templates.length).clamp(0, 1).toDouble(),
+        points: done.values.where((c) => !c.pendingApproval).fold(0, (sum, c) => sum + c.pointsAwarded),
+        glasses: log?.glasses ?? 0,
+        mood: log?.mood,
+      );
+
+  // ------------------------------------------------------------- nube
+
+  /// Reemplaza datos con lo que llegó del servidor. No vuelve a avisar a [sync].
+  void applyRemote({
+    String? homeName,
+    List<Member>? members,
+    Set<String>? pendingMembers,
+    Map<String, int>? balances,
+    Map<String, int>? piggyBank,
+    Map<String, Map<String, TaskCompletion>>? today,
+    Map<String, HealthLog>? health,
+    Map<String, List<DaySummary>>? history,
+    List<Redemption>? redemptions,
+    List<FamilyNotice>? notices,
+  }) {
+    if (homeName != null) this.homeName = homeName;
+    if (members != null) {
+      _members
+        ..clear()
+        ..addAll(members);
+    }
+    if (pendingMembers != null) {
+      _pendingMembers
+        ..clear()
+        ..addAll(pendingMembers);
+    }
+    if (balances != null) {
+      _balances
+        ..clear()
+        ..addAll(balances);
+    }
+    if (piggyBank != null) {
+      _piggy
+        ..clear()
+        ..addAll(piggyBank);
+    }
+    if (today != null) {
+      _today
+        ..clear()
+        ..addAll(today);
+    }
+    if (health != null) {
+      _health
+        ..clear()
+        ..addAll(health);
+    }
+    if (history != null) {
+      _history
+        ..clear()
+        ..addAll(history);
+    }
+    if (redemptions != null) {
+      _redemptions
+        ..clear()
+        ..addAll(redemptions);
+    }
+    if (notices != null) {
+      _notices
+        ..clear()
+        ..addAll(notices);
+    }
+    notifyListeners();
+  }
+
+  /// Deja el store vacío, listo para un hogar nuevo.
+  void clearAll({String homeName = ''}) {
+    _currentMemberId = null;
+    applyRemote(
+      homeName: homeName,
+      members: const [],
+      pendingMembers: const {},
+      balances: const {},
+      piggyBank: const {},
+      today: const {},
+      health: const {},
+      history: const {},
+      redemptions: const [],
+      notices: const [],
+    );
+  }
+
   // ------------------------------------------------------------ persistencia
 
   /// Versión del formato guardado. Si cambia, los datos viejos se ignoran.
@@ -306,12 +481,13 @@ class FamilyStore extends ChangeNotifier {
   static String dayKey(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
-  /// Estado completo para guardar en el teléfono. Las plantillas de tareas y
-  /// premios no se guardan: vienen de la configuración de la app.
+  /// Estado completo para guardar en el teléfono (modo demostración). Las
+  /// plantillas de tareas y premios no se guardan: vienen de la configuración.
   Map<String, dynamic> toJson() => {
         'v': schemaVersion,
         'day': dayKey(_clock()),
-        'members': [for (final m in _members) _memberToJson(m)],
+        'homeName': homeName,
+        'members': [for (final m in _members) memberToJson(m)],
         'pending': _pendingMembers.toList(),
         'balances': _balances,
         'piggy': _piggy,
@@ -355,9 +531,10 @@ class FamilyStore extends ChangeNotifier {
   void restoreFrom(Map<String, dynamic> json) {
     if (json['v'] != schemaVersion) return;
 
+    if (json['homeName'] is String) homeName = json['homeName'] as String;
     _members
       ..clear()
-      ..addAll([for (final m in json['members'] as List) _memberFromJson(m as Map<String, dynamic>)]);
+      ..addAll([for (final m in json['members'] as List) memberFromJson(m as Map<String, dynamic>)]);
     _pendingMembers
       ..clear()
       ..addAll((json['pending'] as List).cast<String>());
@@ -441,18 +618,12 @@ class FamilyStore extends ChangeNotifier {
     Map<String, HealthLog> health,
   ) {
     for (final child in children) {
-      final done = completions[child.id] ?? const {};
+      final done = completions[child.id] ?? const <String, TaskCompletion>{};
       final log = health[child.id];
       if (done.isEmpty && log == null) continue;
       final list = _history.putIfAbsent(child.id, () => []);
       if (list.any((s) => DateUtils.isSameDay(s.date, date))) continue;
-      list.add(DaySummary(
-        date: date,
-        completionRatio: _templates.isEmpty ? 0 : done.length / _templates.length,
-        points: done.values.where((c) => !c.pendingApproval).fold(0, (sum, c) => sum + c.pointsAwarded),
-        glasses: log?.glasses ?? 0,
-        mood: log?.mood,
-      ));
+      list.add(summarizeDay(date, done, log));
     }
   }
 
@@ -463,39 +634,43 @@ class FamilyStore extends ChangeNotifier {
     restoreFrom(demo.toJson());
   }
 
-  static Map<String, dynamic> _memberToJson(Member m) => {
+  static Map<String, dynamic> memberToJson(Member m) => {
         'id': m.id,
         'nickname': m.nickname,
         'role': m.role.name,
         'mode': m.mode?.name,
         'accent': m.accent.toARGB32(),
-        'avatar': {
-          'skin': m.avatar.skin,
-          'hairStyle': m.avatar.hairStyle,
-          'hairColor': m.avatar.hairColor,
-          'eyes': m.avatar.eyes,
-          'glasses': m.avatar.glasses,
-          'shirt': m.avatar.shirt,
-          'accessory': m.avatar.accessory,
-        },
+        'uid': m.uid,
+        'avatar': avatarToJson(m.avatar),
       };
 
-  static Member _memberFromJson(Map<String, dynamic> j) {
-    final a = j['avatar'] as Map<String, dynamic>;
+  static Map<String, dynamic> avatarToJson(AvatarConfig a) => {
+        'skin': a.skin,
+        'hairStyle': a.hairStyle,
+        'hairColor': a.hairColor,
+        'eyes': a.eyes,
+        'glasses': a.glasses,
+        'shirt': a.shirt,
+        'accessory': a.accessory,
+      };
+
+  static Member memberFromJson(Map<String, dynamic> j) {
+    final a = (j['avatar'] as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
     return Member(
       id: j['id'] as String,
       nickname: j['nickname'] as String,
       role: MemberRole.values.byName(j['role'] as String),
       mode: j['mode'] == null ? null : AgeMode.values.byName(j['mode'] as String),
-      accent: Color(j['accent'] as int),
+      accent: Color((j['accent'] as num?)?.toInt() ?? 0xFF2563EB),
+      uid: j['uid'] as String?,
       avatar: AvatarConfig(
-        skin: a['skin'] as int,
-        hairStyle: a['hairStyle'] as int,
-        hairColor: a['hairColor'] as int,
-        eyes: a['eyes'] as int,
-        glasses: a['glasses'] as bool,
-        shirt: a['shirt'] as int,
-        accessory: a['accessory'] as int,
+        skin: (a['skin'] as num?)?.toInt() ?? 1,
+        hairStyle: (a['hairStyle'] as num?)?.toInt() ?? 0,
+        hairColor: (a['hairColor'] as num?)?.toInt() ?? 1,
+        eyes: (a['eyes'] as num?)?.toInt() ?? 0,
+        glasses: a['glasses'] as bool? ?? false,
+        shirt: (a['shirt'] as num?)?.toInt() ?? 0,
+        accessory: (a['accessory'] as num?)?.toInt() ?? 0,
       ),
     );
   }
@@ -519,6 +694,40 @@ class FamilyStore extends ChangeNotifier {
       );
 
   // ----------------------------------------------------------- datos demo
+
+  /// Rutina por defecto de un hogar nuevo.
+  static final List<TaskTemplate> defaultTemplates = _buildDefaultTemplates();
+
+  static List<TaskTemplate> _buildDefaultTemplates() {
+    TimeOfDay t(int h, int m) => TimeOfDay(hour: h, minute: m);
+    return [
+      TaskTemplate(id: 'levantarse', name: 'Levantarme', block: DayBlock.morning, time: t(7, 0), points: 5),
+      TaskTemplate(id: 'aseo', name: 'Aseo personal', block: DayBlock.morning, time: t(7, 10), points: 5),
+      TaskTemplate(id: 'cama', name: 'Tender la cama', block: DayBlock.morning, time: t(7, 20), points: 5, validation: Validation.photo),
+      TaskTemplate(id: 'desayuno', name: 'Desayunar', block: DayBlock.morning, time: t(7, 30), points: 5),
+      TaskTemplate(id: 'mesa', name: 'Recoger la mesa', block: DayBlock.morning, time: t(7, 45), points: 3),
+      TaskTemplate(id: 'vajilla', name: 'Lavar mi vajilla', block: DayBlock.morning, time: t(7, 50), points: 5, validation: Validation.adult),
+      TaskTemplate(id: 'dientes_am', name: 'Cepillarme los dientes', block: DayBlock.morning, time: t(7, 55), points: 5),
+      TaskTemplate(id: 'utiles', name: 'Útiles del colegio listos', block: DayBlock.morning, time: t(8, 0), points: 5),
+      TaskTemplate(id: 'entrada', name: 'Entrar al colegio a horario', block: DayBlock.school, time: t(8, 15), points: 10),
+      TaskTemplate(id: 'salida', name: 'Salida del colegio', block: DayBlock.school, time: t(13, 0), points: 5),
+      TaskTemplate(id: 'deporte', name: 'Actividad extracurricular', block: DayBlock.afternoon, time: t(15, 0), points: 10, windowMinutes: 60),
+      TaskTemplate(id: 'llegar', name: 'Llegar a casa', block: DayBlock.afternoon, time: t(17, 0), points: 5),
+      TaskTemplate(id: 'banio', name: 'Bañarme', block: DayBlock.afternoon, time: t(17, 30), points: 5),
+      TaskTemplate(id: 'estudiar', name: 'Estudiar / repasar', block: DayBlock.night, time: t(18, 0), points: 10, windowMinutes: 120),
+      TaskTemplate(id: 'cena', name: 'Comer, recoger y lavar', block: DayBlock.night, time: t(20, 0), points: 8, windowMinutes: 60),
+      TaskTemplate(id: 'dientes_pm', name: 'Cepillarme los dientes', block: DayBlock.night, time: t(21, 0), points: 5),
+    ];
+  }
+
+  /// Premios por defecto de un hogar nuevo.
+  static const List<Reward> defaultRewards = [
+    Reward(id: 'helado', name: 'Helado', cost: 50, icon: Icons.icecream_outlined),
+    Reward(id: 'peli', name: 'Elijo la película del sábado', cost: 60, icon: Icons.movie_outlined),
+    Reward(id: 'pantalla', name: '1 hora extra de pantalla', cost: 80, icon: Icons.tv_outlined),
+    Reward(id: 'salida', name: 'Salida especial', cost: 150, icon: Icons.park_outlined),
+    Reward(id: 'libre', name: 'Pase libre: finde sin tareas', cost: 300, icon: Icons.beach_access_outlined),
+  ];
 
   /// Hogar de ejemplo con los mismos datos que las maquetas.
   factory FamilyStore.demo({DateTime Function()? clock}) {
@@ -549,34 +758,6 @@ class FamilyStore extends ChangeNotifier {
       ),
     ];
 
-    TimeOfDay t(int h, int m) => TimeOfDay(hour: h, minute: m);
-    final templates = [
-      TaskTemplate(id: 'levantarse', name: 'Levantarme', block: DayBlock.morning, time: t(7, 0), points: 5),
-      TaskTemplate(id: 'aseo', name: 'Aseo personal', block: DayBlock.morning, time: t(7, 10), points: 5),
-      TaskTemplate(id: 'cama', name: 'Tender la cama', block: DayBlock.morning, time: t(7, 20), points: 5, validation: Validation.photo),
-      TaskTemplate(id: 'desayuno', name: 'Desayunar', block: DayBlock.morning, time: t(7, 30), points: 5),
-      TaskTemplate(id: 'mesa', name: 'Recoger la mesa', block: DayBlock.morning, time: t(7, 45), points: 3),
-      TaskTemplate(id: 'vajilla', name: 'Lavar mi vajilla', block: DayBlock.morning, time: t(7, 50), points: 5, validation: Validation.adult),
-      TaskTemplate(id: 'dientes_am', name: 'Cepillarme los dientes', block: DayBlock.morning, time: t(7, 55), points: 5),
-      TaskTemplate(id: 'utiles', name: 'Útiles del colegio listos', block: DayBlock.morning, time: t(8, 0), points: 5),
-      TaskTemplate(id: 'entrada', name: 'Entrar al colegio a horario', block: DayBlock.school, time: t(8, 15), points: 10),
-      TaskTemplate(id: 'salida', name: 'Salida del colegio', block: DayBlock.school, time: t(13, 0), points: 5),
-      TaskTemplate(id: 'deporte', name: 'Fútbol en el club', block: DayBlock.afternoon, time: t(15, 0), points: 10, windowMinutes: 60),
-      TaskTemplate(id: 'llegar', name: 'Llegar a casa', block: DayBlock.afternoon, time: t(17, 0), points: 5),
-      TaskTemplate(id: 'banio', name: 'Bañarme', block: DayBlock.afternoon, time: t(17, 30), points: 5),
-      TaskTemplate(id: 'estudiar', name: 'Estudiar / repasar', block: DayBlock.night, time: t(18, 0), points: 10, windowMinutes: 120),
-      TaskTemplate(id: 'cena', name: 'Comer, recoger y lavar', block: DayBlock.night, time: t(20, 0), points: 8, windowMinutes: 60),
-      TaskTemplate(id: 'dientes_pm', name: 'Cepillarme los dientes', block: DayBlock.night, time: t(21, 0), points: 5),
-    ];
-
-    const rewards = [
-      Reward(id: 'helado', name: 'Helado', cost: 50, icon: Icons.icecream_outlined),
-      Reward(id: 'peli', name: 'Elijo la película del sábado', cost: 60, icon: Icons.movie_outlined),
-      Reward(id: 'pantalla', name: '1 hora extra de pantalla', cost: 80, icon: Icons.tv_outlined),
-      Reward(id: 'salida', name: 'Salida especial', cost: 150, icon: Icons.park_outlined),
-      Reward(id: 'libre', name: 'Pase libre: finde sin tareas', cost: 300, icon: Icons.beach_access_outlined),
-    ];
-
     final today = (clock ?? DateTime.now)();
     const levels = [1.0, .85, .85, 1.0, .6, 1.0, 1.0, .9, 1.0, 1.0, .3, .85, 1.0, 1.0, .9, 1.0, 1.0, .55, .8, 1.0, 1.0, .85, 1.0, 1.0, 1.0, .6, .8, 1.0];
     const moods = ['Contento', 'Tranquilo', 'Cansado'];
@@ -595,8 +776,8 @@ class FamilyStore extends ChangeNotifier {
     final store = FamilyStore(
       homeName: 'Hogar Los Girasoles',
       members: members,
-      templates: templates,
-      rewards: rewards,
+      templates: defaultTemplates,
+      rewards: defaultRewards,
       balances: {'tomi': 210, 'luli': 140, 'mati': 95},
       piggyBank: {'tomi': 640, 'luli': 420, 'mati': 310},
       history: {'tomi': buildHistory(0), 'luli': buildHistory(5), 'mati': buildHistory(11)},
@@ -616,28 +797,49 @@ class FamilyStore extends ChangeNotifier {
 /// Invitación por QR, de un solo uso.
 @immutable
 class Invitation {
-  const Invitation({required this.code, required this.role, required this.expiresAt, this.mode});
+  const Invitation({
+    required this.code,
+    required this.role,
+    required this.expiresAt,
+    this.mode,
+    this.homeId,
+    this.homeName = '',
+  });
 
   final String code;
   final MemberRole role;
   final AgeMode? mode;
   final DateTime expiresAt;
 
-  /// Contenido del QR. No incluye datos personales: solo el código y el rol.
-  String get qrPayload => 'familyapp://unirse?code=$code&rol=${role.name}';
+  /// Hogar al que invita (solo en la nube).
+  final String? homeId;
+  final String homeName;
+
+  static const lifetime = Duration(minutes: 15);
+
+  /// Contenido del QR. No incluye datos personales: solo el código.
+  /// Escaneado con la cámara del teléfono, abre Family App.
+  String get qrPayload => 'familyapp://app/unirse?code=$code';
 
   static final codePattern = RegExp(r'^FAM-[A-Z0-9]{4}$');
 
+  static String randomCode(Random random) {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    return 'FAM-${List.generate(4, (_) => alphabet[random.nextInt(alphabet.length)]).join()}';
+  }
+
   /// Extrae el código de lo que leyó la cámara o escribió la persona.
   ///
-  /// Acepta el enlace completo del QR (`familyapp://unirse?code=FAM-XXXX`) o
-  /// solo el código. Devuelve `null` si no es una invitación de family_app.
+  /// Acepta el enlace del QR (`familyapp://app/unirse?code=FAM-XXXX`, o el
+  /// formato anterior `familyapp://unirse?code=...`) o solo el código.
+  /// Devuelve `null` si no es una invitación de Family App.
   static String? parseCode(String raw) {
     final text = raw.trim();
     final uri = Uri.tryParse(text);
-    if (uri != null && uri.scheme == 'familyapp' && uri.host == 'unirse') {
+    if (uri != null && uri.scheme == 'familyapp') {
+      final isJoinLink = (uri.host == 'app' && uri.path == '/unirse') || uri.host == 'unirse';
       final code = uri.queryParameters['code']?.toUpperCase();
-      return code != null && codePattern.hasMatch(code) ? code : null;
+      return isJoinLink && code != null && codePattern.hasMatch(code) ? code : null;
     }
     final code = text.toUpperCase();
     return codePattern.hasMatch(code) ? code : null;

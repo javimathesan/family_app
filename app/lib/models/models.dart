@@ -97,9 +97,14 @@ class Member {
     this.mode,
     this.avatar = const AvatarConfig(),
     this.accent = const Color(0xFF2563EB),
+    this.uid,
   });
 
   final String id;
+
+  /// Teléfono (usuario anónimo de Firebase) que usa este miembro.
+  /// `null` si no tiene celular propio y se maneja desde el de un adulto.
+  final String? uid;
   String nickname;
   final MemberRole role;
   AgeMode? mode;
