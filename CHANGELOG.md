@@ -2,6 +2,12 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.1.1 — 2026-10-30 · Primera corrida en un celular real
+- Carpetas de plataformas generadas con `flutter create` (Android, iOS, web, Windows, macOS, Linux).
+- `pubspec.lock` versionado para que todos usen las mismas versiones de paquetes.
+- El analizador ignora las carpetas generadas de cada plataforma.
+- `.gitattributes` para unificar los fines de línea entre Windows y el resto.
+
 ## 0.1.0 — 2026-10-29 · Primera versión navegable
 
 ### App (Flutter, carpeta `app/`)
