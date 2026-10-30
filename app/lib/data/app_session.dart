@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -40,6 +43,7 @@ class AppSession extends ChangeNotifier {
   static const _kHome = 'session_home';
   static const _kMember = 'session_member';
   static const _kPending = 'session_pending';
+  static const _kPin = 'session_pin';
 
   SessionMode mode = SessionMode.none;
   String? homeId;
@@ -70,6 +74,31 @@ class AppSession extends ChangeNotifier {
         if (m.uid != null && m.uid == mine) m else if (m.uid == null && isAdmin) m,
     ];
   }
+
+  // -------------------------------------------------------------------- PIN
+
+  /// PIN de 4 dígitos para abrir perfiles de adulto en este teléfono.
+  /// Se guarda solo un resumen (hash), nunca el número.
+  bool get hasPin => _prefs.getString(_kPin) != null;
+
+  static String _hashPin(String pin) => sha256.convert(utf8.encode('family_app:pin:$pin')).toString();
+
+  static final _pinPattern = RegExp(r'^\d{4}$');
+
+  static bool isValidPin(String pin) => _pinPattern.hasMatch(pin);
+
+  Future<void> setPin(String pin) async {
+    if (!isValidPin(pin)) throw ArgumentError('El PIN tiene que tener 4 números');
+    await _prefs.setString(_kPin, _hashPin(pin));
+    notifyListeners();
+  }
+
+  Future<void> clearPin() async {
+    await _prefs.remove(_kPin);
+    notifyListeners();
+  }
+
+  bool checkPin(String pin) => !hasPin || _prefs.getString(_kPin) == _hashPin(pin);
 
   // ----------------------------------------------------------------- inicio
 

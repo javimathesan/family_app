@@ -6,6 +6,7 @@ import '../../data/family_store.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/avatar_view.dart';
 import '../../widgets/common.dart';
+import '../../widgets/pin_dialog.dart';
 
 /// Inicio: elegir qué hacer la primera vez, esperar aprobación o elegir perfil.
 class WelcomeScreen extends StatelessWidget {
@@ -165,7 +166,9 @@ class _ProfilePicker extends StatelessWidget {
               title: Text(m.nickname, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
               subtitle: Text(m.mode == null ? m.role.label : '${m.role.label} · ${m.mode!.label}'),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () {
+              onTap: () async {
+                if (m.role.isAdult && !await confirmAdultPin(context)) return;
+                if (!context.mounted) return;
                 store.signInAs(m.id);
                 Navigator.of(context).pushReplacementNamed(m.role.isAdult ? Routes.adult : Routes.child);
               },

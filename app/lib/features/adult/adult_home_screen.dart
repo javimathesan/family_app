@@ -9,6 +9,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/avatar_view.dart';
 import '../../widgets/common.dart';
 import '../../widgets/mood_face.dart';
+import '../../widgets/pin_dialog.dart';
 
 /// Panel del adulto: miembros, aprobaciones pendientes y avisos.
 class AdultHomeScreen extends StatelessWidget {
@@ -70,6 +71,7 @@ class AdultHomeScreen extends StatelessWidget {
                   tooltip: 'Más opciones',
                   onSelected: (value) => _onMenu(context, value),
                   itemBuilder: (_) => [
+                    PopupMenuItem(value: 'pin', child: Text(session.hasPin ? 'Cambiar o quitar el PIN' : 'Poner PIN al modo adulto')),
                     if (session.isDemo) ...const [
                       PopupMenuItem(value: 'reset', child: Text('Restablecer datos de ejemplo')),
                       PopupMenuItem(value: 'leave', child: Text('Salir de la demostración')),
@@ -120,6 +122,10 @@ class AdultHomeScreen extends StatelessWidget {
                   ),
                 ],
               ),
+            ],
+            if (me != null) ...[
+              const SizedBox(height: 20),
+              _MyDay(member: me),
             ],
             const SizedBox(height: 20),
             Text('Hijos', style: sectionTitle(context)),
@@ -219,6 +225,7 @@ class AdultHomeScreen extends StatelessWidget {
   }
 
   Future<void> _onMenu(BuildContext context, String value) async {
+    if (value == 'pin') return _managePin(context);
     final session = SessionScope.of(context);
     final store = FamilyScope.of(context);
     final reset = value == 'reset';
@@ -251,6 +258,52 @@ class AdultHomeScreen extends StatelessWidget {
     Navigator.of(context).pushNamedAndRemoveUntil(Routes.welcome, (_) => false);
   }
 
+  /// Poner, cambiar o quitar el PIN que protege los perfiles de adulto en
+  /// este teléfono (para cuando los chicos lo usan).
+  Future<void> _managePin(BuildContext context) async {
+    final session = SessionScope.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    if (session.hasPin) {
+      final current = await showPinDialog(context, title: 'PIN actual', message: 'Para cambiarlo o quitarlo, ingresá el PIN actual.');
+      if (current == null || !context.mounted) return;
+      if (!session.checkPin(current)) {
+        messenger.showSnackBar(const SnackBar(content: Text('PIN incorrecto')));
+        return;
+      }
+      final remove = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('PIN del modo adulto'),
+          content: const Text('¿Qué querés hacer?'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Quitar PIN')),
+            FilledButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cambiar PIN')),
+          ],
+        ),
+      );
+      if (remove == null || !context.mounted) return;
+      if (remove) {
+        await session.clearPin();
+        messenger.showSnackBar(const SnackBar(content: Text('Listo: los perfiles de adulto se abren sin PIN.')));
+        return;
+      }
+    }
+    final first = await showPinDialog(
+      context,
+      title: 'Nuevo PIN',
+      message: 'Elegí 4 números. Se va a pedir para abrir perfiles de adulto en este teléfono.',
+    );
+    if (first == null || !context.mounted) return;
+    final second = await showPinDialog(context, title: 'Repetí el PIN');
+    if (second == null || !context.mounted) return;
+    if (first != second) {
+      messenger.showSnackBar(const SnackBar(content: Text('Los PIN no coinciden. Probá de nuevo.')));
+      return;
+    }
+    await session.setPin(first);
+    messenger.showSnackBar(const SnackBar(content: Text('PIN guardado en este teléfono.')));
+  }
+
   Future<void> _addChildWithoutPhone(BuildContext context) async {
     final store = FamilyScope.of(context);
     final result = await showDialog<(String, AgeMode)>(
@@ -259,6 +312,51 @@ class AdultHomeScreen extends StatelessWidget {
     );
     if (result == null) return;
     store.addMember(nickname: result.$1, role: MemberRole.child, mode: result.$2);
+  }
+}
+
+/// Metas del día del adulto: dar el ejemplo y afianzar el vínculo familiar.
+class _MyDay extends StatelessWidget {
+  const _MyDay({required this.member});
+
+  final Member member;
+
+  @override
+  Widget build(BuildContext context) {
+    final store = FamilyScope.of(context);
+    final accent = Theme.of(context).colorScheme.primary;
+    final done = store.adultGoalsDone(member.id);
+    final total = AdultGoal.all.length;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(child: Text('Mi día', style: sectionTitle(context))),
+            Text('$done de $total', style: TextStyle(fontWeight: FontWeight.w800, color: accent)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          done == total ? '¡Día completo! Gran ejemplo para tus hijos.' : 'Tus metas de hoy. Tus hijos ven que también te comprometés.',
+          style: mutedText(context),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final g in AdultGoal.all)
+              FilterChip(
+                avatar: Icon(g.icon, size: 18),
+                label: Text(g.label),
+                selected: store.isGoalDone(member.id, g.id),
+                onSelected: (_) => store.toggleAdultGoal(member.id, g.id),
+              ),
+          ],
+        ),
+      ],
+    );
   }
 }
 
