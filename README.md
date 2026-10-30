@@ -4,7 +4,7 @@ App móvil familiar que convierte la rutina diaria de los hijos en hábitos sano
 
 ## Estado
 
-**Etapa actual: v0.2.** La app (Family App, `com.javimathesan.familyapp`) corre en Android con todas las pantallas de la v1, escaneo de QR con la cámara y datos guardados en el teléfono. Falta backend para sincronizar varios teléfonos y notificaciones. Ver el [registro de cambios](CHANGELOG.md).
+**Etapa actual: v0.3.** Family App (`com.javimathesan.familyapp`) corre en Android y sincroniza los teléfonos del hogar con Firebase: crear hogar, invitar por QR, aprobar altas y ver en vivo lo que hace cada hijo. Falta que el adulto edite la rutina y las notificaciones push. Ver el [registro de cambios](CHANGELOG.md).
 
 | Carpeta | Contenido |
 | --- | --- |
@@ -48,6 +48,6 @@ Flutter (Android e iOS) · NestJS + PostgreSQL · WebSocket + Redis · Firebase 
 - [x] Escaneo real del QR con la cámara.
 - [x] Guardar los datos en el teléfono.
 - [x] Identificador definitivo para publicar en tiendas.
-- [ ] Backend y cuentas para sincronizar los teléfonos del hogar.
+- [x] Backend y cuentas para sincronizar los teléfonos del hogar (Firebase).
 - [ ] Que el adulto edite tareas, horarios, puntos y premios.
 - [ ] Notificaciones push al adulto.

@@ -2,6 +2,25 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.3.0 — 2026-10-30 · Hogar compartido entre teléfonos (Firebase)
+
+### Agregado
+- Hogar compartido en Cloud Firestore: cada teléfono entra con una sesión anónima de Firebase, sin email ni contraseña.
+- Primeros pasos: "Crear mi hogar", "Me invitaron" o "Probar con datos de ejemplo".
+- Invitaciones reales: el QR crea un código de un solo uso en el servidor que vence en 15 minutos.
+- Unirse con aprobación real: el teléfono nuevo queda esperando y el adulto aprueba o rechaza desde "Para aprobar".
+- Sincronización en vivo entre teléfonos: tareas, aprobaciones, puntos, agua y salud, canjes, avatares, colores y avisos.
+- "Hijo sin celular": el adulto lo agrega y lo maneja desde su teléfono.
+- "Desvincular este teléfono" y "Salir de la demostración".
+- Escanear el QR con la cámara del teléfono abre Family App en la pantalla para unirse.
+- Reglas de seguridad de Firestore en `firebase/firestore.rules`.
+
+### Técnico
+- `google-services.json` no está en el repo (es público): el plugin de Firebase se aplica solo si el archivo está en `app/android/app/`.
+- Android mínimo: 7.0 (API 24), lo que pide Firebase.
+- Pruebas de sincronización con Firestore simulado (`fake_cloud_firestore`).
+- La verificación de GitHub compila con una configuración de Firebase de prueba: el APK de Actions funciona solo en modo demostración.
+
 ## 0.2.0 — 2026-10-30 · Cámara, guardado y listo para tiendas
 
 ### Cambios importantes
