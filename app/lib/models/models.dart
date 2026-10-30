@@ -133,11 +133,17 @@ class TaskTemplate {
     required this.points,
     this.validation = Validation.self,
     this.windowMinutes = 30,
+    this.assignedTo = const {},
   });
 
   final String id;
   final String name;
   final DayBlock block;
+
+  /// Hijos a los que les toca. Vacío = a todos.
+  final Set<String> assignedTo;
+
+  bool appliesTo(String memberId) => assignedTo.isEmpty || assignedTo.contains(memberId);
 
   /// Hora sugerida del día.
   final TimeOfDay time;
@@ -154,6 +160,7 @@ class TaskTemplate {
     int? points,
     Validation? validation,
     int? windowMinutes,
+    Set<String>? assignedTo,
   }) =>
       TaskTemplate(
         id: id,
@@ -163,7 +170,33 @@ class TaskTemplate {
         points: points ?? this.points,
         validation: validation ?? this.validation,
         windowMinutes: windowMinutes ?? this.windowMinutes,
+        assignedTo: assignedTo ?? this.assignedTo,
       );
+}
+
+/// Meta diaria del adulto ("Mi día"). No da puntos: es para dar el ejemplo.
+@immutable
+class AdultGoal {
+  const AdultGoal(this.id, this.label, this.icon, {this.notice});
+
+  /// Siempre empieza con `meta_` para no mezclarse con las tareas de los chicos.
+  final String id;
+  final String label;
+  final IconData icon;
+
+  /// Si no es `null`, al marcarla se avisa al hogar: "<apodo> <notice>".
+  final String? notice;
+
+  static const all = <AdultGoal>[
+    AdultGoal('meta_ejercicio', 'Hice ejercicio', Icons.directions_run),
+    AdultGoal('meta_lectura', 'Leí o estudié', Icons.menu_book_outlined),
+    AdultGoal('meta_jugar', 'Jugué con mis hijos', Icons.toys_outlined, notice: 'jugó con sus hijos'),
+    AdultGoal('meta_mesa', 'Comida en familia sin celulares', Icons.dinner_dining_outlined, notice: 'propuso comer en familia sin celulares'),
+    AdultGoal('meta_amigos', 'Tiempo con amigos', Icons.groups_outlined),
+    AdultGoal('meta_pantalla', 'Menos de 2 horas de pantalla', Icons.phonelink_off_outlined),
+  ];
+
+  static bool isGoalId(String id) => id.startsWith('meta_');
 }
 
 /// Registro de una tarea hecha en un día.

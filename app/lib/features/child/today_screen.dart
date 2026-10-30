@@ -19,7 +19,7 @@ class TodayScreen extends StatelessWidget {
     final me = store.currentMember!;
     final accent = Theme.of(context).colorScheme.primary;
     final done = store.doneToday(me.id);
-    final total = store.templates.length;
+    final total = store.templatesFor(me.id).length;
     final next = store.nextTask(me.id);
     final health = store.healthOf(me.id);
 

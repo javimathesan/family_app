@@ -55,7 +55,7 @@ class _TasksTab extends StatelessWidget {
       children: [
         Text('${store.templates.length} tareas · hasta $total puntos por día', style: mutedText(context).copyWith(fontSize: 14)),
         const SizedBox(height: 4),
-        Text('Tocá una tarea para cambiarla. Las mismas tareas valen para todos los hijos.', style: mutedText(context)),
+        Text('Tocá una tarea para cambiarla. Cada tarea puede ser para todos o solo para algunos hijos.', style: mutedText(context)),
         for (final block in DayBlock.values) ...[
           const SizedBox(height: 18),
           Text(block.label, style: sectionTitle(context)),
@@ -67,7 +67,7 @@ class _TasksTab extends StatelessWidget {
               padding: EdgeInsets.zero,
               child: ListTile(
                 title: Text(t.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-                subtitle: Text('${hhmm(t.time)} · ${t.validation.label}'),
+                subtitle: Text('${hhmm(t.time)} · ${t.validation.label} · ${_whoLabel(store, t)}'),
                 trailing: Text('+${t.points}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
                 onTap: () => editTask(context, t),
               ),
@@ -78,6 +78,15 @@ class _TasksTab extends StatelessWidget {
       ],
     );
   }
+}
+
+String _whoLabel(FamilyStore store, TaskTemplate t) {
+  if (t.assignedTo.isEmpty) return 'todos';
+  final names = [
+    for (final id in t.assignedTo)
+      if (store.memberById(id) case final m?) m.nickname,
+  ];
+  return names.isEmpty ? 'nadie' : 'solo ${names.join(', ')}';
 }
 
 /// Abre el formulario de una tarea (nueva si [task] es `null`).
@@ -117,6 +126,7 @@ class _TaskFormState extends State<_TaskForm> {
   late TimeOfDay _time = widget.task?.time ?? const TimeOfDay(hour: 8, minute: 0);
   late int _points = widget.task?.points ?? 5;
   late Validation _validation = widget.task?.validation ?? Validation.self;
+  late Set<String> _assigned = {...?widget.task?.assignedTo};
 
   @override
   void dispose() {
@@ -195,6 +205,33 @@ class _TaskFormState extends State<_TaskForm> {
               ],
             ),
             const SizedBox(height: 14),
+            Text('¿Para quién?', style: sectionTitle(context)),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ChoiceChip(
+                  label: const Text('Todos los hijos'),
+                  selected: _assigned.isEmpty,
+                  onSelected: (_) => setState(() => _assigned = {}),
+                ),
+                for (final c in store.children.where((c) => !store.isPendingMember(c.id)))
+                  FilterChip(
+                    label: Text(c.nickname),
+                    selected: _assigned.contains(c.id),
+                    onSelected: (on) => setState(() {
+                      _assigned = {..._assigned};
+                      if (on) {
+                        _assigned.add(c.id);
+                      } else {
+                        _assigned.remove(c.id);
+                      }
+                    }),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 14),
             Text('¿Quién la valida?', style: sectionTitle(context)),
             const SizedBox(height: 6),
             Wrap(
@@ -258,6 +295,7 @@ class _TaskFormState extends State<_TaskForm> {
                                 points: _points,
                                 validation: _validation,
                                 windowMinutes: widget.task?.windowMinutes ?? 30,
+                                assignedTo: _assigned,
                               ),
                             ),
                           ),

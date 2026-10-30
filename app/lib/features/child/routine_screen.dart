@@ -21,7 +21,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
     final store = FamilyScope.of(context);
     final me = store.currentMember!;
     final accent = Theme.of(context).colorScheme.primary;
-    final tasks = store.tasksFor(_block);
+    final tasks = store.tasksFor(_block, memberId: me.id);
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -43,7 +43,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
               children: [
                 Text('${store.pointsToday(me.id)} pts',
                     style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: accent)),
-                Text('${store.doneToday(me.id)} de ${store.templates.length} hechas',
+                Text('${store.doneToday(me.id)} de ${store.templatesFor(me.id).length} hechas',
                     style: mutedText(context).copyWith(fontWeight: FontWeight.w700)),
               ],
             ),
@@ -59,6 +59,11 @@ class _RoutineScreenState extends State<RoutineScreen> {
           onSelectionChanged: (s) => setState(() => _block = s.first),
         ),
         const SizedBox(height: 16),
+        if (tasks.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Text('No tenés tareas en este momento del día.', style: mutedText(context).copyWith(fontSize: 15)),
+          ),
         for (final task in tasks) ...[
           _TaskTile(task: task, memberId: me.id),
           const SizedBox(height: 10),

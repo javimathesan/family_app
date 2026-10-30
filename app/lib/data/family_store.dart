@@ -175,8 +175,12 @@ class FamilyStore extends ChangeNotifier {
 
   List<TaskTemplate> get templates => List.unmodifiable(_templates);
 
-  List<TaskTemplate> tasksFor(DayBlock block) =>
-      _templates.where((t) => t.block == block).toList();
+  /// Tareas de un bloque; con [memberId], solo las que le tocan a ese hijo.
+  List<TaskTemplate> tasksFor(DayBlock block, {String? memberId}) =>
+      _templates.where((t) => t.block == block && (memberId == null || t.appliesTo(memberId))).toList();
+
+  /// Tareas que le tocan a un hijo.
+  List<TaskTemplate> templatesFor(String memberId) => _templates.where((t) => t.appliesTo(memberId)).toList();
 
   bool isDone(String memberId, String taskId) => _today[memberId]?.containsKey(taskId) ?? false;
 
@@ -256,15 +260,47 @@ class FamilyStore extends ChangeNotifier {
       .where((c) => !c.pendingApproval)
       .fold(0, (sum, c) => sum + c.pointsAwarded);
 
-  int doneToday(String memberId) => _today[memberId]?.length ?? 0;
+  /// Tareas de su rutina que ya hizo hoy (no cuenta las metas del adulto).
+  int doneToday(String memberId) {
+    final done = _today[memberId];
+    if (done == null) return 0;
+    return templatesFor(memberId).where((t) => done.containsKey(t.id)).length;
+  }
 
-  double completionRatio(String memberId) =>
-      _templates.isEmpty ? 0 : doneToday(memberId) / _templates.length;
+  double completionRatio(String memberId) {
+    final total = templatesFor(memberId).length;
+    return total == 0 ? 0 : doneToday(memberId) / total;
+  }
+
+  // ------------------------------------------------------- mi día (adulto)
+
+  bool isGoalDone(String memberId, String goalId) => _today[memberId]?.containsKey(goalId) ?? false;
+
+  int adultGoalsDone(String memberId) =>
+      AdultGoal.all.where((g) => isGoalDone(memberId, g.id)).length;
+
+  /// Marca o desmarca una meta del día del adulto. Devuelve si quedó marcada.
+  bool toggleAdultGoal(String memberId, String goalId) {
+    final day = _today.putIfAbsent(memberId, () => {});
+    if (day.remove(goalId) != null) {
+      sync?.taskChanged(memberId, _todayKey, goalId, null);
+      notifyListeners();
+      return false;
+    }
+    final completion = TaskCompletion(taskId: goalId, completedAt: _clock(), pointsAwarded: 0);
+    day[goalId] = completion;
+    sync?.taskChanged(memberId, _todayKey, goalId, completion);
+    final goal = AdultGoal.all.where((g) => g.id == goalId).firstOrNull;
+    final who = memberById(memberId)?.nickname;
+    if (goal?.notice != null && who != null) _addNotice('$who ${goal!.notice}');
+    notifyListeners();
+    return true;
+  }
 
   /// Próxima tarea sin hacer a partir de la hora actual.
   TaskTemplate? nextTask(String memberId) {
     final now = TimeOfDay.fromDateTime(_clock());
-    final pending = _templates.where((t) => !isDone(memberId, t.id)).toList()
+    final pending = templatesFor(memberId).where((t) => !isDone(memberId, t.id)).toList()
       ..sort((a, b) => _minutes(a.time).compareTo(_minutes(b.time)));
     for (final t in pending) {
       if (_minutes(t.time) + t.windowMinutes >= _minutes(now)) return t;
@@ -449,13 +485,17 @@ class FamilyStore extends ChangeNotifier {
   DateTime get now => _clock();
 
   /// Resumen de un día terminado para el calendario de caritas.
-  DaySummary summarizeDay(DateTime date, Map<String, TaskCompletion> done, HealthLog? log) => DaySummary(
+  DaySummary summarizeDay(DateTime date, Map<String, TaskCompletion> done, HealthLog? log, {String? memberId}) {
+    final total = memberId == null ? _templates.length : templatesFor(memberId).length;
+    final count = done.keys.where((id) => !AdultGoal.isGoalId(id)).length;
+    return DaySummary(
         date: date,
-        completionRatio: _templates.isEmpty ? 0 : (done.length / _templates.length).clamp(0, 1).toDouble(),
+        completionRatio: total == 0 ? 0 : (count / total).clamp(0, 1).toDouble(),
         points: done.values.where((c) => !c.pendingApproval).fold(0, (sum, c) => sum + c.pointsAwarded),
         glasses: log?.glasses ?? 0,
         mood: log?.mood,
       );
+  }
 
   // ------------------------------------------------------------- nube
 
@@ -717,7 +757,7 @@ class FamilyStore extends ChangeNotifier {
       if (done.isEmpty && log == null) continue;
       final list = _history.putIfAbsent(child.id, () => []);
       if (list.any((s) => DateUtils.isSameDay(s.date, date))) continue;
-      list.add(summarizeDay(date, done, log));
+      list.add(summarizeDay(date, done, log, memberId: child.id));
     }
   }
 
@@ -782,6 +822,7 @@ class FamilyStore extends ChangeNotifier {
         'points': t.points,
         'validation': t.validation.name,
         'window': t.windowMinutes,
+        'assigned': t.assignedTo.toList(),
       };
 
   static TaskTemplate templateFromJson(Map<String, dynamic> j) => TaskTemplate(
@@ -792,6 +833,7 @@ class FamilyStore extends ChangeNotifier {
         points: (j['points'] as num).toInt(),
         validation: Validation.values.asNameMap()[j['validation']] ?? Validation.self,
         windowMinutes: (j['window'] as num?)?.toInt() ?? 30,
+        assignedTo: {...?(j['assigned'] as List?)?.cast<String>()},
       );
 
   static Map<String, dynamic> rewardToJson(Reward r) => {

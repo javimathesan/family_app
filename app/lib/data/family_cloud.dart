@@ -256,7 +256,7 @@ class FamilyCloud implements FamilySync {
           today[memberId] = completions;
           if (log != null) health[memberId] = log;
         } else {
-          history.putIfAbsent(memberId, () => []).add(store.summarizeDay(DateTime.parse(day), completions, log));
+          history.putIfAbsent(memberId, () => []).add(store.summarizeDay(DateTime.parse(day), completions, log, memberId: memberId));
         }
       }
       for (final list in history.values) {
