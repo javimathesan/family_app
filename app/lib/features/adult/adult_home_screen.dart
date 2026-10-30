@@ -63,33 +63,27 @@ class AdultHomeScreen extends StatelessWidget {
               children: [
                 Icon(session.isCloud ? Icons.cloud_done_outlined : Icons.phone_android, size: 16, color: AppColors.muted),
                 const SizedBox(width: 6),
-                Text(
-                  session.isCloud ? 'Sincronizado con los teléfonos del hogar' : 'Demostración: solo en este teléfono',
-                  style: mutedText(context),
+                Expanded(
+                  child: Text(
+                    session.isCloud ? 'Sincronizado con los teléfonos del hogar' : 'Demostración: solo en este teléfono',
+                    style: mutedText(context),
+                  ),
                 ),
               ],
             ),
             if (session.isAdmin) ...[
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: () => Navigator.of(context).pushNamed(Routes.invite),
-                      style: FilledButton.styleFrom(backgroundColor: AppColors.ink),
-                      icon: const Icon(Icons.qr_code_2),
-                      label: const Text('Invitar con QR'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _addChildWithoutPhone(context),
-                      icon: const Icon(Icons.person_add_alt),
-                      label: const Text('Hijo sin celular'),
-                    ),
-                  ),
-                ],
+              FilledButton.icon(
+                onPressed: () => Navigator.of(context).pushNamed(Routes.invite),
+                style: FilledButton.styleFrom(backgroundColor: AppColors.ink),
+                icon: const Icon(Icons.qr_code_2),
+                label: const Text('Invitar con QR'),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () => _addChildWithoutPhone(context),
+                icon: const Icon(Icons.person_add_alt),
+                label: const Text('Hijo sin celular'),
               ),
             ],
             const SizedBox(height: 16),
