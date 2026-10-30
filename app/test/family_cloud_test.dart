@@ -214,11 +214,11 @@ void main() {
 
   test('la rutina y los premios que edita el adulto le llegan al hijo', () async {
     final ids = await familyWithOneChild();
-    adultStore.saveTemplate(TaskTemplate(
+    adultStore.saveTemplate(const TaskTemplate(
       id: 'perro',
       name: 'Pasear al perro',
       block: DayBlock.afternoon,
-      time: const TimeOfDay(hour: 16, minute: 0),
+      time: TimeOfDay(hour: 16, minute: 0),
       points: 8,
     ));
     adultStore.removeTemplate('aseo');
