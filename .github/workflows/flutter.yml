@@ -20,7 +20,15 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: flutter analyze
+      - name: flutter analyze
+        run: |
+          set +e
+          flutter analyze > analyze.txt
+          code=$?
+          cat analyze.txt
+          # Cada problema como anotación para verlo sin abrir el log.
+          grep -E '^ *(error|warning|info) •' analyze.txt | sed -E 's/^ *(error|warning|info) • /::error title=analyze::/' | head -40
+          exit $code
       - name: flutter test
         run: |
           set +e
