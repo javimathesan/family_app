@@ -72,11 +72,14 @@ void main() {
     await tester.ensureVisible(find.widgetWithText(OutlinedButton, 'Juegos'));
     await tester.tap(find.widgetWithText(OutlinedButton, 'Juegos'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Cuándo pueden jugar los chicos'));
+    await tester.tap(find.text('Reglas de juego de los chicos'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Siempre'));
     await tester.pumpAndSettle();
     expect(store.gamesRule, GamesRule.free);
+    await tester.tap(find.text('30 min'));
+    await tester.pumpAndSettle();
+    expect(store.gamesMinutes, 30);
 
     for (final game in ['4 en línea', 'Ludo', 'Ajedrez']) {
       expect(find.text(game), findsOneWidget);

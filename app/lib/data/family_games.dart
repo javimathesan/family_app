@@ -22,11 +22,60 @@ extension FamilyGames on FamilyStore {
   String playerName(String id) => id == botPlayerId ? 'Robi' : (memberById(id)?.nickname ?? 'Alguien');
 
   /// Los adultos juegan siempre; los chicos según la regla del hogar.
-  bool canPlayGames(String memberId) {
+  bool canPlayGames(String memberId) => gamesLock(memberId) == null;
+
+  /// Por qué no puede jugar ahora, o `null` si puede.
+  GamesLock? gamesLock(String memberId) {
     final m = memberById(memberId);
-    if (m == null || m.role.isAdult) return true;
-    if (templatesFor(memberId).isEmpty) return true;
-    return completionRatio(memberId) >= _gamesRule.minRatio - 0.001;
+    if (m == null || m.role.isAdult) return null;
+    if (_gamesMinutes > 0 && gameSecondsToday(memberId) >= _gamesMinutes * 60) return GamesLock.time;
+    if (templatesFor(memberId).isEmpty) return null;
+    return completionRatio(memberId) >= _gamesRule.minRatio - 0.001 ? null : GamesLock.routine;
+  }
+
+  int get gamesMinutes => _gamesMinutes;
+  List<String> get languages => List.unmodifiable(_languages);
+
+  int gameSecondsToday(String memberId) => _gameSeconds[memberId] ?? 0;
+
+  /// Minutos de juego que le quedan hoy, o `null` si no hay límite.
+  int? gameMinutesLeft(String memberId) {
+    if (_gamesMinutes == 0 || (memberById(memberId)?.role.isAdult ?? true)) return null;
+    return ((_gamesMinutes * 60 - gameSecondsToday(memberId)) / 60).ceil().clamp(0, _gamesMinutes);
+  }
+
+  /// Suma tiempo de juego de un chico (se guarda en la nube cada minuto).
+  void addGameSeconds(String memberId, int seconds) {
+    if (memberById(memberId)?.role.isAdult ?? true) return;
+    final before = gameSecondsToday(memberId);
+    final after = before + seconds;
+    _gameSeconds[memberId] = after;
+    if (after ~/ 60 != before ~/ 60) sync?.gameTimeChanged(memberId, FamilyStore.dayKey(_clock()), after);
+    _changed();
+  }
+
+  void setGamesMinutes(int minutes) {
+    if (minutes == _gamesMinutes) return;
+    _gamesMinutes = minutes;
+    sync?.homeSettingsChanged({'gamesMinutes': minutes});
+    _changed();
+  }
+
+  void setLanguages(List<String> codes) {
+    _languages = [...codes];
+    sync?.homeSettingsChanged({'languages': codes});
+    _changed();
+  }
+
+  /// Borra las partidas terminadas en las que participó.
+  int removeFinishedMatches(String memberId) {
+    final ids = [for (final m in _matches) if (m.finished && m.players.contains(memberId)) m.id];
+    for (final id in ids) {
+      _matches.removeWhere((m) => m.id == id);
+      sync?.matchRemoved(id);
+    }
+    if (ids.isNotEmpty) _changed();
+    return ids.length;
   }
 
   GamesRule get gamesRule => _gamesRule;

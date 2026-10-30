@@ -31,11 +31,13 @@ class GamesHub extends StatelessWidget {
     final session = SessionScope.of(context);
     final me = store.currentMember;
     if (me == null) return const SizedBox.shrink();
-    final locked = !store.canPlayGames(me.id);
+    final lock = store.gamesLock(me.id);
+    final locked = lock != null;
+    final minutesLeft = store.gameMinutesLeft(me.id);
     final mine = store.matchesOf(me.id);
     final active = mine.where((m) => !m.finished).toList()
       ..sort((a, b) => (b.currentPlayer == me.id ? 1 : 0).compareTo(a.currentPlayer == me.id ? 1 : 0));
-    final finished = mine.where((m) => m.finished).take(5).toList();
+    final finished = mine.where((m) => m.finished).toList();
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -44,8 +46,33 @@ class GamesHub extends StatelessWidget {
           Text('Juegos', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
           const SizedBox(height: 12),
         ],
-        if (locked) _LockCard(memberId: me.id),
-        if (me.role.isAdult && session.isAdmin) _RuleCard(rule: store.gamesRule),
+        if (lock == GamesLock.routine) _LockCard(memberId: me.id),
+        if (lock == GamesLock.time)
+          const InfoCard(
+            color: Color(0xFFFFF3E0),
+            child: Row(
+              children: [
+                Icon(Icons.timer_off_outlined, size: 36, color: Color(0xFFEF6C00)),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text('Se terminó el tiempo de juego de hoy. ¡Mañana hay más!',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                ),
+              ],
+            ),
+          ),
+        if (!locked && minutesLeft != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              children: [
+                const Icon(Icons.timer_outlined, size: 20),
+                const SizedBox(width: 6),
+                Text('Te quedan $minutesLeft minutos de juego hoy', style: const TextStyle(fontWeight: FontWeight.w700)),
+              ],
+            ),
+          ),
+        if (me.role.isAdult && session.isAdmin) _RuleCard(rule: store.gamesRule, minutes: store.gamesMinutes),
         const SizedBox(height: 8),
         Text('Nuevo juego', style: sectionTitle(context)),
         const SizedBox(height: 8),
@@ -69,11 +96,51 @@ class GamesHub extends StatelessWidget {
         for (final m in active) _MatchTile(match: m, me: me.id),
         if (finished.isNotEmpty) ...[
           const SizedBox(height: 12),
-          Text('Terminadas', style: mutedText(context).copyWith(fontWeight: FontWeight.w700)),
-          for (final m in finished) _MatchTile(match: m, me: me.id),
+          Row(
+            children: [
+              Expanded(
+                child: Text('Terminadas (${finished.length}) · deslizá para borrar una',
+                    style: mutedText(context).copyWith(fontWeight: FontWeight.w700)),
+              ),
+              TextButton.icon(
+                onPressed: () => _clearFinished(context, me.id, finished.length),
+                icon: const Icon(Icons.delete_sweep_outlined),
+                label: const Text('Borrar todas'),
+              ),
+            ],
+          ),
+          for (final m in finished)
+            Dismissible(
+              key: ValueKey('fin_${m.id}'),
+              direction: DismissDirection.endToStart,
+              background: Container(
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.only(right: 20),
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(color: Colors.red.shade400, borderRadius: BorderRadius.circular(12)),
+                child: const Icon(Icons.delete_outline, color: Colors.white),
+              ),
+              onDismissed: (_) => store.removeMatch(m.id),
+              child: _MatchTile(match: m, me: me.id),
+            ),
         ],
       ],
     );
+  }
+
+  Future<void> _clearFinished(BuildContext context, String memberId, int count) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('¿Borrar las $count partidas terminadas?'),
+        content: const Text('Se borran para todos los jugadores. Las partidas en curso no se tocan.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Borrar')),
+        ],
+      ),
+    );
+    if (ok == true && context.mounted) FamilyScope.of(context).removeFinishedMatches(memberId);
   }
 
   Future<void> _newGame(BuildContext context, GameKind kind) async {
@@ -211,52 +278,86 @@ class _LockCard extends StatelessWidget {
 }
 
 class _RuleCard extends StatelessWidget {
-  const _RuleCard({required this.rule});
+  const _RuleCard({required this.rule, required this.minutes});
 
   final GamesRule rule;
+  final int minutes;
+
+  static const minuteOptions = [0, 15, 30, 45, 60, 90];
+
+  static String minutesLabel(int m) => m == 0 ? 'Sin límite' : '$m min';
 
   @override
   Widget build(BuildContext context) {
     return Card(
       child: ListTile(
         leading: const Icon(Icons.rule),
-        title: const Text('Cuándo pueden jugar los chicos', style: TextStyle(fontWeight: FontWeight.w700)),
-        subtitle: Text(rule.label),
+        title: const Text('Reglas de juego de los chicos', style: TextStyle(fontWeight: FontWeight.w700)),
+        subtitle: Text('${rule.label} · ${minutes == 0 ? 'sin límite de tiempo' : '$minutes min por día'}'),
         trailing: const Icon(Icons.edit_outlined),
         onTap: () => showModalBottomSheet<void>(
           context: context,
           showDragHandle: true,
-          builder: (ctx) {
-            final store = FamilyScope.of(ctx);
-            return SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
-                    child: Text('Los adultos juegan siempre. Para los chicos:', style: TextStyle(fontWeight: FontWeight.w700)),
+          isScrollControlled: true,
+          builder: (ctx) => ListenableBuilder(
+            listenable: FamilyScope.of(context),
+            builder: (ctx, _) {
+              final store = FamilyScope.of(context);
+              return SafeArea(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        child: Text('Cuándo pueden jugar (los adultos juegan siempre)', style: TextStyle(fontWeight: FontWeight.w800)),
+                      ),
+                      RadioGroup<GamesRule>(
+                        groupValue: store.gamesRule,
+                        onChanged: (r) {
+                          if (r != null) store.setGamesRule(r);
+                        },
+                        child: Column(
+                          children: [
+                            for (final r in GamesRule.values)
+                              RadioListTile<GamesRule>(
+                                value: r,
+                                title: Text(r.label, style: const TextStyle(fontWeight: FontWeight.w700)),
+                                subtitle: Text(r.description),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
+                        child: Text('Tiempo de juego por día', style: TextStyle(fontWeight: FontWeight.w800)),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final m in minuteOptions)
+                              ChoiceChip(
+                                label: Text(minutesLabel(m)),
+                                selected: store.gamesMinutes == m,
+                                onSelected: (_) => store.setGamesMinutes(m),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        child: Text('Cuenta el tiempo con una partida abierta. Aprender palabras no gasta tiempo de juego.'),
+                      ),
+                    ],
                   ),
-                  RadioGroup<GamesRule>(
-                    groupValue: store.gamesRule,
-                    onChanged: (r) {
-                      if (r != null) store.setGamesRule(r);
-                      Navigator.pop(ctx);
-                    },
-                    child: Column(
-                      children: [
-                        for (final r in GamesRule.values)
-                          RadioListTile<GamesRule>(
-                            value: r,
-                            title: Text(r.label, style: const TextStyle(fontWeight: FontWeight.w700)),
-                            subtitle: Text(r.description),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
+                ),
+              );
+            },
+          ),
         ),
       ),
     );

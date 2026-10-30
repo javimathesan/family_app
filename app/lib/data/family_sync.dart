@@ -31,4 +31,10 @@ abstract class FamilySync {
 
   /// El adulto cambió cuándo pueden jugar los chicos.
   void gamesRuleChanged(GamesRule rule);
+
+  /// Cambió una configuración del hogar (minutos de juego, idiomas…).
+  void homeSettingsChanged(Map<String, dynamic> fields);
+
+  /// Tiempo de juego de hoy de un chico, en segundos.
+  void gameTimeChanged(String memberId, String day, int seconds);
 }

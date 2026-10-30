@@ -112,4 +112,26 @@ void main() {
     await settle();
     expect(adultStore.matchById(match.id), isNull);
   });
+
+  test('límite de minutos por día y borrar terminadas', () {
+    final store = FamilyStore.demo(clock: clock)
+      ..setGamesRule(GamesRule.free)
+      ..setGamesMinutes(15);
+    expect(store.gameMinutesLeft('tomi'), 15);
+    store.addGameSeconds('tomi', 14 * 60);
+    expect(store.canPlayGames('tomi'), isTrue);
+    expect(store.gameMinutesLeft('tomi'), 1);
+    store.addGameSeconds('tomi', 60);
+    expect(store.gamesLock('tomi'), GamesLock.time);
+    store.addGameSeconds('adulto', 9999);
+    expect(store.canPlayGames('adulto'), isTrue);
+    expect(store.gameMinutesLeft('adulto'), isNull);
+
+    store.signInAs('luli');
+    final a = store.createMatch(GameKind.tateti, ['luli', botPlayerId]);
+    store.createMatch(GameKind.cuatro, ['luli', botPlayerId]);
+    store.playMove(a.id, {'cells': [0, 0, 0, 1, 1, -1, -1, -1, -1]}, nextTurn: 1, winner: 0);
+    expect(store.removeFinishedMatches('luli'), 1);
+    expect(store.matchesOf('luli').length, 1, reason: 'la partida en curso queda');
+  });
 }

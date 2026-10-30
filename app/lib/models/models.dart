@@ -432,3 +432,6 @@ enum GamesRule {
   final String description;
   final double minRatio;
 }
+
+/// Por qué un chico no puede jugar ahora.
+enum GamesLock { routine, time }

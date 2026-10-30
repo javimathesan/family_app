@@ -29,9 +29,26 @@ class _GameScreenState extends State<GameScreen> {
   String? _botScheduledFor;
   Timer? _botTimer;
 
+  /// Cuenta el tiempo de juego de los chicos mientras la partida está abierta.
+  Timer? _clock;
+
+  @override
+  void initState() {
+    super.initState();
+    _clock = Timer.periodic(const Duration(seconds: 10), (_) {
+      if (!mounted) return;
+      final store = FamilyScope.of(context);
+      final me = store.currentMember;
+      final match = store.matchById(widget.matchId);
+      if (me == null || match == null || match.finished) return;
+      store.addGameSeconds(me.id, 10);
+    });
+  }
+
   @override
   void dispose() {
     _botTimer?.cancel();
+    _clock?.cancel();
     super.dispose();
   }
 
@@ -463,7 +480,9 @@ class _StatusLine extends StatelessWidget {
       final w = match.players[match.winner!];
       text = w == me ? '¡Ganaste! 🎉' : '¡Ganó ${store.playerName(w)}!';
     } else if (locked) {
-      text = 'Terminá tus tareas para seguir jugando';
+      text = store.gamesLock(me) == GamesLock.time
+          ? 'Se terminó tu tiempo de juego por hoy'
+          : 'Terminá tus tareas para seguir jugando';
     } else if (match.currentPlayer == me) {
       text = 'Te toca';
     } else if (match.currentPlayer == botPlayerId) {

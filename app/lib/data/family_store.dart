@@ -60,6 +60,15 @@ class FamilyStore extends ChangeNotifier {
   final Set<String> _relinking = {};
   final List<GameMatch> _matches = [];
   GamesRule _gamesRule = GamesRule.half;
+
+  /// Minutos de juego por día para los chicos (0 = sin límite).
+  int _gamesMinutes = 0;
+
+  /// Idiomas que se aprenden en Palabras (códigos de [Lang]).
+  List<String> _languages = const ['en', 'pt', 'ko'];
+
+  /// Segundos jugados hoy por cada miembro.
+  final Map<String, int> _gameSeconds = {};
   final _random = Random();
 
   void _changed() => notifyListeners();
@@ -560,7 +569,17 @@ class FamilyStore extends ChangeNotifier {
     List<Reward>? rewards,
     List<GameMatch>? matches,
     GamesRule? gamesRule,
+    int? gamesMinutes,
+    List<String>? languages,
+    Map<String, int>? gameSeconds,
   }) {
+    if (gamesMinutes != null) _gamesMinutes = gamesMinutes;
+    if (languages != null) _languages = [...languages];
+    if (gameSeconds != null) {
+      _gameSeconds
+        ..clear()
+        ..addAll(gameSeconds);
+    }
     if (homeName != null) this.homeName = homeName;
     if (gamesRule != null) _gamesRule = gamesRule;
     if (relinking != null) {
@@ -652,6 +671,9 @@ class FamilyStore extends ChangeNotifier {
       rewards: defaultRewards,
       matches: const [],
       gamesRule: GamesRule.half,
+      gamesMinutes: 0,
+      languages: const ['en', 'pt', 'ko'],
+      gameSeconds: const {},
     );
   }
 
@@ -676,6 +698,9 @@ class FamilyStore extends ChangeNotifier {
         'balances': _balances,
         'piggy': _piggy,
         'gamesRule': _gamesRule.name,
+        'gamesMinutes': _gamesMinutes,
+        'languages': _languages,
+        'gameSeconds': _gameSeconds,
         'matches': [for (final m in _matches) _matchToJson(m)],
         'history': {
           for (final e in _history.entries) e.key: [for (final s in e.value) _summaryToJson(s)],
@@ -732,6 +757,12 @@ class FamilyStore extends ChangeNotifier {
       ..clear()
       ..addAll([for (final m in json['members'] as List) memberFromJson(m as Map<String, dynamic>)]);
     _gamesRule = GamesRule.values.asNameMap()[json['gamesRule']] ?? GamesRule.half;
+    _gamesMinutes = json['gamesMinutes'] as int? ?? 0;
+    _languages = ((json['languages'] as List?) ?? const ['en', 'pt', 'ko']).cast<String>().toList();
+    _gameSeconds.clear();
+    if (json['day'] == dayKey(_clock()) && json['gameSeconds'] is Map) {
+      _gameSeconds.addAll((json['gameSeconds'] as Map).cast<String, int>());
+    }
     _matches
       ..clear()
       ..addAll([

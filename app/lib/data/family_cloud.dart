@@ -252,6 +252,8 @@ class FamilyCloud implements FamilySync {
             ? [for (final r in rewards) FamilyStore.rewardFromJson((r as Map).cast<String, dynamic>())]
             : null,
         gamesRule: GamesRule.values.asNameMap()[data['gamesRule']],
+        gamesMinutes: (data['gamesMinutes'] as num?)?.toInt(),
+        languages: data['languages'] is List ? (data['languages'] as List).cast<String>() : null,
       );
     }, onError: onError));
 
@@ -278,6 +280,7 @@ class FamilyCloud implements FamilySync {
       final today = <String, Map<String, TaskCompletion>>{};
       final health = <String, HealthLog>{};
       final history = <String, List<DaySummary>>{};
+      final gameSeconds = <String, int>{};
       for (final doc in snap.docs) {
         final data = doc.data();
         final memberId = data['memberId'] as String?;
@@ -286,6 +289,7 @@ class FamilyCloud implements FamilySync {
         final completions = _completionsFrom(data['completions']);
         final log = _healthFrom(data['health']);
         if (day == todayKey) {
+          if (data['gameSeconds'] is num) gameSeconds[memberId] = (data['gameSeconds'] as num).toInt();
           today[memberId] = completions;
           if (log != null) health[memberId] = log;
         } else {
@@ -295,7 +299,7 @@ class FamilyCloud implements FamilySync {
       for (final list in history.values) {
         list.sort((a, b) => a.date.compareTo(b.date));
       }
-      store.applyRemote(today: today, health: health, history: history);
+      store.applyRemote(today: today, health: health, history: history, gameSeconds: gameSeconds);
     }, onError: onError));
 
     _subs.add(_redemptions(homeId).snapshots().listen((snap) {
@@ -479,4 +483,14 @@ class FamilyCloud implements FamilySync {
         'relink': FieldValue.delete(),
         'uid': null,
       }));
+
+  @override
+  void homeSettingsChanged(Map<String, dynamic> fields) => _write((h) => _homeRef(h).update(fields));
+
+  @override
+  void gameTimeChanged(String memberId, String day, int seconds) => _write((h) => _days(h).doc(_dayId(memberId, day)).set({
+        'memberId': memberId,
+        'day': day,
+        'gameSeconds': seconds,
+      }, SetOptions(merge: true)));
 }
