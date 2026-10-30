@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Botón "Run workflow" en la pestaña Actions para compilar sin subir cambios.
+  workflow_dispatch:
 
 jobs:
   analizar-y-probar:
@@ -92,7 +94,7 @@ jobs:
       # Versión de prueba siempre en el mismo enlace:
       # https://github.com/javimathesan/family_app/releases/download/prueba/family-app.apk
       - name: Publicar versión de prueba
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && env.REAL_FIREBASE == 'true' && env.SIGNED == 'true'
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && env.REAL_FIREBASE == 'true' && env.SIGNED == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
