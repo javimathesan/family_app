@@ -2,6 +2,11 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.10.0 — 2026-10-30 · Ícono propio y Mi Barrio
+
+- **Ícono propio:** una casa con una estrella sobre fondo azul violeta. Incluye ícono adaptable de Android, versión monocromo para los temas de Android 13 o superior, pantalla de carga con el ícono y un ícono blanco para los avisos.
+- **Mi Barrio**, juego propio de 2 a 4 jugadores (o contra Robi): se tiran dos dados en un tablero de 20 casillas. Los lugares del barrio (kiosco, heladería, cine, zoológico, castillo…) se pueden comprar; si caés en el de otro, le pagás alquiler, que es doble si tiene todo el grupo de color. Además hay casillas de Sorpresa, impuestos que van al pozo, la Fuente que se lleva el pozo y la Siesta que hace perder un turno. Quien se queda sin monedas sale del juego; al terminar las vueltas gana el más rico.
+
 ## 0.9.0 — 2026-10-30 · Teléfono nuevo y avisos para los chicos
 
 - **Teléfono nuevo de alguien:** si alguien borra la app o cambia de celular, un adulto elige "Teléfono nuevo de alguien" en el menú del panel y muestra un QR. En el teléfono nuevo se escanea con "Me invitaron" y vuelve a entrar con el mismo perfil, puntos, avatar e historial. El teléfono anterior pierde el acceso. Si el adulto rechaza, el perfil no se borra: queda sin teléfono propio.
