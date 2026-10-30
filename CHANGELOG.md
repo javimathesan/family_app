@@ -2,6 +2,14 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.11.0 — 2026-10-30 · Agenda, palabras en idiomas y tiempo de juego
+
+- **Agenda familiar:** los adultos anotan turnos, cumpleaños o actos con lugar, día, hora, para quién y notas. Se puede elegir un aviso (a la hora, 10 o 30 minutos antes, 1 o 2 horas antes, 1 día antes) o que **suene como alarma** hasta tocarla. Los avisos los programa Android: llegan aunque la app esté cerrada y sin plan Blaze. Los chicos ven "Hoy en la agenda" en su pantalla Hoy y el adulto ve lo de hoy en su panel.
+- **Aprender palabras:** inglés, portugués y coreano (con cómo se lee). Hay 7 temas (colores, números, animales, comida, familia, la casa y el colegio) con tarjetas que se escuchan con la voz del teléfono y un quiz de 5 preguntas que da 1 punto por respuesta correcta, una vez por día. "Palabra del día" en la pantalla Hoy. El adulto elige qué idiomas usa el hogar. No gasta tiempo de juego.
+- **Tiempo de juego por día:** el adulto elige sin límite, 15, 30, 45, 60 o 90 minutos. Los chicos ven cuánto les queda y, al terminarse, no pueden seguir jugando hasta el otro día.
+- **Borrar partidas terminadas:** "Borrar todas" o deslizar una para borrarla.
+- **Reglas de Firestore actualizadas:** agregan la colección `events` (agenda).
+
 ## 0.10.0 — 2026-10-30 · Ícono propio y Mi Barrio
 
 - **Ícono propio:** una casa con una estrella sobre fondo azul violeta. Incluye ícono adaptable de Android, versión monocromo para los temas de Android 13 o superior, pantalla de carga con el ícono y un ícono blanco para los avisos.
