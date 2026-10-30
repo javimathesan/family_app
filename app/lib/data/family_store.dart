@@ -298,6 +298,226 @@ class FamilyStore extends ChangeNotifier {
 
   DateTime get now => _clock();
 
+  // ------------------------------------------------------------ persistencia
+
+  /// Versión del formato guardado. Si cambia, los datos viejos se ignoran.
+  static const schemaVersion = 1;
+
+  static String dayKey(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  /// Estado completo para guardar en el teléfono. Las plantillas de tareas y
+  /// premios no se guardan: vienen de la configuración de la app.
+  Map<String, dynamic> toJson() => {
+        'v': schemaVersion,
+        'day': dayKey(_clock()),
+        'members': [for (final m in _members) _memberToJson(m)],
+        'pending': _pendingMembers.toList(),
+        'balances': _balances,
+        'piggy': _piggy,
+        'history': {
+          for (final e in _history.entries) e.key: [for (final s in e.value) _summaryToJson(s)],
+        },
+        'notices': [
+          for (final n in _notices.take(50))
+            {'time': n.time.toIso8601String(), 'text': n.text, 'alert': n.isAlert},
+        ],
+        'redemptions': [
+          for (final r in _redemptions)
+            {
+              'id': r.id,
+              'member': r.memberId,
+              'reward': r.rewardId,
+              'at': r.requestedAt.toIso8601String(),
+              'status': r.status.name,
+            },
+        ],
+        'today': {
+          for (final e in _today.entries)
+            e.key: [
+              for (final c in e.value.values)
+                {
+                  'task': c.taskId,
+                  'at': c.completedAt.toIso8601String(),
+                  'pts': c.pointsAwarded,
+                  'pending': c.pendingApproval,
+                },
+            ],
+        },
+        'health': {
+          for (final e in _health.entries)
+            e.key: {'glasses': e.value.glasses, 'poop': e.value.poop, 'pee': e.value.pee, 'mood': e.value.mood},
+        },
+      };
+
+  /// Restaura lo guardado. Si el guardado es de otro día, ese día se archiva
+  /// en el calendario y la rutina de hoy arranca vacía.
+  void restoreFrom(Map<String, dynamic> json) {
+    if (json['v'] != schemaVersion) return;
+
+    _members
+      ..clear()
+      ..addAll([for (final m in json['members'] as List) _memberFromJson(m as Map<String, dynamic>)]);
+    _pendingMembers
+      ..clear()
+      ..addAll((json['pending'] as List).cast<String>());
+    _balances
+      ..clear()
+      ..addAll((json['balances'] as Map).cast<String, int>());
+    _piggy
+      ..clear()
+      ..addAll((json['piggy'] as Map).cast<String, int>());
+    _history
+      ..clear()
+      ..addAll({
+        for (final e in (json['history'] as Map).entries)
+          e.key as String: [for (final s in e.value as List) _summaryFromJson(s as Map<String, dynamic>)],
+      });
+    _notices
+      ..clear()
+      ..addAll([
+        for (final n in json['notices'] as List)
+          FamilyNotice(
+            time: DateTime.parse(n['time'] as String),
+            text: n['text'] as String,
+            isAlert: n['alert'] as bool,
+          ),
+      ]);
+    _redemptions
+      ..clear()
+      ..addAll([
+        for (final r in json['redemptions'] as List)
+          Redemption(
+            id: r['id'] as String,
+            memberId: r['member'] as String,
+            rewardId: r['reward'] as String,
+            requestedAt: DateTime.parse(r['at'] as String),
+            status: RedemptionStatus.values.byName(r['status'] as String),
+          ),
+      ]);
+
+    final savedToday = <String, Map<String, TaskCompletion>>{
+      for (final e in (json['today'] as Map).entries)
+        e.key as String: {
+          for (final c in e.value as List)
+            c['task'] as String: TaskCompletion(
+              taskId: c['task'] as String,
+              completedAt: DateTime.parse(c['at'] as String),
+              pointsAwarded: c['pts'] as int,
+              pendingApproval: c['pending'] as bool,
+            ),
+        },
+    };
+    final savedHealth = <String, HealthLog>{
+      for (final e in (json['health'] as Map).entries)
+        e.key as String: HealthLog(
+          glasses: e.value['glasses'] as int,
+          poop: e.value['poop'] as bool,
+          pee: e.value['pee'] as int,
+          mood: e.value['mood'] as String?,
+        ),
+    };
+
+    _today.clear();
+    _health.clear();
+    final savedDay = json['day'] as String;
+    if (savedDay == dayKey(_clock())) {
+      _today.addAll(savedToday);
+      _health.addAll(savedHealth);
+    } else {
+      _archiveDay(DateTime.parse(savedDay), savedToday, savedHealth);
+    }
+
+    if (_currentMemberId != null && memberById(_currentMemberId!) == null) {
+      _currentMemberId = null;
+    }
+    notifyListeners();
+  }
+
+  /// Pasa un día terminado al calendario de cada hijo.
+  void _archiveDay(
+    DateTime date,
+    Map<String, Map<String, TaskCompletion>> completions,
+    Map<String, HealthLog> health,
+  ) {
+    for (final child in children) {
+      final done = completions[child.id] ?? const {};
+      final log = health[child.id];
+      if (done.isEmpty && log == null) continue;
+      final list = _history.putIfAbsent(child.id, () => []);
+      if (list.any((s) => DateUtils.isSameDay(s.date, date))) continue;
+      list.add(DaySummary(
+        date: date,
+        completionRatio: _templates.isEmpty ? 0 : done.length / _templates.length,
+        points: done.values.where((c) => !c.pendingApproval).fold(0, (sum, c) => sum + c.pointsAwarded),
+        glasses: log?.glasses ?? 0,
+        mood: log?.mood,
+      ));
+    }
+  }
+
+  /// Vuelve a los datos de ejemplo (útil para probar desde cero).
+  void resetToDemo() {
+    final demo = FamilyStore.demo(clock: _clock);
+    _currentMemberId = null;
+    restoreFrom(demo.toJson());
+  }
+
+  static Map<String, dynamic> _memberToJson(Member m) => {
+        'id': m.id,
+        'nickname': m.nickname,
+        'role': m.role.name,
+        'mode': m.mode?.name,
+        'accent': m.accent.toARGB32(),
+        'avatar': {
+          'skin': m.avatar.skin,
+          'hairStyle': m.avatar.hairStyle,
+          'hairColor': m.avatar.hairColor,
+          'eyes': m.avatar.eyes,
+          'glasses': m.avatar.glasses,
+          'shirt': m.avatar.shirt,
+          'accessory': m.avatar.accessory,
+        },
+      };
+
+  static Member _memberFromJson(Map<String, dynamic> j) {
+    final a = j['avatar'] as Map<String, dynamic>;
+    return Member(
+      id: j['id'] as String,
+      nickname: j['nickname'] as String,
+      role: MemberRole.values.byName(j['role'] as String),
+      mode: j['mode'] == null ? null : AgeMode.values.byName(j['mode'] as String),
+      accent: Color(j['accent'] as int),
+      avatar: AvatarConfig(
+        skin: a['skin'] as int,
+        hairStyle: a['hairStyle'] as int,
+        hairColor: a['hairColor'] as int,
+        eyes: a['eyes'] as int,
+        glasses: a['glasses'] as bool,
+        shirt: a['shirt'] as int,
+        accessory: a['accessory'] as int,
+      ),
+    );
+  }
+
+  static Map<String, dynamic> _summaryToJson(DaySummary s) => {
+        'date': s.date.toIso8601String(),
+        'ratio': s.completionRatio,
+        'points': s.points,
+        'glasses': s.glasses,
+        'screen': s.screenMinutes,
+        'mood': s.mood,
+      };
+
+  static DaySummary _summaryFromJson(Map<String, dynamic> j) => DaySummary(
+        date: DateTime.parse(j['date'] as String),
+        completionRatio: (j['ratio'] as num).toDouble(),
+        points: j['points'] as int,
+        glasses: j['glasses'] as int,
+        screenMinutes: j['screen'] as int,
+        mood: j['mood'] as String?,
+      );
+
   // ----------------------------------------------------------- datos demo
 
   /// Hogar de ejemplo con los mismos datos que las maquetas.

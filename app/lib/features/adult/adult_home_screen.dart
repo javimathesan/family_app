@@ -43,6 +43,29 @@ class AdultHomeScreen extends StatelessWidget {
                   onPressed: () => Navigator.of(context).pushReplacementNamed(Routes.welcome),
                   icon: const Icon(Icons.switch_account_outlined),
                 ),
+                PopupMenuButton<String>(
+                  tooltip: 'Más opciones',
+                  onSelected: (value) async {
+                    if (value != 'reset') return;
+                    final ok = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('¿Volver a los datos de ejemplo?'),
+                        content: const Text('Se borran los puntos, tareas, premios y miembros guardados en este teléfono.'),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+                          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Restablecer')),
+                        ],
+                      ),
+                    );
+                    if (ok != true || !context.mounted) return;
+                    store.resetToDemo();
+                    Navigator.of(context).pushReplacementNamed(Routes.welcome);
+                  },
+                  itemBuilder: (_) => const [
+                    PopupMenuItem(value: 'reset', child: Text('Restablecer datos de ejemplo')),
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: 12),
