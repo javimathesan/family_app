@@ -2,6 +2,14 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.5.0 — 2026-10-30 · Rutina y premios editables
+
+- **Rutina y premios:** el adulto crea, edita y borra tareas (nombre, momento del día, hora, puntos y quién la valida) y premios (nombre, puntos e ícono). Se sincronizan con todos los teléfonos del hogar.
+- **Panel del adulto:** muestra su avatar (tocarlo abre el editor), la sección **Adultos del hogar** y mensajes de ayuda cuando todavía no hay hijos ni avisos.
+- Al crear el hogar, el adulto arma primero su avatar.
+- Los adultos tienen todos los disfraces libres; los chicos los desbloquean con puntos.
+- Versión de prueba automática: GitHub compila con Firebase real y la clave de firma, y publica el APK en un enlace fijo.
+
 ## 0.4.0 — 2026-10-30 · Avatares con disfraces
 
 - Disfraces originales que se desbloquean una vez con puntos: superhéroe, princesa, ninja, astronauta, pirata, dinosaurio, unicornio y uniforme estilo anime (sin personajes con marca registrada).
