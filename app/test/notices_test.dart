@@ -101,7 +101,8 @@ void main() {
 
     await tester.tap(find.byTooltip('Novedades'));
     await tester.pumpAndSettle();
-    expect(find.text('Tomi completó 3 tareas'), findsOneWidget);
+    // 3 de ahora + 1 de la demo (salió del colegio).
+    expect(find.text('Tomi completó 4 tareas'), findsOneWidget);
     expect(find.text('Luli pidió el premio: Helado'), findsOneWidget);
     expect(find.text('Hoy'), findsOneWidget);
     expect(session.unreadNotices, 0);
