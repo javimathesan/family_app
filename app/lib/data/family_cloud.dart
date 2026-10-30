@@ -120,7 +120,15 @@ class FamilyCloud implements FamilySync {
     required String homeName,
     required MemberRole role,
     AgeMode? mode,
+    Member? relink,
   }) async {
+    if (relink != null && relink.uid != null) {
+      // El teléfono viejo deja de tener acceso al hogar.
+      await _homeRef(homeId).update({
+        'memberUids': FieldValue.arrayRemove([relink.uid]),
+        'adminUids': FieldValue.arrayRemove([relink.uid]),
+      });
+    }
     for (var attempt = 0; attempt < 5; attempt++) {
       final code = Invitation.randomCode(_random);
       final ref = db.collection('invites').doc(code);
@@ -134,6 +142,8 @@ class FamilyCloud implements FamilySync {
         'createdBy': uid,
         'expiresAt': Timestamp.fromDate(expiresAt),
         'usedBy': null,
+        if (relink != null) 'memberId': relink.id,
+        if (relink != null) 'memberName': relink.nickname,
       });
       return Invitation(
         code: code,
@@ -142,6 +152,8 @@ class FamilyCloud implements FamilySync {
         expiresAt: expiresAt,
         homeId: homeId,
         homeName: homeName,
+        memberId: relink?.id,
+        memberName: relink?.nickname,
       );
     }
     throw const JoinException('No se pudo generar un código. Probá de nuevo.');
@@ -174,12 +186,27 @@ class FamilyCloud implements FamilySync {
       expiresAt: expiresAt,
       homeId: data['homeId'] as String,
       homeName: data['homeName'] as String? ?? 'tu hogar',
+      memberId: data['memberId'] as String?,
+      memberName: data['memberName'] as String?,
     );
   }
 
   /// Se suma al hogar de la invitación como miembro pendiente de aprobación.
   Future<String> joinHome(Invitation invite, String nickname) async {
     final homeId = invite.homeId!;
+    if (invite.isRelink) {
+      // Vuelve a entrar con su perfil de siempre (puntos, avatar, historial).
+      final batch = db.batch()
+        ..update(db.collection('invites').doc(invite.code), {'usedBy': uid})
+        ..update(_members(homeId).doc(invite.memberId), {
+          'uid': uid,
+          'pending': true,
+          'relink': true,
+          'inviteCode': invite.code,
+        });
+      await batch.commit();
+      return invite.memberId!;
+    }
     final memberId = _newMemberId();
     final member = Member(id: memberId, nickname: nickname.trim(), role: invite.role, mode: invite.mode, uid: uid);
     final batch = db.batch()
@@ -193,6 +220,8 @@ class FamilyCloud implements FamilySync {
   Stream<bool?> watchApproval(String homeId, String memberId) {
     return _members(homeId).doc(memberId).snapshots().map((snap) {
       if (!snap.exists) return null;
+      // Si rechazaron el teléfono nuevo, el perfil ya no apunta a este teléfono.
+      if (snap.data()?['uid'] != uid) return null;
       return snap.data()?['pending'] != true;
     });
   }
@@ -229,16 +258,18 @@ class FamilyCloud implements FamilySync {
     _subs.add(_members(homeId).snapshots().listen((snap) {
       final members = <Member>[];
       final pending = <String>{};
+      final relinking = <String>{};
       final balances = <String, int>{};
       final piggy = <String, int>{};
       for (final doc in snap.docs) {
         final data = doc.data();
         members.add(FamilyStore.memberFromJson({...data, 'id': doc.id}));
         if (data['pending'] == true) pending.add(doc.id);
+        if (data['pending'] == true && data['relink'] == true) relinking.add(doc.id);
         balances[doc.id] = (data['balance'] as num?)?.toInt() ?? 0;
         piggy[doc.id] = (data['piggy'] as num?)?.toInt() ?? 0;
       }
-      store.applyRemote(members: members, pendingMembers: pending, balances: balances, piggyBank: piggy);
+      store.applyRemote(members: members, pendingMembers: pending, relinking: relinking, balances: balances, piggyBank: piggy);
     }, onError: onError));
 
     final since = FamilyStore.dayKey(_clock().subtract(const Duration(days: historyDays)));
@@ -353,7 +384,7 @@ class FamilyCloud implements FamilySync {
 
   @override
   void memberConfirmed(Member member) => _write((h) {
-        final batch = db.batch()..update(_members(h).doc(member.id), {'pending': false});
+        final batch = db.batch()..update(_members(h).doc(member.id), {'pending': false, 'relink': FieldValue.delete()});
         final phone = member.uid;
         if (phone != null) {
           batch.update(_homeRef(h), {
@@ -441,4 +472,11 @@ class FamilyCloud implements FamilySync {
 
   @override
   void gamesRuleChanged(GamesRule rule) => _write((h) => _homeRef(h).update({'gamesRule': rule.name}));
+
+  @override
+  void relinkCancelled(Member member) => _write((h) => _members(h).doc(member.id).update({
+        'pending': false,
+        'relink': FieldValue.delete(),
+        'uid': null,
+      }));
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app.dart';
 import '../../data/family_store.dart';
+import '../../models/models.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/accent_picker.dart';
 import '../../widgets/avatar_view.dart';
@@ -22,6 +23,11 @@ class TodayScreen extends StatelessWidget {
     final total = store.templatesFor(me.id).length;
     final next = store.nextTask(me.id);
     final health = store.healthOf(me.id);
+    // Lo que los adultos aprobaron (o dejaron para otro momento) hoy.
+    final forMe = [
+      for (final n in store.notices)
+        if (n.memberId == me.id && n.kind == NoticeKind.approval && DateUtils.isSameDay(n.time, store.now)) n,
+    ].take(3).toList();
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -87,6 +93,31 @@ class TodayScreen extends StatelessWidget {
             ),
           ),
         ),
+        if (forMe.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          InfoCard(
+            color: const Color(0xFFE8F8EE),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Para vos', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF1B7F3B))),
+                const SizedBox(height: 4),
+                for (final n in forMe)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(n.text.contains('aprobó') ? Icons.celebration : Icons.schedule, size: 20, color: const Color(0xFF1B7F3B)),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text(n.text, style: const TextStyle(fontWeight: FontWeight.w600))),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 16),
         if (next != null)
           InfoCard(

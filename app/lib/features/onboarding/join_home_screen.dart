@@ -80,6 +80,7 @@ class _JoinHomeScreenState extends State<JoinHomeScreen> {
       if (!mounted) return;
       setState(() {
         _invite = invite;
+        if (invite.isRelink) _nick.text = invite.memberName ?? '';
         _busy = false;
         _step = 1;
       });
@@ -274,6 +275,16 @@ class _JoinHomeScreenState extends State<JoinHomeScreen> {
           ),
         ),
         const SizedBox(height: 20),
+        if (invite.isRelink)
+          InfoCard(
+            color: const Color(0xFFE8F1FF),
+            child: Text(
+              'Volvés a entrar como ${invite.memberName}, con tus puntos, tu avatar y tu historial. '
+              'Un adulto del hogar lo tiene que aprobar.',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          )
+        else
         TextField(
           controller: _nick,
           maxLength: 16,
@@ -291,7 +302,7 @@ class _JoinHomeScreenState extends State<JoinHomeScreen> {
           onPressed: nick.isEmpty || _busy ? null : _join,
           child: _busy
               ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
-              : const Text('Unirme al hogar'),
+              : Text(invite.isRelink ? 'Volver a entrar como ${invite.memberName}' : 'Unirme al hogar'),
         ),
         TextButton(
           onPressed: _busy ? null : () => setState(() => _step = 0),

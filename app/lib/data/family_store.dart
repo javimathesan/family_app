@@ -57,6 +57,7 @@ class FamilyStore extends ChangeNotifier {
   final Map<String, HealthLog> _health = {};
   final List<Redemption> _redemptions = [];
   final Set<String> _pendingMembers = {};
+  final Set<String> _relinking = {};
   final List<GameMatch> _matches = [];
   GamesRule _gamesRule = GamesRule.half;
   final _random = Random();
@@ -147,6 +148,19 @@ class FamilyStore extends ChangeNotifier {
   }
 
   bool isPendingMember(String id) => _pendingMembers.contains(id);
+
+  /// Perfil existente que espera aprobación para entrar desde un teléfono nuevo.
+  bool isRelinking(String id) => _relinking.contains(id);
+
+  /// El adulto no reconoce el teléfono nuevo: el perfil queda como estaba,
+  /// sin teléfono propio (se maneja desde el teléfono del adulto).
+  void cancelRelink(String id) {
+    final m = memberById(id);
+    if (m == null || !_relinking.remove(id)) return;
+    _pendingMembers.remove(id);
+    sync?.relinkCancelled(m);
+    notifyListeners();
+  }
 
   void confirmMember(String id) {
     final m = memberById(id);
@@ -534,6 +548,7 @@ class FamilyStore extends ChangeNotifier {
     String? homeName,
     List<Member>? members,
     Set<String>? pendingMembers,
+    Set<String>? relinking,
     Map<String, int>? balances,
     Map<String, int>? piggyBank,
     Map<String, Map<String, TaskCompletion>>? today,
@@ -548,6 +563,11 @@ class FamilyStore extends ChangeNotifier {
   }) {
     if (homeName != null) this.homeName = homeName;
     if (gamesRule != null) _gamesRule = gamesRule;
+    if (relinking != null) {
+      _relinking
+        ..clear()
+        ..addAll(relinking);
+    }
     if (matches != null) {
       _matches
         ..clear()
@@ -620,6 +640,7 @@ class FamilyStore extends ChangeNotifier {
       homeName: homeName,
       members: const [],
       pendingMembers: const {},
+      relinking: const {},
       balances: const {},
       piggyBank: const {},
       today: const {},
@@ -1045,6 +1066,8 @@ class Invitation {
     this.mode,
     this.homeId,
     this.homeName = '',
+    this.memberId,
+    this.memberName,
   });
 
   final String code;
@@ -1055,6 +1078,13 @@ class Invitation {
   /// Hogar al que invita (solo en la nube).
   final String? homeId;
   final String homeName;
+
+  /// Si es para volver a vincular un perfil que ya existe (teléfono nuevo o
+  /// app reinstalada): id y apodo de ese perfil.
+  final String? memberId;
+  final String? memberName;
+
+  bool get isRelink => memberId != null;
 
   static const lifetime = Duration(minutes: 15);
 

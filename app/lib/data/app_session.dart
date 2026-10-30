@@ -122,7 +122,10 @@ class AppSession extends ChangeNotifier {
 
   /// Si este aviso se muestra como notificación del sistema en este teléfono.
   bool shouldNotify(FamilyNotice n) {
-    if (n.memberId != null && n.memberId == _viewerId) return false;
+    if (n.memberId != null && n.memberId == _viewerId) {
+      // A los chicos sí les avisa cuando les aprueban un premio o una tarea.
+      return n.kind == NoticeKind.approval && notifyMode != NotifyMode.none;
+    }
     return switch (notifyMode) {
       NotifyMode.all => true,
       NotifyMode.important => n.isImportant,
@@ -255,9 +258,9 @@ class AppSession extends ChangeNotifier {
   }
 
   /// Invitación para sumar a alguien: en la nube si está vinculado, local en la demo.
-  Future<Invitation> createInvitation({required MemberRole role, AgeMode? ageMode}) {
+  Future<Invitation> createInvitation({required MemberRole role, AgeMode? ageMode, Member? relink}) {
     if (isCloud) {
-      return _requireCloud().createInvite(homeId: homeId!, homeName: store.homeName, role: role, mode: ageMode);
+      return _requireCloud().createInvite(homeId: homeId!, homeName: store.homeName, role: role, mode: ageMode, relink: relink);
     }
     return Future.value(store.createInvitation(role: role, mode: ageMode));
   }

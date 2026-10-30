@@ -48,7 +48,7 @@ class FamilyApp extends StatelessWidget {
     final Widget page = switch (uri.path) {
       Routes.child => const ChildShell(),
       Routes.adult => const AdultHomeScreen(),
-      Routes.invite => const InviteScreen(),
+      Routes.invite => InviteScreen(relinkMemberId: uri.queryParameters['relink']),
       Routes.routine => const RoutineEditorScreen(),
       Routes.notices => const NoticesScreen(),
       Routes.createHome => const CreateHomeScreen(),

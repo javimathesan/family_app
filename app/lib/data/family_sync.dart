@@ -10,6 +10,9 @@ abstract class FamilySync {
   void memberUpdated(Member member);
   void memberConfirmed(Member member);
   void memberRemoved(Member member);
+
+  /// Se rechazó el teléfono nuevo de un perfil existente.
+  void relinkCancelled(Member member);
   void taskChanged(String memberId, String day, String taskId, TaskCompletion? completion);
   void healthChanged(String memberId, String day, HealthLog log);
   void balanceChanged(String memberId, int delta);

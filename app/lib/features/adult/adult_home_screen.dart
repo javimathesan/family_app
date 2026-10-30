@@ -77,6 +77,8 @@ class AdultHomeScreen extends StatelessWidget {
                   itemBuilder: (_) => [
                     const PopupMenuItem(value: 'switch', child: Text('Cambiar de usuario')),
                     PopupMenuItem(value: 'pin', child: Text(session.hasPin ? 'Cambiar o quitar el PIN' : 'Poner PIN al modo adulto')),
+                    if (session.isCloud && session.isAdmin)
+                      const PopupMenuItem(value: 'relink', child: Text('Teléfono nuevo de alguien')),
                     if (session.isDemo) ...const [
                       PopupMenuItem(value: 'reset', child: Text('Restablecer datos de ejemplo')),
                       PopupMenuItem(value: 'leave', child: Text('Salir de la demostración')),
@@ -182,12 +184,21 @@ class AdultHomeScreen extends StatelessWidget {
             if (!hasApprovals)
               InfoCard(child: Text('Todo al día. No hay pedidos pendientes.', style: mutedText(context).copyWith(fontSize: 15))),
             for (final m in pendingMembers)
-              _ApprovalCard(
-                kind: 'ALTA NUEVA',
-                text: '${m.nickname} quiere unirse como ${m.role.label.toLowerCase()}',
-                onApprove: session.isAdmin ? () => store.confirmMember(m.id) : null,
-                onReject: session.isAdmin ? () => store.removeMember(m.id) : null,
-              ),
+              if (store.isRelinking(m.id))
+                _ApprovalCard(
+                  kind: 'TELÉFONO NUEVO',
+                  text: '${m.nickname} quiere volver a entrar desde otro teléfono',
+                  onApprove: session.isAdmin ? () => store.confirmMember(m.id) : null,
+                  // Rechazar no borra el perfil: queda sin teléfono propio.
+                  onReject: session.isAdmin ? () => store.cancelRelink(m.id) : null,
+                )
+              else
+                _ApprovalCard(
+                  kind: 'ALTA NUEVA',
+                  text: '${m.nickname} quiere unirse como ${m.role.label.toLowerCase()}',
+                  onApprove: session.isAdmin ? () => store.confirmMember(m.id) : null,
+                  onReject: session.isAdmin ? () => store.removeMember(m.id) : null,
+                ),
             for (final r in store.pendingRedemptions)
               _ApprovalCard(
                 kind: 'PREMIO PEDIDO · ${store.memberById(r.memberId)?.nickname ?? ''}',
@@ -247,12 +258,44 @@ class AdultHomeScreen extends StatelessWidget {
     );
   }
 
+  /// Elige a quién se le cambió o borró el teléfono y muestra su QR.
+  Future<void> _relinkPhone(BuildContext context) async {
+    final store = FamilyScope.of(context);
+    final me = store.currentMember?.id;
+    final options = [
+      for (final m in store.members)
+        if (m.id != me && !store.isPendingMember(m.id)) m,
+    ];
+    final picked = await showDialog<String>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('¿Quién cambió de teléfono o borró la app?'),
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(24, 0, 24, 8),
+            child: Text('Va a volver a entrar con su perfil, sus puntos y su avatar. El teléfono anterior deja de tener acceso.'),
+          ),
+          if (options.isEmpty)
+            const Padding(padding: EdgeInsets.all(24), child: Text('No hay otros miembros en el hogar.')),
+          for (final m in options)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(ctx, m.id),
+              child: Text(m.nickname, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            ),
+        ],
+      ),
+    );
+    if (picked == null || !context.mounted) return;
+    Navigator.of(context).pushNamed('${Routes.invite}?relink=$picked');
+  }
+
   Future<void> _onMenu(BuildContext context, String value) async {
     if (value == 'switch') {
       Navigator.of(context).pushReplacementNamed(Routes.welcome);
       return;
     }
     if (value == 'pin') return _managePin(context);
+    if (value == 'relink') return _relinkPhone(context);
     final session = SessionScope.of(context);
     final store = FamilyScope.of(context);
     final reset = value == 'reset';

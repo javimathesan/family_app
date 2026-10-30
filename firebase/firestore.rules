@@ -56,7 +56,16 @@ service cloud.firestore {
             && request.resource.data.pending == true
             && getAfter(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.homeId == homeId
             && getAfter(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.usedBy == request.auth.uid);
-        allow update: if isMember(homeId);
+        // Teléfono nuevo de un perfil existente: con una invitación para ese
+        // perfil, solo puede ponerse como su teléfono y quedar pendiente.
+        allow update: if isMember(homeId)
+          || (signedIn()
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['uid', 'pending', 'relink', 'inviteCode'])
+            && request.resource.data.uid == request.auth.uid
+            && request.resource.data.pending == true
+            && getAfter(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.homeId == homeId
+            && getAfter(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.memberId == memberId
+            && getAfter(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.usedBy == request.auth.uid);
         allow delete: if isAdmin(homeId);
       }
 

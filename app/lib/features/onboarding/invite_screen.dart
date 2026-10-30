@@ -11,7 +11,10 @@ import '../../widgets/common.dart';
 
 /// El adulto genera un QR de invitación de un solo uso que vence en 15 minutos.
 class InviteScreen extends StatefulWidget {
-  const InviteScreen({super.key});
+  const InviteScreen({super.key, this.relinkMemberId});
+
+  /// Si viene, el QR es para que ese perfil vuelva a entrar desde un teléfono nuevo.
+  final String? relinkMemberId;
 
   @override
   State<InviteScreen> createState() => _InviteScreenState();
@@ -48,9 +51,11 @@ class _InviteScreenState extends State<InviteScreen> {
       _error = null;
     });
     try {
+      final relink = widget.relinkMemberId == null ? null : FamilyScope.of(context).memberById(widget.relinkMemberId!);
       final inv = await SessionScope.of(context).createInvitation(
-        role: _role,
-        ageMode: _role == MemberRole.child ? _mode : null,
+        role: relink?.role ?? _role,
+        ageMode: relink?.mode ?? (_role == MemberRole.child ? _mode : null),
+        relink: relink,
       );
       if (!mounted || request != _request) return;
       setState(() {
@@ -73,12 +78,25 @@ class _InviteScreenState extends State<InviteScreen> {
     final session = SessionScope.of(context);
     final accent = Theme.of(context).colorScheme.primary;
     final inv = _invitation;
+    final relinkName = widget.relinkMemberId == null ? null : store.memberById(widget.relinkMemberId!)?.nickname;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Sumar a alguien', style: TextStyle(fontWeight: FontWeight.w800))),
+      appBar: AppBar(
+        title: Text(relinkName == null ? 'Sumar a alguien' : 'Teléfono nuevo', style: const TextStyle(fontWeight: FontWeight.w800)),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
         children: [
+          if (relinkName != null)
+            InfoCard(
+              color: const Color(0xFFE8F1FF),
+              child: Text(
+                '$relinkName vuelve a entrar con su perfil de siempre: puntos, avatar e historial. '
+                'El teléfono anterior deja de tener acceso al hogar.',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+          if (relinkName == null) ...[
           Text('¿Quién se suma?', style: sectionTitle(context)),
           const SizedBox(height: 8),
           Wrap(
@@ -119,6 +137,7 @@ class _InviteScreenState extends State<InviteScreen> {
                   ),
               ],
             ),
+          ],
           ],
           const SizedBox(height: 16),
           InfoCard(
