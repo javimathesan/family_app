@@ -4,7 +4,7 @@ App móvil familiar que convierte la rutina diaria de los hijos en hábitos sano
 
 ## Estado
 
-**Etapa actual: v0.6.** Family App (`com.javimathesan.familyapp`) corre en Android y sincroniza los teléfonos del hogar con Firebase: crear hogar, invitar por QR, aprobar altas y ver en vivo lo que hace cada hijo. Falta que el adulto edite la rutina y las notificaciones push. Ver el [registro de cambios](CHANGELOG.md).
+**Etapa actual: v0.6.** Family App (`com.javimathesan.familyapp`) corre en Android y sincroniza los teléfonos del hogar con Firebase: crear hogar, invitar por QR, aprobar altas y ver en vivo lo que hace cada hijo. El adulto edita la rutina y los premios, asigna tareas a cada hijo y registra su propio día. Faltan las notificaciones push. Ver el [registro de cambios](CHANGELOG.md).
 
 | Carpeta | Contenido |
 | --- | --- |
