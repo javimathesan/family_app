@@ -36,7 +36,7 @@ void main() {
     final match = store.createMatch(GameKind.tateti, ['tomi', 'luli']);
     store.playMove(match.id, {'cells': [0, 0, 0, 1, 1, -1, -1, -1, -1]}, nextTurn: 1, winner: 0);
     expect(store.matchById(match.id)!.finished, isTrue);
-    expect(store.notices.first.text, 'Tomi ganó al tres en raya 🏆');
+    expect(store.notices.first.text, 'Tomi ganó en Tres en raya 🏆');
     // Una partida terminada ya no acepta jugadas.
     store.playMove(match.id, {'cells': []}, nextTurn: 0);
     expect((store.matchById(match.id)!.state['cells'] as List).length, 9);

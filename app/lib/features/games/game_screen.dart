@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../app.dart';
 import '../../data/family_store.dart';
+import '../../games/barrio.dart';
 import '../../games/chess.dart';
 import '../../games/cuatro.dart';
 import '../../games/ludo.dart';
@@ -139,6 +140,8 @@ class _GameScreenState extends State<GameScreen> {
             ],
           ],
         );
+      case GameKind.barrio:
+        return _barrio(context, store, match, canAct);
       case GameKind.ajedrez:
         final position = Chess.fromJson(s);
         // Cada uno ve sus piezas abajo; en un solo teléfono, las blancas.
@@ -160,7 +163,111 @@ class _GameScreenState extends State<GameScreen> {
     }
   }
 
+  Widget _barrio(BuildContext context, FamilyStore store, GameMatch match, bool canAct) {
+    final state = BarrioState.fromJson(match.state);
+    final colors = [for (var i = 0; i < match.players.length; i++) ludoColors[i]];
+    String names(String text) => text.replaceAllMapped(
+          RegExp(r'\{p(\d)\}'),
+          (m) => store.playerName(match.players[int.parse(m.group(1)!)]),
+        );
+    final here = Barrio.squares[state.pos[match.turn]];
+    return Column(
+      children: [
+        BarrioBoard(
+          state: state,
+          playerColors: colors,
+          center: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  DiceFace(value: state.dice.isEmpty ? null : state.dice[0], size: 40),
+                  const SizedBox(width: 8),
+                  DiceFace(value: state.dice.isEmpty ? null : state.dice[1], size: 40),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text('Pozo de la fuente: ${state.pot} ⛲', style: const TextStyle(fontWeight: FontWeight.w800)),
+              Text('Quedan ${state.turnsLeft} turnos', style: const TextStyle(fontSize: 12, color: Colors.black54)),
+              if (state.message != null && state.message!.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Text(names(state.message!), textAlign: TextAlign.center, style: const TextStyle(fontSize: 12)),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          alignment: WrapAlignment.center,
+          children: [
+            for (var p = 0; p < match.players.length; p++)
+              Chip(
+                avatar: CircleAvatar(backgroundColor: colors[p], radius: 8),
+                label: Text(
+                  state.out[p]
+                      ? '${store.playerName(match.players[p])}: afuera'
+                      : '${store.playerName(match.players[p])}: ${state.cash[p]} 🪙 · ${state.propertiesOf(p).length} lugares',
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (canAct && !state.buying)
+          FilledButton.icon(
+            onPressed: () => _barrioRoll(store, match),
+            icon: const Icon(Icons.casino),
+            label: const Text('Tirar los dados'),
+          ),
+        if (canAct && state.buying)
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton(
+                  onPressed: () => _barrioDecide(store, match, true),
+                  child: Text('Comprar ${here.name} (${here.price})'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => _barrioDecide(store, match, false),
+                  child: const Text('No, gracias'),
+                ),
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+
   // ------------------------------------------------------------ jugadas
+
+  void _barrioStep(FamilyStore store, GameMatch match, BarrioStep step) {
+    store.playMove(
+      match.id,
+      step.state.toJson(),
+      nextTurn: step.nextTurn,
+      winner: step.winner,
+      draw: step.draw,
+      by: match.currentPlayer,
+    );
+  }
+
+  void _barrioRoll(FamilyStore store, GameMatch match) {
+    final r = barrioRoll();
+    _barrioStep(store, match, BarrioState.fromJson(match.state).roll(match.turn, r.d1, r.d2, r.card));
+  }
+
+  void _barrioDecide(FamilyStore store, GameMatch match, bool buy) {
+    _barrioStep(store, match, BarrioState.fromJson(match.state).decide(match.turn, buy: buy));
+  }
 
   void _playTateti(FamilyStore store, GameMatch match, int i) {
     final cells = Tateti.play((match.state['cells'] as List).cast<int>(), i, match.turn);
@@ -236,6 +343,13 @@ class _GameScreenState extends State<GameScreen> {
           }
         case GameKind.ajedrez:
           _chessMove(store, m, Chess.fromJson(m.state).botMove());
+        case GameKind.barrio:
+          final state = BarrioState.fromJson(m.state);
+          if (state.buying) {
+            _barrioDecide(store, m, state.botWantsToBuy(m.turn));
+          } else {
+            _barrioRoll(store, m);
+          }
       }
     });
   }
@@ -277,6 +391,7 @@ class _Players extends StatelessWidget {
     if (match.kind == GameKind.ludo) {
       return ludoColors[Ludo.seatsFor(match.players.length)[i]];
     }
+    if (match.kind == GameKind.barrio) return ludoColors[i];
     if (match.kind == GameKind.ajedrez) return i == 0 ? Colors.white : Colors.black87;
     return twoPlayerColors[i];
   }

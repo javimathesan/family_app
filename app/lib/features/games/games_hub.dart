@@ -108,6 +108,7 @@ class _GameCard extends StatelessWidget {
     GameKind.cuatro: Color(0xFFBBDEFB),
     GameKind.ludo: Color(0xFFC8E6C9),
     GameKind.ajedrez: Color(0xFFD7CCC8),
+    GameKind.barrio: Color(0xFFF8BBD0),
   };
 
   @override

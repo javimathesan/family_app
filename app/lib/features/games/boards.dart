@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../games/barrio.dart';
 import '../../games/chess.dart';
 import '../../games/cuatro.dart';
 import '../../games/ludo.dart';
@@ -552,6 +553,116 @@ class _ChessBoardViewState extends State<ChessBoardView> {
           },
         ),
       ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------- Mi Barrio
+
+/// Colores de los grupos de lugares.
+const barrioGroupColors = [Color(0xFF8D6E63), Color(0xFF26C6DA), Color(0xFFEC407A), Color(0xFFFFA726), Color(0xFF7E57C2)];
+
+/// Posición (columna, fila) de cada casilla en el borde de una grilla de 6 × 6:
+/// la Salida abajo a la derecha y se avanza hacia la izquierda.
+(int, int) barrioCell(int index) {
+  if (index <= 5) return (5 - index, 5);
+  if (index <= 10) return (0, 10 - index);
+  if (index <= 15) return (index - 10, 0);
+  return (5, index - 15);
+}
+
+class BarrioBoard extends StatelessWidget {
+  const BarrioBoard({super.key, required this.state, required this.center, required this.playerColors});
+
+  final BarrioState state;
+  final Widget center;
+  final List<Color> playerColors;
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 1,
+      child: LayoutBuilder(builder: (context, box) {
+        final cell = box.maxWidth / 6;
+        return Stack(
+          children: [
+            Positioned(
+              left: cell,
+              top: cell,
+              width: cell * 4,
+              height: cell * 4,
+              child: Container(
+                decoration: BoxDecoration(color: const Color(0xFFE8F5E9), borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.all(8),
+                child: center,
+              ),
+            ),
+            for (var i = 0; i < Barrio.squares.length; i++)
+              Builder(builder: (context) {
+                final (c, r) = barrioCell(i);
+                final square = Barrio.squares[i];
+                final owner = state.owners[i];
+                final here = [for (var p = 0; p < state.players; p++) if (!state.out[p] && state.pos[p] == i) p];
+                return Positioned(
+                  left: c * cell,
+                  top: r * cell,
+                  width: cell,
+                  height: cell,
+                  child: Container(
+                    key: ValueKey('barrio_$i'),
+                    margin: const EdgeInsets.all(1),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: owner >= 0 ? playerColors[owner] : Colors.black12, width: owner >= 0 ? 3 : 1),
+                    ),
+                    child: Column(
+                      children: [
+                        if (square.group >= 0)
+                          Container(height: cell * .1, color: barrioGroupColors[square.group]),
+                        Expanded(
+                          child: FittedBox(
+                            child: Padding(
+                              padding: const EdgeInsets.all(2),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(square.emoji, style: const TextStyle(fontSize: 18)),
+                                  Text(square.name.split(' ').first, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700)),
+                                  if (square.price > 0) Text('${square.price}', style: const TextStyle(fontSize: 9, color: Colors.black54)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (here.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 2),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                for (final p in here)
+                                  Container(
+                                    width: cell * .18,
+                                    height: cell * .18,
+                                    margin: const EdgeInsets.symmetric(horizontal: 1),
+                                    decoration: BoxDecoration(
+                                      color: playerColors[p],
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white, width: 1.5),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+          ],
+        );
+      }),
     );
   }
 }

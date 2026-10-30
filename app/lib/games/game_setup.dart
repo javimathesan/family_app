@@ -1,4 +1,5 @@
 import '../models/models.dart';
+import 'barrio.dart';
 import 'chess.dart';
 import 'cuatro.dart';
 import 'ludo.dart';
@@ -10,4 +11,5 @@ Map<String, dynamic> initialGameState(GameKind kind, int players) => switch (kin
       GameKind.cuatro => {'cells': Cuatro.initial()},
       GameKind.ludo => LudoState.initial(players).toJson(),
       GameKind.ajedrez => Chess.initial().toJson(),
+      GameKind.barrio => BarrioState.initial(players).toJson(),
     };

@@ -90,7 +90,7 @@ extension FamilyGames on FamilyStore {
     if (m.finished) {
       final text = draw
           ? '${m.kind.label}: empate entre ${_joinNames([for (final p in m.players) playerName(p)])}'
-          : '${playerName(m.players[winner!])} ganó al ${m.kind.label.toLowerCase()} 🏆';
+          : '${playerName(m.players[winner!])} ganó en ${m.kind.label} 🏆';
       _addNotice(text, kind: NoticeKind.game, memberId: winner == null ? m.createdBy : m.players[winner]);
     }
     _changed();
