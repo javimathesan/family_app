@@ -2,6 +2,14 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.8.0 — 2026-10-30 · Área de juegos
+
+- **Juegos:** nueva pestaña para los chicos y botón en el panel del adulto. Cuatro juegos por turnos: **Tres en raya**, **4 en línea**, **Ludo** (2 a 4 jugadores, con dado, casillas seguras, comer fichas y meta justa) y **Ajedrez** (con enroque, captura al paso, coronación, jaque mate y ahogado; muestra los movimientos posibles).
+- **Contra la familia o contra Robi:** se puede jugar con otro miembro desde su propio celular (le aparece "Te toca" en Juegos y un aviso si tiene la app minimizada), pasándose un solo teléfono, o contra Robi, la compu, que a veces se equivoca a propósito.
+- **Primero la rutina:** el adulto elige cuándo pueden jugar los chicos: siempre, con media rutina hecha (por defecto) o con la rutina completa. Los adultos juegan siempre.
+- Las partidas se sincronizan entre teléfonos y avisan en Novedades cuando empiezan y quién ganó. Botón de revancha y de abandonar.
+- **Reglas de Firestore actualizadas** (`firebase/firestore.rules`): agregan la colección `games`. Hay que volver a publicarlas en la consola de Firebase.
+
 ## 0.7.0 — 2026-10-30 · Novedades y avisos (sin plan Blaze)
 
 - **Novedades:** campanita en el panel del adulto con el número de novedades sin leer. Al tocarla se ve todo lo que pasó, agrupado por día ("Hoy", "Ayer"…) y por hijo: las tareas de cada hijo se juntan en una línea ("Tomi completó 5 tareas") para no llenar la pantalla. Filtros: Todo, Importantes o un miembro.
