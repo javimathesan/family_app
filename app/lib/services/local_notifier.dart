@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 import '../data/app_session.dart';
 import '../data/family_store.dart';
@@ -11,7 +14,12 @@ import '../models/models.dart';
 /// Sin un servidor que envíe notificaciones push (Cloud Functions, plan
 /// Blaze), con la app cerrada no llegan: quedan en Novedades al abrirla.
 class LocalNotifier with WidgetsBindingObserver {
-  LocalNotifier(this.store, this.session);
+  LocalNotifier(this.store, this.session) {
+    instance = this;
+  }
+
+  /// El notificador de la app (para pedir permisos desde las pantallas).
+  static LocalNotifier? instance;
 
   final FamilyStore store;
   final AppSession session;
@@ -45,6 +53,103 @@ class LocalNotifier with WidgetsBindingObserver {
     }
     WidgetsBinding.instance.addObserver(this);
     store.addListener(_onStoreChanged);
+    _scheduleAgenda();
+  }
+
+  /// Permiso para que los recordatorios con alarma suenen a la hora exacta.
+  Future<void> askExactAlarms() async {
+    if (!_ready) return;
+    try {
+      await _plugin
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          ?.requestExactAlarmsPermission();
+    } catch (error) {
+      debugPrint('No se pudo pedir permiso de alarmas: $error');
+    }
+  }
+
+  // ----------------------------------------------------------------- agenda
+
+  String _agendaSignature = '';
+  bool _scheduling = false;
+
+  /// Programa los recordatorios de la agenda en el teléfono. Suenan aunque
+  /// la app esté cerrada: los maneja Android, no hace falta internet.
+  Future<void> _scheduleAgenda() async {
+    if (!_ready || _scheduling) return;
+    final viewer = session.deviceMemberId ?? store.currentMember?.id;
+    final now = DateTime.now();
+    final limit = now.add(const Duration(days: 60));
+    final upcoming = [
+      for (final e in viewer == null ? store.events : store.eventsFor(viewer))
+        if (e.remindAt != null && e.remindAt!.isAfter(now) && e.remindAt!.isBefore(limit)) e,
+    ].take(40).toList();
+    final signature = [
+      for (final e in upcoming) '${e.id}|${e.title}|${e.place}|${e.at.millisecondsSinceEpoch}|${e.remindMinutes}|${e.alarm}',
+    ].join(';');
+    if (signature == _agendaSignature) return;
+    _scheduling = true;
+    try {
+      final pending = await _plugin.pendingNotificationRequests();
+      for (final p in pending) {
+        if (p.payload?.startsWith('agenda:') ?? false) await _plugin.cancel(p.id);
+      }
+      for (final e in upcoming) {
+        await _scheduleEvent(e);
+      }
+      _agendaSignature = signature;
+    } catch (error) {
+      debugPrint('No se pudo programar la agenda: $error');
+    } finally {
+      _scheduling = false;
+    }
+  }
+
+  static int _eventNotificationId(String eventId) => 100000 + (eventId.hashCode & 0x7fffffff) % 900000;
+
+  Future<void> _scheduleEvent(AgendaEvent e) async {
+    final hh = '${e.at.hour.toString().padLeft(2, '0')}:${e.at.minute.toString().padLeft(2, '0')}';
+    final when = e.remindMinutes == 0 ? 'Ahora, $hh' : '${e.at.day}/${e.at.month} a las $hh';
+    final who = e.memberIds.isEmpty ? '' : ' · ${[for (final id in e.memberIds) store.playerName(id)].join(', ')}';
+    final body = '$when${e.place.isEmpty ? '' : ' · ${e.place}'}$who';
+    final details = NotificationDetails(
+      android: e.alarm
+          ? AndroidNotificationDetails(
+              'agenda_alarma',
+              'Alarmas de la agenda',
+              channelDescription: 'Recordatorios que suenan como alarma',
+              importance: Importance.max,
+              priority: Priority.max,
+              category: AndroidNotificationCategory.alarm,
+              audioAttributesUsage: AudioAttributesUsage.alarm,
+              // Suena hasta que se toca el aviso.
+              additionalFlags: Int32List.fromList([4]),
+            )
+          : const AndroidNotificationDetails(
+              'agenda',
+              'Recordatorios de la agenda',
+              channelDescription: 'Turnos, cumpleaños y otras cosas de la agenda familiar',
+              importance: Importance.high,
+              priority: Priority.high,
+              category: AndroidNotificationCategory.reminder,
+            ),
+    );
+    final at = tz.TZDateTime.from(e.remindAt!, tz.UTC);
+    Future<void> schedule(AndroidScheduleMode mode) => _plugin.zonedSchedule(
+          _eventNotificationId(e.id),
+          '📅 ${e.title}',
+          body,
+          at,
+          details,
+          androidScheduleMode: mode,
+          payload: 'agenda:${e.id}',
+        );
+    try {
+      await schedule(e.alarm ? AndroidScheduleMode.alarmClock : AndroidScheduleMode.inexactAllowWhileIdle);
+    } catch (_) {
+      // Sin permiso de alarmas exactas: queda como aviso común (puede demorar unos minutos).
+      await schedule(AndroidScheduleMode.inexactAllowWhileIdle);
+    }
   }
 
   /// Pide permiso para mostrar avisos (Android 13 o superior).
@@ -72,6 +177,7 @@ class LocalNotifier with WidgetsBindingObserver {
   }
 
   void _onStoreChanged() {
+    _scheduleAgenda();
     _checkTurns();
     final fresh = [for (final n in store.notices) if (!_known.contains(_key(n))) n];
     if (fresh.isEmpty) return;

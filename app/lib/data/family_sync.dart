@@ -37,4 +37,8 @@ abstract class FamilySync {
 
   /// Tiempo de juego de hoy de un chico, en segundos.
   void gameTimeChanged(String memberId, String day, int seconds);
+
+  /// Se creó o cambió un evento de la agenda.
+  void eventSaved(AgendaEvent event);
+  void eventRemoved(String eventId);
 }

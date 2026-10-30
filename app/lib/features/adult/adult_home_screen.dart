@@ -131,15 +131,50 @@ class AdultHomeScreen extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: () => Navigator.of(context).pushNamed(Routes.games),
-              icon: Badge(
-                isLabelVisible: me != null && store.myTurnCount(me.id) > 0,
-                label: Text('${me == null ? 0 : store.myTurnCount(me.id)}'),
-                child: const Icon(Icons.sports_esports_outlined),
-              ),
-              label: const Text('Juegos'),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => Navigator.of(context).pushNamed(Routes.agenda),
+                    icon: const Icon(Icons.event_note_outlined),
+                    label: const Text('Agenda'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => Navigator.of(context).pushNamed(Routes.games),
+                    icon: Badge(
+                      isLabelVisible: me != null && store.myTurnCount(me.id) > 0,
+                      label: Text('${me == null ? 0 : store.myTurnCount(me.id)}'),
+                      child: const Icon(Icons.sports_esports_outlined),
+                    ),
+                    label: const Text('Juegos'),
+                  ),
+                ),
+              ],
             ),
+            if (me != null)
+              for (final e in store.eventsOn(store.now, me.id).where((e) => e.at.isAfter(store.now)).take(2))
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: InfoCard(
+                    color: const Color(0xFFFFF8E1),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.event, color: Color(0xFFB26A00)),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Hoy ${e.at.hour.toString().padLeft(2, '0')}:${e.at.minute.toString().padLeft(2, '0')} · ${e.title}'
+                            '${e.place.isEmpty ? '' : ' · ${e.place}'}',
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
             if (me != null) ...[
               const SizedBox(height: 20),
               _MyDay(member: me),

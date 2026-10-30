@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../app.dart';
 import '../../data/family_store.dart';
+import '../../learning/vocabulary.dart';
 import '../../models/models.dart';
+import '../learning/words_screen.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/accent_picker.dart';
 import '../../widgets/avatar_view.dart';
@@ -28,6 +30,9 @@ class TodayScreen extends StatelessWidget {
       for (final n in store.notices)
         if (n.memberId == me.id && n.kind == NoticeKind.approval && DateUtils.isSameDay(n.time, store.now)) n,
     ].take(3).toList();
+    final agendaToday = store.eventsOn(store.now, me.id);
+    final langs = homeLanguages(store);
+    final wotd = wordOfTheDay(store.now, langs);
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -118,6 +123,54 @@ class TodayScreen extends StatelessWidget {
             ),
           ),
         ],
+        const SizedBox(height: 16),
+        InfoCard(
+          color: const Color(0xFFFFF8E1),
+          child: InkWell(
+            onTap: () => Navigator.of(context).pushNamed(Routes.agenda),
+            child: Row(
+              children: [
+                const Icon(Icons.event_note, size: 32, color: Color(0xFFB26A00)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('HOY EN LA AGENDA', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFFB26A00))),
+                      if (agendaToday.isEmpty) const Text('Nada especial. ¡Día tranquilo!'),
+                      for (final e in agendaToday)
+                        Text('${hhmm(TimeOfDay.fromDateTime(e.at))} · ${e.title}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        InfoCard(
+          color: const Color(0xFFE3F2FD),
+          child: Row(
+            children: [
+              Text(wotd.word.emoji, style: const TextStyle(fontSize: 40)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('PALABRA DEL DÍA ${wotd.lang.flag}',
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF1565C0))),
+                    Text('${wotd.word.es} = ${wotd.word.inLang(wotd.lang)}',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                    if (wotd.word.hint(wotd.lang) != null) Text('Se lee: ${wotd.word.hint(wotd.lang)}', style: mutedText(context)),
+                  ],
+                ),
+              ),
+              SpeakButton(text: wotd.word.inLang(wotd.lang), lang: wotd.lang, size: 24),
+            ],
+          ),
+        ),
         const SizedBox(height: 16),
         if (next != null)
           InfoCard(

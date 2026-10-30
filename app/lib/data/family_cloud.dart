@@ -73,6 +73,7 @@ class FamilyCloud implements FamilySync {
   CollectionReference<Map<String, dynamic>> _redemptions(String home) => _homeRef(home).collection('redemptions');
   CollectionReference<Map<String, dynamic>> _notices(String home) => _homeRef(home).collection('notices');
   CollectionReference<Map<String, dynamic>> _games(String home) => _homeRef(home).collection('games');
+  CollectionReference<Map<String, dynamic>> _events(String home) => _homeRef(home).collection('events');
 
   String _newMemberId() =>
       'm${_clock().microsecondsSinceEpoch.toRadixString(36)}${_random.nextInt(1296).toRadixString(36)}';
@@ -322,6 +323,14 @@ class FamilyCloud implements FamilySync {
       ]);
     }, onError: onError));
 
+    // Agenda: desde hace 30 días en adelante.
+    final agendaSince = _clock().subtract(const Duration(days: 30)).millisecondsSinceEpoch;
+    _subs.add(_events(homeId).where('at', isGreaterThanOrEqualTo: agendaSince).snapshots().listen((snap) {
+      store.applyRemote(events: [
+        for (final doc in snap.docs) FamilyStore.eventFromJson({...doc.data(), 'id': doc.id}),
+      ]);
+    }, onError: onError));
+
     _subs.add(_games(homeId).orderBy('updatedAt', descending: true).limit(30).snapshots().listen((snap) {
       store.applyRemote(matches: [
         for (final doc in snap.docs)
@@ -493,4 +502,10 @@ class FamilyCloud implements FamilySync {
         'day': day,
         'gameSeconds': seconds,
       }, SetOptions(merge: true)));
+
+  @override
+  void eventSaved(AgendaEvent event) => _write((h) => _events(h).doc(event.id).set(FamilyStore.eventToJson(event)));
+
+  @override
+  void eventRemoved(String eventId) => _write((h) => _events(h).doc(eventId).delete());
 }

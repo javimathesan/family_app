@@ -154,6 +154,27 @@ extension FamilyGames on FamilyStore {
     _changed();
   }
 
+  /// Id del registro del día con los puntos del quiz de palabras.
+  static const wordQuizId = 'juego_palabras';
+
+  /// Puntos que da el quiz de palabras: 1 por respuesta correcta, una vez por día.
+  /// Devuelve los puntos ganados (0 si ya los ganó hoy o es adulto).
+  int awardWordQuiz(String memberId, int correct, String language) {
+    final m = memberById(memberId);
+    if (m == null || m.role.isAdult || correct <= 0) return 0;
+    final day = _today.putIfAbsent(memberId, () => {});
+    if (day.containsKey(wordQuizId)) return 0;
+    final completion = TaskCompletion(taskId: wordQuizId, completedAt: _clock(), pointsAwarded: correct);
+    day[wordQuizId] = completion;
+    sync?.taskChanged(memberId, FamilyStore.dayKey(_clock()), wordQuizId, completion);
+    _addBalance(memberId, correct);
+    _addNotice('${m.nickname} practicó $language: $correct de 5 en el quiz de palabras', kind: NoticeKind.game, memberId: memberId);
+    _changed();
+    return correct;
+  }
+
+  bool wordQuizDoneToday(String memberId) => _today[memberId]?.containsKey(wordQuizId) ?? false;
+
   static String _joinNames(List<String> names) {
     if (names.isEmpty) return 'nadie';
     if (names.length == 1) return names.first;

@@ -74,6 +74,17 @@ class GamesHub extends StatelessWidget {
           ),
         if (me.role.isAdult && session.isAdmin) _RuleCard(rule: store.gamesRule, minutes: store.gamesMinutes),
         const SizedBox(height: 8),
+        Card(
+          color: const Color(0xFFE3F2FD),
+          child: ListTile(
+            leading: const Text('🔤', style: TextStyle(fontSize: 30)),
+            title: const Text('Aprender palabras', style: TextStyle(fontWeight: FontWeight.w800)),
+            subtitle: const Text('Inglés, portugués y coreano con tarjetas y quiz. No gasta tiempo de juego.'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).pushNamed(Routes.words),
+          ),
+        ),
+        const SizedBox(height: 8),
         Text('Nuevo juego', style: sectionTitle(context)),
         const SizedBox(height: 8),
         GridView.count(

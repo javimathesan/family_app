@@ -77,6 +77,11 @@ service cloud.firestore {
         allow read, write: if isMember(homeId);
       }
 
+      // Agenda familiar.
+      match /events/{eventId} {
+        allow read, write: if isMember(homeId);
+      }
+
       // Partidas del Área de juegos.
       match /games/{gameId} {
         allow read, write: if isMember(homeId);

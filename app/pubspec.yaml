@@ -19,6 +19,8 @@ dependencies:
   cloud_firestore: ^7.1.0
   crypto: ^3.0.3
   flutter_local_notifications: ^19.4.0
+  flutter_tts: ^4.2.3
+  timezone: ^0.10.0
 
 dev_dependencies:
   flutter_test:

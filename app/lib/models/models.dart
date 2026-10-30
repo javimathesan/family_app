@@ -435,3 +435,63 @@ enum GamesRule {
 
 /// Por qué un chico no puede jugar ahora.
 enum GamesLock { routine, time }
+
+// ------------------------------------------------------------------ agenda
+
+/// Nota o recordatorio de la agenda familiar (turno médico, cumpleaños…).
+class AgendaEvent {
+  AgendaEvent({
+    required this.id,
+    required this.title,
+    required this.at,
+    required this.createdBy,
+    this.place = '',
+    this.notes = '',
+    Set<String>? memberIds,
+    this.remindMinutes,
+    this.alarm = false,
+  }) : memberIds = memberIds ?? {};
+
+  final String id;
+  String title;
+  String place;
+  String notes;
+  DateTime at;
+
+  /// Para quiénes es. Vacío = toda la familia.
+  Set<String> memberIds;
+
+  /// Minutos antes para avisar (`null` = sin aviso, 0 = a la hora).
+  int? remindMinutes;
+
+  /// Que suene como alarma (insistente) en vez de un aviso común.
+  bool alarm;
+  final String createdBy;
+
+  bool isFor(String memberId) => memberIds.isEmpty || memberIds.contains(memberId);
+
+  DateTime? get remindAt => remindMinutes == null ? null : at.subtract(Duration(minutes: remindMinutes!));
+
+  AgendaEvent copy() => AgendaEvent(
+        id: id,
+        title: title,
+        at: at,
+        createdBy: createdBy,
+        place: place,
+        notes: notes,
+        memberIds: {...memberIds},
+        remindMinutes: remindMinutes,
+        alarm: alarm,
+      );
+
+  /// Opciones de aviso para elegir en el formulario.
+  static const remindOptions = <int?, String>{
+    null: 'Sin aviso',
+    0: 'A la hora',
+    10: '10 minutos antes',
+    30: '30 minutos antes',
+    60: '1 hora antes',
+    120: '2 horas antes',
+    1440: '1 día antes',
+  };
+}

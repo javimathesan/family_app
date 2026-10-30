@@ -7,6 +7,7 @@ import '../games/game_setup.dart';
 import '../models/models.dart';
 import 'family_sync.dart';
 
+part 'family_agenda.dart';
 part 'family_games.dart';
 
 /// Estado del hogar en memoria.
@@ -59,6 +60,7 @@ class FamilyStore extends ChangeNotifier {
   final Set<String> _pendingMembers = {};
   final Set<String> _relinking = {};
   final List<GameMatch> _matches = [];
+  final List<AgendaEvent> _events = [];
   GamesRule _gamesRule = GamesRule.half;
 
   /// Minutos de juego por día para los chicos (0 = sin límite).
@@ -539,8 +541,10 @@ class FamilyStore extends ChangeNotifier {
 
   /// Resumen de un día terminado para el calendario de caritas.
   DaySummary summarizeDay(DateTime date, Map<String, TaskCompletion> done, HealthLog? log, {String? memberId}) {
-    final total = memberId == null ? _templates.length : templatesFor(memberId).length;
-    final count = done.keys.where((id) => !AdultGoal.isGoalId(id)).length;
+    final ids = {for (final t in memberId == null ? _templates : templatesFor(memberId)) t.id};
+    final total = ids.length;
+    // Solo cuentan las tareas de la rutina (no las metas del adulto ni los juegos).
+    final count = done.keys.where(ids.contains).length;
     return DaySummary(
         date: date,
         completionRatio: total == 0 ? 0 : (count / total).clamp(0, 1).toDouble(),
@@ -572,7 +576,13 @@ class FamilyStore extends ChangeNotifier {
     int? gamesMinutes,
     List<String>? languages,
     Map<String, int>? gameSeconds,
+    List<AgendaEvent>? events,
   }) {
+    if (events != null) {
+      _events
+        ..clear()
+        ..addAll(events);
+    }
     if (gamesMinutes != null) _gamesMinutes = gamesMinutes;
     if (languages != null) _languages = [...languages];
     if (gameSeconds != null) {
@@ -674,6 +684,7 @@ class FamilyStore extends ChangeNotifier {
       gamesMinutes: 0,
       languages: const ['en', 'pt', 'ko'],
       gameSeconds: const {},
+      events: const [],
     );
   }
 
@@ -702,6 +713,7 @@ class FamilyStore extends ChangeNotifier {
         'languages': _languages,
         'gameSeconds': _gameSeconds,
         'matches': [for (final m in _matches) _matchToJson(m)],
+        'events': [for (final e in _events) _eventToJson(e)],
         'history': {
           for (final e in _history.entries) e.key: [for (final s in e.value) _summaryToJson(s)],
         },
@@ -758,6 +770,9 @@ class FamilyStore extends ChangeNotifier {
       ..addAll([for (final m in json['members'] as List) memberFromJson(m as Map<String, dynamic>)]);
     _gamesRule = GamesRule.values.asNameMap()[json['gamesRule']] ?? GamesRule.half;
     _gamesMinutes = json['gamesMinutes'] as int? ?? 0;
+    _events
+      ..clear()
+      ..addAll([for (final e in (json['events'] as List?) ?? const []) _eventFromJson((e as Map).cast<String, dynamic>())]);
     _languages = ((json['languages'] as List?) ?? const ['en', 'pt', 'ko']).cast<String>().toList();
     _gameSeconds.clear();
     if (json['day'] == dayKey(_clock()) && json['gameSeconds'] is Map) {
@@ -864,6 +879,8 @@ class FamilyStore extends ChangeNotifier {
   }
 
   static Map<String, dynamic> matchToJson(GameMatch m) => _matchToJson(m);
+  static Map<String, dynamic> eventToJson(AgendaEvent e) => _eventToJson(e);
+  static AgendaEvent eventFromJson(Map<String, dynamic> j) => _eventFromJson(j);
   static GameMatch? matchFromJson(Map<String, dynamic> j) => _matchFromJson(j);
 
   static Map<String, dynamic> memberToJson(Member m) => {
