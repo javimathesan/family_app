@@ -345,9 +345,89 @@ enum NoticeKind {
   join(true, Icons.person_add_alt),
   goal(false, Icons.favorite_border),
   alert(true, Icons.warning_amber_outlined),
+  game(false, Icons.sports_esports_outlined),
   info(false, Icons.info_outline);
 
   const NoticeKind(this.important, this.icon);
   final bool important;
   final IconData icon;
+}
+
+// ------------------------------------------------------------------ juegos
+
+/// Juegos del Área de juegos.
+enum GameKind {
+  tateti('Tres en raya', 'Rápido, para todas las edades', Icons.grid_3x3, 2, 2),
+  cuatro('4 en línea', 'Soltá fichas y uní 4', Icons.view_column_outlined, 2, 2),
+  ludo('Ludo', 'De 2 a 4: dados, fichas y carrera a la meta', Icons.casino_outlined, 2, 4),
+  ajedrez('Ajedrez', 'El clásico, con ayuda de movimientos', Icons.castle, 2, 2);
+
+  const GameKind(this.label, this.description, this.icon, this.minPlayers, this.maxPlayers);
+  final String label;
+  final String description;
+  final IconData icon;
+  final int minPlayers;
+  final int maxPlayers;
+}
+
+/// Identificador de Robi, la compu, como jugador.
+const botPlayerId = 'robi';
+
+/// Partida entre miembros del hogar (o contra Robi).
+class GameMatch {
+  GameMatch({
+    required this.id,
+    required this.kind,
+    required this.players,
+    required this.createdBy,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.state,
+    this.turn = 0,
+    this.winner,
+    this.draw = false,
+    this.sameDevice = false,
+    this.lastBy,
+  });
+
+  final String id;
+  final GameKind kind;
+
+  /// Ids de los jugadores en orden de turno (puede incluir [botPlayerId]).
+  final List<String> players;
+  final String createdBy;
+  final DateTime createdAt;
+  DateTime updatedAt;
+
+  /// Estado propio de cada juego (tablero, dado, fichas…).
+  Map<String, dynamic> state;
+
+  /// Posición en [players] del que tiene que jugar.
+  int turn;
+
+  /// Posición en [players] del ganador.
+  int? winner;
+  bool draw;
+
+  /// Se juega pasando un solo teléfono de mano en mano.
+  bool sameDevice;
+
+  /// Quién hizo la última jugada.
+  String? lastBy;
+
+  bool get finished => winner != null || draw;
+  String get currentPlayer => players[turn];
+  bool get vsBot => players.contains(botPlayerId);
+}
+
+/// Cuándo pueden jugar los chicos.
+enum GamesRule {
+  free('Siempre', 'Pueden jugar en cualquier momento.', 0),
+  half('Con media rutina', 'Cuando completaron la mitad de las tareas del día.', .5),
+  all('Con la rutina completa', 'Primero todas las tareas del día, después a jugar.', 1);
+
+  const GamesRule(this.label, this.description, this.minRatio);
+  final String label;
+  final String description;
+  final double minRatio;
 }

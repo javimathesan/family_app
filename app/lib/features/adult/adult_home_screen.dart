@@ -128,6 +128,16 @@ class AdultHomeScreen extends StatelessWidget {
                 ],
               ),
             ],
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () => Navigator.of(context).pushNamed(Routes.games),
+              icon: Badge(
+                isLabelVisible: me != null && store.myTurnCount(me.id) > 0,
+                label: Text('${me == null ? 0 : store.myTurnCount(me.id)}'),
+                child: const Icon(Icons.sports_esports_outlined),
+              ),
+              label: const Text('Juegos'),
+            ),
             if (me != null) ...[
               const SizedBox(height: 20),
               _MyDay(member: me),

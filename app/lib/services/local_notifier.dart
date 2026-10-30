@@ -21,6 +21,9 @@ class LocalNotifier with WidgetsBindingObserver {
   bool _foreground = true;
   final Set<String> _known = {};
   final Map<String, int> _pendingByGroup = {};
+
+  /// Última jugada vista de cada partida, para avisar "te toca" una sola vez.
+  final Map<String, DateTime> _turnSeen = {};
   late DateTime _since;
 
   static const _channelId = 'avisos_hogar';
@@ -37,6 +40,9 @@ class LocalNotifier with WidgetsBindingObserver {
     }
     _since = DateTime.now();
     _known.addAll(store.notices.map(_key));
+    for (final m in store.matches) {
+      _turnSeen[m.id] = m.updatedAt;
+    }
     WidgetsBinding.instance.addObserver(this);
     store.addListener(_onStoreChanged);
   }
@@ -66,6 +72,7 @@ class LocalNotifier with WidgetsBindingObserver {
   }
 
   void _onStoreChanged() {
+    _checkTurns();
     final fresh = [for (final n in store.notices) if (!_known.contains(_key(n))) n];
     if (fresh.isEmpty) return;
     _known.addAll(fresh.map(_key));
@@ -73,6 +80,32 @@ class LocalNotifier with WidgetsBindingObserver {
     for (final n in fresh.reversed) {
       if (n.time.isBefore(_since) || !session.shouldNotify(n)) continue;
       _show(n);
+    }
+  }
+
+  /// "Te toca en Ludo": cuando otro jugó y ahora le toca a este teléfono.
+  void _checkTurns() {
+    final me = session.deviceMemberId;
+    for (final m in store.matches) {
+      final seen = _turnSeen[m.id];
+      if (seen != null && !m.updatedAt.isAfter(seen)) continue;
+      _turnSeen[m.id] = m.updatedAt;
+      if (!_ready || _foreground || !session.isCloud || me == null) continue;
+      if (session.notifyMode == NotifyMode.none || m.finished || m.sameDevice) continue;
+      if (m.currentPlayer != me || m.lastBy == me || m.updatedAt.isBefore(_since)) continue;
+      final rival = m.lastBy == null ? null : store.playerName(m.lastBy!);
+      _plugin.show(
+        m.id.hashCode & 0x7fffffff,
+        'Te toca en ${m.kind.label}',
+        rival == null ? '¡Empezó una partida nueva!' : '$rival ya jugó. ¡Tu turno!',
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'turnos_juegos',
+            'Turnos de juegos',
+            channelDescription: 'Cuando te toca jugar una partida',
+          ),
+        ),
+      );
     }
   }
 

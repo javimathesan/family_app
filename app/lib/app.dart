@@ -7,6 +7,8 @@ import 'features/adult/adult_home_screen.dart';
 import 'features/adult/notices_screen.dart';
 import 'features/adult/routine_editor_screen.dart';
 import 'features/child/child_shell.dart';
+import 'features/games/game_screen.dart';
+import 'features/games/games_hub.dart';
 import 'features/onboarding/avatar_editor_screen.dart';
 import 'features/onboarding/create_home_screen.dart';
 import 'features/onboarding/invite_screen.dart';
@@ -25,6 +27,11 @@ abstract final class Routes {
   static const createHome = '/crear-hogar';
   static const join = '/unirse';
   static const avatar = '/avatar';
+  static const games = '/juegos';
+  static const match = '/juegos/partida';
+
+  /// Ruta de una partida.
+  static String matchOf(String id) => '$match?id=$id';
 }
 
 class FamilyApp extends StatelessWidget {
@@ -47,6 +54,8 @@ class FamilyApp extends StatelessWidget {
       Routes.createHome => const CreateHomeScreen(),
       Routes.join => JoinHomeScreen(initialCode: uri.queryParameters['code']),
       Routes.avatar => const AvatarEditorScreen(),
+      Routes.games => const GamesScreen(),
+      Routes.match => GameScreen(matchId: uri.queryParameters['id'] ?? ''),
       _ => const WelcomeScreen(),
     };
     return MaterialPageRoute<void>(builder: (_) => page, settings: settings);

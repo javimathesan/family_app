@@ -72,6 +72,7 @@ class FamilyCloud implements FamilySync {
   CollectionReference<Map<String, dynamic>> _days(String home) => _homeRef(home).collection('days');
   CollectionReference<Map<String, dynamic>> _redemptions(String home) => _homeRef(home).collection('redemptions');
   CollectionReference<Map<String, dynamic>> _notices(String home) => _homeRef(home).collection('notices');
+  CollectionReference<Map<String, dynamic>> _games(String home) => _homeRef(home).collection('games');
 
   String _newMemberId() =>
       'm${_clock().microsecondsSinceEpoch.toRadixString(36)}${_random.nextInt(1296).toRadixString(36)}';
@@ -221,6 +222,7 @@ class FamilyCloud implements FamilySync {
         rewards: rewards is List
             ? [for (final r in rewards) FamilyStore.rewardFromJson((r as Map).cast<String, dynamic>())]
             : null,
+        gamesRule: GamesRule.values.asNameMap()[data['gamesRule']],
       );
     }, onError: onError));
 
@@ -282,6 +284,13 @@ class FamilyCloud implements FamilySync {
       store.applyRemote(notices: [
         for (final doc in snap.docs)
           FamilyStore.noticeFromJson(doc.data(), time: (doc.data()['time'] as Timestamp).toDate()),
+      ]);
+    }, onError: onError));
+
+    _subs.add(_games(homeId).orderBy('updatedAt', descending: true).limit(30).snapshots().listen((snap) {
+      store.applyRemote(matches: [
+        for (final doc in snap.docs)
+          if (FamilyStore.matchFromJson({...doc.data(), 'id': doc.id}) case final match?) match,
       ]);
     }, onError: onError));
   }
@@ -423,4 +432,13 @@ class FamilyCloud implements FamilySync {
   void rewardsChanged(List<Reward> rewards) => _write((h) => _homeRef(h).update({
         'rewards': [for (final r in rewards) FamilyStore.rewardToJson(r)],
       }));
+
+  @override
+  void matchSaved(GameMatch match) => _write((h) => _games(h).doc(match.id).set(FamilyStore.matchToJson(match)));
+
+  @override
+  void matchRemoved(String matchId) => _write((h) => _games(h).doc(matchId).delete());
+
+  @override
+  void gamesRuleChanged(GamesRule rule) => _write((h) => _homeRef(h).update({'gamesRule': rule.name}));
 }

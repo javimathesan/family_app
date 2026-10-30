@@ -3,8 +3,11 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../domain/points.dart';
+import '../games/game_setup.dart';
 import '../models/models.dart';
 import 'family_sync.dart';
+
+part 'family_games.dart';
 
 /// Estado del hogar en memoria.
 ///
@@ -54,7 +57,11 @@ class FamilyStore extends ChangeNotifier {
   final Map<String, HealthLog> _health = {};
   final List<Redemption> _redemptions = [];
   final Set<String> _pendingMembers = {};
+  final List<GameMatch> _matches = [];
+  GamesRule _gamesRule = GamesRule.half;
   final _random = Random();
+
+  void _changed() => notifyListeners();
 
   /// Destino de los cambios locales cuando el hogar está en la nube.
   FamilySync? sync;
@@ -536,8 +543,16 @@ class FamilyStore extends ChangeNotifier {
     List<FamilyNotice>? notices,
     List<TaskTemplate>? templates,
     List<Reward>? rewards,
+    List<GameMatch>? matches,
+    GamesRule? gamesRule,
   }) {
     if (homeName != null) this.homeName = homeName;
+    if (gamesRule != null) _gamesRule = gamesRule;
+    if (matches != null) {
+      _matches
+        ..clear()
+        ..addAll(matches);
+    }
     if (templates != null) {
       _templates
         ..clear()
@@ -614,6 +629,8 @@ class FamilyStore extends ChangeNotifier {
       notices: const [],
       templates: defaultTemplates,
       rewards: defaultRewards,
+      matches: const [],
+      gamesRule: GamesRule.half,
     );
   }
 
@@ -637,6 +654,8 @@ class FamilyStore extends ChangeNotifier {
         'pending': _pendingMembers.toList(),
         'balances': _balances,
         'piggy': _piggy,
+        'gamesRule': _gamesRule.name,
+        'matches': [for (final m in _matches) _matchToJson(m)],
         'history': {
           for (final e in _history.entries) e.key: [for (final s in e.value) _summaryToJson(s)],
         },
@@ -691,6 +710,13 @@ class FamilyStore extends ChangeNotifier {
     _members
       ..clear()
       ..addAll([for (final m in json['members'] as List) memberFromJson(m as Map<String, dynamic>)]);
+    _gamesRule = GamesRule.values.asNameMap()[json['gamesRule']] ?? GamesRule.half;
+    _matches
+      ..clear()
+      ..addAll([
+        for (final m in (json['matches'] as List?) ?? const [])
+          if (_matchFromJson((m as Map).cast<String, dynamic>()) case final match?) match,
+      ]);
     _pendingMembers
       ..clear()
       ..addAll((json['pending'] as List).cast<String>());
@@ -784,6 +810,9 @@ class FamilyStore extends ChangeNotifier {
     _currentMemberId = null;
     restoreFrom(demo.toJson());
   }
+
+  static Map<String, dynamic> matchToJson(GameMatch m) => _matchToJson(m);
+  static GameMatch? matchFromJson(Map<String, dynamic> j) => _matchFromJson(j);
 
   static Map<String, dynamic> memberToJson(Member m) => {
         'id': m.id,

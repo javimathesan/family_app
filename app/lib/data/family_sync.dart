@@ -21,4 +21,11 @@ abstract class FamilySync {
 
   /// El adulto cambió los premios (se envía la lista completa).
   void rewardsChanged(List<Reward> rewards);
+
+  /// Se creó una partida o alguien jugó.
+  void matchSaved(GameMatch match);
+  void matchRemoved(String matchId);
+
+  /// El adulto cambió cuándo pueden jugar los chicos.
+  void gamesRuleChanged(GamesRule rule);
 }

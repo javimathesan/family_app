@@ -68,6 +68,11 @@ service cloud.firestore {
         allow read, write: if isMember(homeId);
       }
 
+      // Partidas del Área de juegos.
+      match /games/{gameId} {
+        allow read, write: if isMember(homeId);
+      }
+
       match /notices/{noticeId} {
         allow read, create: if isMember(homeId);
         allow delete: if isAdmin(homeId);
