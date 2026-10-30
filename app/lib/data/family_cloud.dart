@@ -278,14 +278,10 @@ class FamilyCloud implements FamilySync {
       ]);
     }, onError: onError));
 
-    _subs.add(_notices(homeId).orderBy('time', descending: true).limit(30).snapshots().listen((snap) {
+    _subs.add(_notices(homeId).orderBy('time', descending: true).limit(150).snapshots().listen((snap) {
       store.applyRemote(notices: [
         for (final doc in snap.docs)
-          FamilyNotice(
-            time: (doc.data()['time'] as Timestamp).toDate(),
-            text: doc.data()['text'] as String,
-            isAlert: doc.data()['alert'] as bool? ?? false,
-          ),
+          FamilyStore.noticeFromJson(doc.data(), time: (doc.data()['time'] as Timestamp).toDate()),
       ]);
     }, onError: onError));
   }
@@ -414,9 +410,8 @@ class FamilyCloud implements FamilySync {
 
   @override
   void noticeAdded(FamilyNotice notice) => _write((h) => _notices(h).add({
+        ...FamilyStore.noticeToJson(notice, iso: false),
         'time': Timestamp.fromDate(notice.time),
-        'text': notice.text,
-        'alert': notice.isAlert,
       }));
 
   @override

@@ -315,9 +315,39 @@ class DaySummary {
 /// Aviso para el adulto.
 @immutable
 class FamilyNotice {
-  const FamilyNotice({required this.time, required this.text, this.isAlert = false});
+  const FamilyNotice({
+    required this.time,
+    required this.text,
+    this.isAlert = false,
+    this.kind = NoticeKind.info,
+    this.memberId,
+  });
 
   final DateTime time;
   final String text;
   final bool isAlert;
+  final NoticeKind kind;
+
+  /// Miembro del que trata el aviso (el que hizo la tarea, pidió el premio…).
+  final String? memberId;
+
+  /// Los que conviene avisar aunque el teléfono esté en "solo lo importante".
+  bool get isImportant => isAlert || kind.important;
+}
+
+/// Tipo de aviso, para agrupar, filtrar y elegir qué notificar.
+enum NoticeKind {
+  task(false, Icons.check_circle_outline),
+  toApprove(true, Icons.fact_check_outlined),
+  health(false, Icons.local_drink_outlined),
+  reward(true, Icons.card_giftcard_outlined),
+  approval(false, Icons.thumb_up_alt_outlined),
+  join(true, Icons.person_add_alt),
+  goal(false, Icons.favorite_border),
+  alert(true, Icons.warning_amber_outlined),
+  info(false, Icons.info_outline);
+
+  const NoticeKind(this.important, this.icon);
+  final bool important;
+  final IconData icon;
 }

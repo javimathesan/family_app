@@ -73,7 +73,9 @@ void main() {
     expect(find.text('Mi día'), findsOneWidget);
 
     // Los chicos entran sin PIN.
-    await tester.tap(find.byTooltip('Cambiar de usuario'));
+    await tester.tap(find.byTooltip('Más opciones'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cambiar de usuario'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Tomi'));
     await tester.pumpAndSettle();

@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'data/app_session.dart';
 import 'data/family_store.dart';
 import 'features/adult/adult_home_screen.dart';
+import 'features/adult/notices_screen.dart';
 import 'features/adult/routine_editor_screen.dart';
 import 'features/child/child_shell.dart';
 import 'features/onboarding/avatar_editor_screen.dart';
@@ -20,6 +21,7 @@ abstract final class Routes {
   static const adult = '/adulto';
   static const invite = '/adulto/invitar';
   static const routine = '/adulto/rutina';
+  static const notices = '/novedades';
   static const createHome = '/crear-hogar';
   static const join = '/unirse';
   static const avatar = '/avatar';
@@ -41,6 +43,7 @@ class FamilyApp extends StatelessWidget {
       Routes.adult => const AdultHomeScreen(),
       Routes.invite => const InviteScreen(),
       Routes.routine => const RoutineEditorScreen(),
+      Routes.notices => const NoticesScreen(),
       Routes.createHome => const CreateHomeScreen(),
       Routes.join => JoinHomeScreen(initialCode: uri.queryParameters['code']),
       Routes.avatar => const AvatarEditorScreen(),

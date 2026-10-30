@@ -23,6 +23,17 @@ enum SessionMode {
   cloud,
 }
 
+/// Qué avisos del sistema quiere recibir este teléfono.
+enum NotifyMode {
+  important('Solo lo importante', 'Pedidos de premios, altas, tareas para aprobar y alertas.'),
+  all('Todo', 'También cada tarea, meta de agua y aprobación.'),
+  none('Nada', 'Sin avisos del sistema. Las novedades quedan en la campanita.');
+
+  const NotifyMode(this.label, this.description);
+  final String label;
+  final String description;
+}
+
 /// Estado de este teléfono: modo, hogar vinculado y perfil propio.
 class AppSession extends ChangeNotifier {
   AppSession({
@@ -44,9 +55,15 @@ class AppSession extends ChangeNotifier {
   static const _kMember = 'session_member';
   static const _kPending = 'session_pending';
   static const _kPin = 'session_pin';
+  static const _kNoticesSeen = 'notices_seen';
+  static const _kNotifyMode = 'notify_mode';
 
   SessionMode mode = SessionMode.none;
   String? homeId;
+
+  /// Se llama cuando el teléfono queda vinculado a un hogar en la nube
+  /// (por ejemplo, para pedir permiso de avisos).
+  VoidCallback? onCloudLinked;
 
   /// Perfil de la persona que usa este teléfono.
   String? deviceMemberId;
@@ -73,6 +90,44 @@ class AppSession extends ChangeNotifier {
       for (final m in approved)
         if (m.uid != null && m.uid == mine) m else if (m.uid == null && isAdmin) m,
     ];
+  }
+
+  // -------------------------------------------------------------- novedades
+
+  /// Última vez que este teléfono abrió Novedades.
+  DateTime get noticesSeenAt {
+    final ms = _prefs.getInt(_kNoticesSeen);
+    return ms == null ? DateTime.fromMillisecondsSinceEpoch(0) : DateTime.fromMillisecondsSinceEpoch(ms);
+  }
+
+  /// Quién usa este teléfono ahora: sus propias acciones no cuentan como novedad.
+  String? get _viewerId => store.currentMember?.id ?? deviceMemberId;
+
+  bool isUnread(FamilyNotice n) => n.time.isAfter(noticesSeenAt) && n.memberId != _viewerId;
+
+  int get unreadNotices => store.notices.where(isUnread).length;
+
+  Future<void> markNoticesSeen() async {
+    await _prefs.setInt(_kNoticesSeen, store.now.millisecondsSinceEpoch);
+    notifyListeners();
+  }
+
+  /// Qué avisos del sistema muestra este teléfono.
+  NotifyMode get notifyMode => NotifyMode.values.asNameMap()[_prefs.getString(_kNotifyMode)] ?? NotifyMode.important;
+
+  Future<void> setNotifyMode(NotifyMode mode) async {
+    await _prefs.setString(_kNotifyMode, mode.name);
+    notifyListeners();
+  }
+
+  /// Si este aviso se muestra como notificación del sistema en este teléfono.
+  bool shouldNotify(FamilyNotice n) {
+    if (n.memberId != null && n.memberId == _viewerId) return false;
+    return switch (notifyMode) {
+      NotifyMode.all => true,
+      NotifyMode.important => n.isImportant,
+      NotifyMode.none => false,
+    };
   }
 
   // -------------------------------------------------------------------- PIN
@@ -105,6 +160,10 @@ class AppSession extends ChangeNotifier {
   /// Recupera el modo guardado y conecta lo necesario.
   Future<void> restore() async {
     storage.listen(store);
+    // Primera vez en este teléfono: lo anterior no cuenta como novedad.
+    if (_prefs.getInt(_kNoticesSeen) == null) {
+      await _prefs.setInt(_kNoticesSeen, store.now.millisecondsSinceEpoch);
+    }
     final saved = SessionMode.values.asNameMap()[_prefs.getString(_kMode)] ?? SessionMode.none;
     homeId = _prefs.getString(_kHome);
     deviceMemberId = _prefs.getString(_kMember);
@@ -192,6 +251,7 @@ class AppSession extends ChangeNotifier {
     store.signInAs(ids.memberId);
     await _save();
     notifyListeners();
+    onCloudLinked?.call();
   }
 
   /// Invitación para sumar a alguien: en la nube si está vinculado, local en la demo.
@@ -229,6 +289,7 @@ class AppSession extends ChangeNotifier {
     store.signInAs(deviceMemberId!);
     await _save();
     notifyListeners();
+    onCloudLinked?.call();
   }
 
   /// Desvincula este teléfono del hogar (los datos siguen en la nube).

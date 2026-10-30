@@ -2,6 +2,14 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.7.0 — 2026-10-30 · Novedades y avisos (sin plan Blaze)
+
+- **Novedades:** campanita en el panel del adulto con el número de novedades sin leer. Al tocarla se ve todo lo que pasó, agrupado por día ("Hoy", "Ayer"…) y por hijo: las tareas de cada hijo se juntan en una línea ("Tomi completó 5 tareas") para no llenar la pantalla. Filtros: Todo, Importantes o un miembro.
+- **Avisos del sistema** mientras Family App está abierta o minimizada. Cada teléfono elige: **Solo lo importante** (por defecto: pedidos de premios, altas, tareas para aprobar y alertas), **Todo** o **Nada**. Lo que hace uno mismo nunca avisa.
+- Nuevos avisos: premio pedido, premio o tarea aprobados (con el nombre de quién aprobó) y premio dejado para otro momento.
+- "Cambiar de usuario" pasó al menú de tres puntos.
+- Con la app cerrada no llegan avisos (eso necesita el plan Blaze de Firebase); al abrirla, todo aparece en Novedades.
+
 ## 0.6.0 — 2026-10-30 · Tareas por hijo, Mi día del adulto y PIN
 
 - **Tareas por hijo:** en Rutina y premios, "¿Para quién?" permite que una tarea sea para todos o solo para algunos hijos. La rutina, el progreso, la próxima tarea y el calendario de cada hijo cuentan solo sus tareas.

@@ -63,14 +63,19 @@ class AdultHomeScreen extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Cambiar de usuario',
-                  onPressed: () => Navigator.of(context).pushReplacementNamed(Routes.welcome),
-                  icon: const Icon(Icons.switch_account_outlined),
+                  tooltip: 'Novedades',
+                  onPressed: () => Navigator.of(context).pushNamed(Routes.notices),
+                  icon: Badge(
+                    isLabelVisible: session.unreadNotices > 0,
+                    label: Text('${session.unreadNotices > 99 ? '99+' : session.unreadNotices}'),
+                    child: const Icon(Icons.notifications_none),
+                  ),
                 ),
                 PopupMenuButton<String>(
                   tooltip: 'Más opciones',
                   onSelected: (value) => _onMenu(context, value),
                   itemBuilder: (_) => [
+                    const PopupMenuItem(value: 'switch', child: Text('Cambiar de usuario')),
                     PopupMenuItem(value: 'pin', child: Text(session.hasPin ? 'Cambiar o quitar el PIN' : 'Poner PIN al modo adulto')),
                     if (session.isDemo) ...const [
                       PopupMenuItem(value: 'reset', child: Text('Restablecer datos de ejemplo')),
@@ -188,8 +193,16 @@ class AdultHomeScreen extends StatelessWidget {
                 onReject: () => store.rejectTask(p.member.id, p.task.id),
               ),
             const SizedBox(height: 10),
-            Text('Últimos avisos', style: sectionTitle(context)),
-            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(child: Text('Últimas novedades', style: sectionTitle(context))),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pushNamed(Routes.notices),
+                  child: Text(session.unreadNotices > 0 ? 'Ver todas (${session.unreadNotices} nuevas)' : 'Ver todas'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
             if (store.notices.isEmpty)
               InfoCard(
                 child: Text(
@@ -202,7 +215,7 @@ class AdultHomeScreen extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 child: Column(
                   children: [
-                    for (final n in store.notices.take(6))
+                    for (final n in store.notices.take(4))
                       ListTile(
                         dense: true,
                         leading: Text(
@@ -225,6 +238,10 @@ class AdultHomeScreen extends StatelessWidget {
   }
 
   Future<void> _onMenu(BuildContext context, String value) async {
+    if (value == 'switch') {
+      Navigator.of(context).pushReplacementNamed(Routes.welcome);
+      return;
+    }
     if (value == 'pin') return _managePin(context);
     final session = SessionScope.of(context);
     final store = FamilyScope.of(context);

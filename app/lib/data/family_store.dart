@@ -112,7 +112,7 @@ class FamilyStore extends ChangeNotifier {
     _addBalance(memberId, -cost);
     m.unlocked.add(itemId);
     sync?.memberUpdated(m);
-    _addNotice('${m.nickname} desbloqueó algo nuevo para su avatar');
+    _addNotice('${m.nickname} desbloqueó algo nuevo para su avatar', memberId: memberId);
     notifyListeners();
     return true;
   }
@@ -134,7 +134,7 @@ class FamilyStore extends ChangeNotifier {
     final member = Member(id: _newId('m'), nickname: nickname.trim(), role: role, mode: mode);
     _members.add(member);
     _pendingMembers.add(member.id);
-    _addNotice('${member.nickname} quiere unirse al hogar');
+    _addNotice('${member.nickname} quiere unirse al hogar', kind: NoticeKind.join, memberId: member.id);
     notifyListeners();
     return member;
   }
@@ -210,7 +210,11 @@ class FamilyStore extends ChangeNotifier {
     sync?.taskChanged(memberId, _todayKey, taskId, completion);
     if (!needsAdult) _addBalance(memberId, points);
     final who = memberById(memberId)?.nickname ?? 'Alguien';
-    _addNotice('$who completó: ${task.name}');
+    _addNotice(
+      needsAdult ? '$who completó: ${task.name} (para aprobar)' : '$who completó: ${task.name}',
+      kind: needsAdult ? NoticeKind.toApprove : NoticeKind.task,
+      memberId: memberId,
+    );
     notifyListeners();
     return points;
   }
@@ -247,6 +251,11 @@ class FamilyStore extends ChangeNotifier {
     _today[memberId]![taskId] = approved;
     sync?.taskChanged(memberId, _todayKey, taskId, approved);
     _addBalance(memberId, c.pointsAwarded);
+    _addNotice(
+      '$_approverName aprobó "${_templateById(taskId)?.name ?? 'la tarea'}" de ${memberById(memberId)?.nickname ?? 'tu hijo'} (+${c.pointsAwarded} pts)',
+      kind: NoticeKind.approval,
+      memberId: memberId,
+    );
     notifyListeners();
   }
 
@@ -292,7 +301,7 @@ class FamilyStore extends ChangeNotifier {
     sync?.taskChanged(memberId, _todayKey, goalId, completion);
     final goal = AdultGoal.all.where((g) => g.id == goalId).firstOrNull;
     final who = memberById(memberId)?.nickname;
-    if (goal?.notice != null && who != null) _addNotice('$who ${goal!.notice}');
+    if (goal?.notice != null && who != null) _addNotice('$who ${goal!.notice}', kind: NoticeKind.goal, memberId: memberId);
     notifyListeners();
     return true;
   }
@@ -371,7 +380,7 @@ class FamilyStore extends ChangeNotifier {
     if (HealthRules.reachedWaterGoal(log.glasses, waterGoal)) {
       _addBalance(memberId, 5);
       final who = memberById(memberId)?.nickname ?? 'Alguien';
-      _addNotice('$who llegó a su meta de agua');
+      _addNotice('$who llegó a su meta de agua', kind: NoticeKind.health, memberId: memberId);
     }
     notifyListeners();
   }
@@ -410,8 +419,8 @@ class FamilyStore extends ChangeNotifier {
     if (after != before) sync?.balanceChanged(memberId, after - before);
   }
 
-  void _addNotice(String text, {bool alert = false}) {
-    final notice = FamilyNotice(time: _clock(), text: text, isAlert: alert);
+  void _addNotice(String text, {bool alert = false, NoticeKind kind = NoticeKind.info, String? memberId}) {
+    final notice = FamilyNotice(time: _clock(), text: text, isAlert: alert, kind: alert ? NoticeKind.alert : kind, memberId: memberId);
     _notices.insert(0, notice);
     sync?.noticeAdded(notice);
   }
@@ -439,15 +448,24 @@ class FamilyStore extends ChangeNotifier {
     );
     _redemptions.add(redemption);
     sync?.redemptionSaved(redemption);
+    final who = memberById(memberId)?.nickname ?? 'Alguien';
+    _addNotice('$who pidió el premio: ${reward.name}', kind: NoticeKind.reward, memberId: memberId);
     notifyListeners();
     return true;
   }
+
+  String get _approverName => currentMember?.nickname ?? 'Un adulto';
 
   void approveRedemption(String redemptionId) {
     final r = _redemptionById(redemptionId);
     if (r == null || r.status != RedemptionStatus.pending) return;
     r.status = RedemptionStatus.approved;
     sync?.redemptionSaved(r);
+    _addNotice(
+      '$_approverName aprobó "${rewardById(r.rewardId)?.name ?? 'el premio'}" para ${memberById(r.memberId)?.nickname ?? 'tu hijo'}',
+      kind: NoticeKind.approval,
+      memberId: r.memberId,
+    );
     notifyListeners();
   }
 
@@ -459,6 +477,11 @@ class FamilyStore extends ChangeNotifier {
     sync?.redemptionSaved(r);
     final reward = rewardById(r.rewardId);
     if (reward != null) _addBalance(r.memberId, reward.cost);
+    _addNotice(
+      '$_approverName dejó para otro momento "${reward?.name ?? 'el premio'}" de ${memberById(r.memberId)?.nickname ?? 'tu hijo'} (se devolvieron los puntos)',
+      kind: NoticeKind.approval,
+      memberId: r.memberId,
+    );
     notifyListeners();
   }
 
@@ -618,8 +641,7 @@ class FamilyStore extends ChangeNotifier {
           for (final e in _history.entries) e.key: [for (final s in e.value) _summaryToJson(s)],
         },
         'notices': [
-          for (final n in _notices.take(50))
-            {'time': n.time.toIso8601String(), 'text': n.text, 'alert': n.isAlert},
+          for (final n in _notices.take(100)) noticeToJson(n, iso: true),
         ],
         'redemptions': [
           for (final r in _redemptions)
@@ -687,12 +709,7 @@ class FamilyStore extends ChangeNotifier {
     _notices
       ..clear()
       ..addAll([
-        for (final n in json['notices'] as List)
-          FamilyNotice(
-            time: DateTime.parse(n['time'] as String),
-            text: n['text'] as String,
-            isAlert: n['alert'] as bool,
-          ),
+        for (final n in json['notices'] as List) noticeFromJson((n as Map).cast<String, dynamic>()),
       ]);
     _redemptions
       ..clear()
@@ -812,6 +829,24 @@ class FamilyStore extends ChangeNotifier {
       ),
     );
   }
+
+  /// [iso]: fecha como texto (guardado local); si no, la deja como DateTime
+  /// para que la nube la convierta.
+  static Map<String, dynamic> noticeToJson(FamilyNotice n, {required bool iso}) => {
+        'time': iso ? n.time.toIso8601String() : n.time,
+        'text': n.text,
+        'alert': n.isAlert,
+        'kind': n.kind.name,
+        'member': n.memberId,
+      };
+
+  static FamilyNotice noticeFromJson(Map<String, dynamic> j, {DateTime? time}) => FamilyNotice(
+        time: time ?? DateTime.parse(j['time'] as String),
+        text: j['text'] as String,
+        isAlert: j['alert'] as bool? ?? false,
+        kind: NoticeKind.values.asNameMap()[j['kind']] ?? ((j['alert'] as bool? ?? false) ? NoticeKind.alert : NoticeKind.info),
+        memberId: j['member'] as String?,
+      );
 
   static Map<String, dynamic> templateToJson(TaskTemplate t) => {
         'id': t.id,
@@ -959,9 +994,9 @@ class FamilyStore extends ChangeNotifier {
       piggyBank: {'tomi': 640, 'luli': 420, 'mati': 310},
       history: {'tomi': buildHistory(0), 'luli': buildHistory(5), 'mati': buildHistory(11)},
       notices: [
-        FamilyNotice(time: today.subtract(const Duration(minutes: 40)), text: 'Tomi salió del colegio a horario'),
-        FamilyNotice(time: today.subtract(const Duration(hours: 1)), text: 'Luli llegó a su meta de agua'),
-        FamilyNotice(time: today.subtract(const Duration(hours: 2)), text: 'Mati lleva 2 días sin registrar popó', isAlert: true),
+        FamilyNotice(time: today.subtract(const Duration(minutes: 40)), text: 'Tomi salió del colegio a horario', kind: NoticeKind.task, memberId: 'tomi'),
+        FamilyNotice(time: today.subtract(const Duration(hours: 1)), text: 'Luli llegó a su meta de agua', kind: NoticeKind.health, memberId: 'luli'),
+        FamilyNotice(time: today.subtract(const Duration(hours: 2)), text: 'Mati lleva 2 días sin registrar popó', isAlert: true, kind: NoticeKind.alert, memberId: 'mati'),
       ],
       clock: clock,
     );
