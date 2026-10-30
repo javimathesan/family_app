@@ -86,7 +86,7 @@ void main() {
 
     await tester.tap(find.text('Papá'));
     await tester.pumpAndSettle();
-    expect(find.text('Adultos del hogar'), findsOneWidget);
+    expect(find.text('Mi día'), findsOneWidget);
 
     await tester.ensureVisible(find.text('Rutina y premios'));
     await tester.tap(find.text('Rutina y premios'));
