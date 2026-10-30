@@ -2,6 +2,12 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.9.0 — 2026-10-30 · Teléfono nuevo y avisos para los chicos
+
+- **Teléfono nuevo de alguien:** si alguien borra la app o cambia de celular, un adulto elige "Teléfono nuevo de alguien" en el menú del panel y muestra un QR. En el teléfono nuevo se escanea con "Me invitaron" y vuelve a entrar con el mismo perfil, puntos, avatar e historial. El teléfono anterior pierde el acceso. Si el adulto rechaza, el perfil no se borra: queda sin teléfono propio.
+- **Avisos para los chicos:** cuando un adulto les aprueba un premio o una tarea, les llega un aviso (con la app abierta o minimizada) y lo ven en "Para vos" en la pantalla Hoy.
+- **Reglas de Firestore actualizadas:** permiten que el teléfono nuevo se vincule a su perfil. Hay que volver a publicarlas.
+
 ## 0.8.0 — 2026-10-30 · Área de juegos
 
 - **Juegos:** nueva pestaña para los chicos y botón en el panel del adulto. Cuatro juegos por turnos: **Tres en raya**, **4 en línea**, **Ludo** (2 a 4 jugadores, con dado, casillas seguras, comer fichas y meta justa) y **Ajedrez** (con enroque, captura al paso, coronación, jaque mate y ahogado; muestra los movimientos posibles).
