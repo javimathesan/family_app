@@ -1,14 +1,15 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../app.dart';
 import '../../data/family_store.dart';
 import '../../models/models.dart';
 import '../../widgets/common.dart';
+import 'qr_scan_screen.dart';
 
 /// Alta de un miembro nuevo en 3 pasos: escanear, apodo y esperar confirmación.
 ///
-/// El escaneo real con cámara (paquete mobile_scanner) queda para la próxima
-/// iteración; por ahora se puede escribir el código o simular el escaneo.
+/// El código se lee con la cámara ([QrScanScreen]) o se escribe a mano.
 class JoinHomeScreen extends StatefulWidget {
   const JoinHomeScreen({super.key});
 
@@ -29,7 +30,16 @@ class _JoinHomeScreenState extends State<JoinHomeScreen> {
     super.dispose();
   }
 
-  static final _codePattern = RegExp(r'^FAM-[A-Z0-9]{4}$');
+  Future<void> _openScanner() async {
+    final code = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (_) => const QrScanScreen()),
+    );
+    if (!mounted || code == null) return;
+    setState(() {
+      _code.text = code;
+      _step = 1;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,18 +89,32 @@ class _JoinHomeScreenState extends State<JoinHomeScreen> {
   }
 
   Widget _scanStep(BuildContext context) {
-    final valid = _codePattern.hasMatch(_code.text.trim().toUpperCase());
+    final valid = Invitation.parseCode(_code.text) != null;
     return ListView(
       children: [
         Text('Unirme a mi hogar', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
         const SizedBox(height: 8),
-        Text('Apuntá la cámara al código QR que te muestra el adulto a cargo, o escribí el código.',
+        Text('Escaneá el código QR que te muestra el adulto a cargo, o escribí el código.',
             style: mutedText(context).copyWith(fontSize: 16)),
         const SizedBox(height: 16),
-        Container(
-          height: 220,
-          decoration: BoxDecoration(color: const Color(0xFF1E2235), borderRadius: BorderRadius.circular(28)),
-          child: const Center(child: Icon(Icons.qr_code_scanner, color: Colors.white, size: 96, semanticLabel: 'Visor de la cámara')),
+        Material(
+          color: const Color(0xFF1E2235),
+          borderRadius: BorderRadius.circular(28),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: _openScanner,
+            child: const SizedBox(
+              height: 220,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.qr_code_scanner, color: Colors.white, size: 96),
+                  SizedBox(height: 8),
+                  Text('Abrir la cámara', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 17)),
+                ],
+              ),
+            ),
+          ),
         ),
         const SizedBox(height: 16),
         TextField(
@@ -100,14 +124,23 @@ class _JoinHomeScreenState extends State<JoinHomeScreen> {
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 12),
-        FilledButton(onPressed: valid ? () => setState(() => _step = 1) : null, child: const Text('Continuar')),
-        TextButton(
-          onPressed: () => setState(() {
-            _code.text = 'FAM-DEMO';
-            _step = 1;
-          }),
-          child: const Text('Simular escaneo (demo)'),
+        FilledButton(
+          onPressed: valid
+              ? () => setState(() {
+                    _code.text = Invitation.parseCode(_code.text)!;
+                    _step = 1;
+                  })
+              : null,
+          child: const Text('Continuar'),
         ),
+        if (kDebugMode)
+          TextButton(
+            onPressed: () => setState(() {
+              _code.text = 'FAM-DEMO';
+              _step = 1;
+            }),
+            child: const Text('Simular escaneo (solo en desarrollo)'),
+          ),
       ],
     );
   }

@@ -405,6 +405,23 @@ class Invitation {
 
   /// Contenido del QR. No incluye datos personales: solo el código y el rol.
   String get qrPayload => 'familyapp://unirse?code=$code&rol=${role.name}';
+
+  static final codePattern = RegExp(r'^FAM-[A-Z0-9]{4}$');
+
+  /// Extrae el código de lo que leyó la cámara o escribió la persona.
+  ///
+  /// Acepta el enlace completo del QR (`familyapp://unirse?code=FAM-XXXX`) o
+  /// solo el código. Devuelve `null` si no es una invitación de family_app.
+  static String? parseCode(String raw) {
+    final text = raw.trim();
+    final uri = Uri.tryParse(text);
+    if (uri != null && uri.scheme == 'familyapp' && uri.host == 'unirse') {
+      final code = uri.queryParameters['code']?.toUpperCase();
+      return code != null && codePattern.hasMatch(code) ? code : null;
+    }
+    final code = text.toUpperCase();
+    return codePattern.hasMatch(code) ? code : null;
+  }
 }
 
 /// Da acceso al [FamilyStore] desde cualquier widget y lo reconstruye al cambiar.

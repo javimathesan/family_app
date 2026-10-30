@@ -83,4 +83,21 @@ void main() {
     expect(inv.code, matches(RegExp(r'^FAM-[A-Z0-9]{4}$')));
     expect(inv.qrPayload, isNot(contains('Tomi')));
   });
+
+  group('Invitation.parseCode', () {
+    test('lee el código desde el QR generado', () {
+      final inv = store.createInvitation(role: MemberRole.child);
+      expect(Invitation.parseCode(inv.qrPayload), inv.code);
+    });
+
+    test('acepta el código escrito a mano, sin importar mayúsculas', () {
+      expect(Invitation.parseCode(' fam-7k3q '), 'FAM-7K3Q');
+    });
+
+    test('rechaza QR que no son de Family App', () {
+      expect(Invitation.parseCode('https://example.com/?code=FAM-7K3Q'), isNull);
+      expect(Invitation.parseCode('familyapp://unirse?code=HOLA'), isNull);
+      expect(Invitation.parseCode('cualquier texto'), isNull);
+    });
+  });
 }
