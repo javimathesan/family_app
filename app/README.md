@@ -44,9 +44,24 @@ flutter analyze
 flutter test
 ```
 
-### APK de prueba sin compilar
+### Versión de prueba sin compilar (APK automático)
 
-Cada vez que se sube un cambio, GitHub compila la app. En la pestaña **Actions** del repositorio, abrí la última ejecución y descargá **family-app-debug-apk** (se guarda 7 días). Ese APK se compila sin la configuración real de Firebase: sirve para probar la demostración, no para conectar teléfonos.
+Cada vez que se sube un cambio a `main`, GitHub compila la app con la configuración real de Firebase y la clave de firma, y la publica siempre en el mismo enlace:
+
+**https://github.com/javimathesan/family_app/releases/download/prueba/family-app.apk**
+
+Abrilo desde el navegador del teléfono, descargalo e instalalo (aceptá instalar desde esa fuente). Cada versión nueva se instala encima de la anterior sin perder datos.
+
+Para que funcione, el repositorio necesita tres secretos en **Settings → Secrets and variables → Actions**: `GOOGLE_SERVICES_JSON`, `ANDROID_KEYSTORE_BASE64` y `ANDROID_KEY_PASSWORD`. Sin ellos GitHub igual verifica que compile, pero no publica la versión de prueba.
+
+### Clave de firma
+
+La app se firma con una clave propia (`upload-keystore.jks`), que **no** está en el repositorio. Para que lo que compilás en la PC se instale encima del APK de GitHub (y al revés), copiá en tu PC:
+
+- `upload-keystore.jks` → `app/android/app/`
+- `key.properties` → `app/android/`
+
+Guardá una copia de la clave en un lugar seguro: es la que se usará para publicar en Google Play.
 
 ## Cómo probarla
 

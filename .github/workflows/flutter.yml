@@ -32,9 +32,15 @@ jobs:
   compilar-android:
     runs-on: ubuntu-latest
     needs: analizar-y-probar
+    permissions:
+      contents: write
     defaults:
       run:
         working-directory: app
+    env:
+      GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -46,16 +52,56 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      # Configuración de Firebase de prueba (la real no está en el repo) para
-      # verificar que el plugin google-services compila con Gradle.
-      - name: google-services.json de prueba
+
+      # Configuración de Firebase: la real viene de un secreto del repositorio
+      # (no se sube al código porque el repo es público). Sin el secreto se usa
+      # una de prueba: la app compila pero solo ofrece la demostración.
+      - name: google-services.json
         run: |
-          cat > android/app/google-services.json <<'JSON'
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+            echo "REAL_FIREBASE=true" >> "$GITHUB_ENV"
+          else
+            cat > android/app/google-services.json <<'JSON'
           {"project_info":{"project_number":"000000000000","project_id":"ci-placeholder","storage_bucket":"ci-placeholder.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:000000000000:android:0000000000000000","android_client_info":{"package_name":"com.javimathesan.familyapp"}},"oauth_client":[],"api_key":[{"current_key":"AIzaPlaceholderPlaceholderPlaceholder00"}],"services":{"appinvite_service":{"other_platform_oauth_client":[]}}}],"configuration_version":"1"}
           JSON
-      - run: flutter build apk --debug
+          fi
+
+      # Clave de firma de Family App (secreto). Con ella, cada APK nuevo se
+      # instala encima del anterior sin perder datos.
+      - name: Clave de firma
+        run: |
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ] && [ -n "$ANDROID_KEY_PASSWORD" ]; then
+            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/upload-keystore.jks
+            printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=familyapp\nstoreFile=upload-keystore.jks\n' "$ANDROID_KEY_PASSWORD" "$ANDROID_KEY_PASSWORD" > android/key.properties
+            echo "SIGNED=true" >> "$GITHUB_ENV"
+          fi
+
+      # Sin la clave de firma, Gradle firma con la clave de depuración.
+      - name: Compilar APK
+        run: |
+          flutter build apk --release
+          cp build/app/outputs/flutter-apk/app-release.apk family-app.apk
+
       - uses: actions/upload-artifact@v4
         with:
-          name: family-app-debug-apk
-          path: app/build/app/outputs/flutter-apk/app-debug.apk
+          name: family-app-apk
+          path: app/family-app.apk
           retention-days: 7
+
+      # Versión de prueba siempre en el mismo enlace:
+      # https://github.com/javimathesan/family_app/releases/download/prueba/family-app.apk
+      - name: Publicar versión de prueba
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && env.REAL_FIREBASE == 'true' && env.SIGNED == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES="Versión de prueba de Family App, compilada automáticamente del commit ${GITHUB_SHA::7} el $(TZ=America/Argentina/Buenos_Aires date '+%d/%m/%Y %H:%M').
+
+          Para instalarla en Android: descargá family-app.apk, abrilo y aceptá instalar desde esta fuente. Se instala encima de la versión anterior sin perder datos."
+          if gh release view prueba >/dev/null 2>&1; then
+            gh release edit prueba --notes "$NOTES" --prerelease
+          else
+            gh release create prueba --title "Versión de prueba" --notes "$NOTES" --prerelease --target "$GITHUB_SHA"
+          fi
+          gh release upload prueba family-app.apk --clobber
