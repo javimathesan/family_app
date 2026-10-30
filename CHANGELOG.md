@@ -2,6 +2,13 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.6.0 — 2026-10-30 · Tareas por hijo, Mi día del adulto y PIN
+
+- **Tareas por hijo:** en Rutina y premios, "¿Para quién?" permite que una tarea sea para todos o solo para algunos hijos. La rutina, el progreso, la próxima tarea y el calendario de cada hijo cuentan solo sus tareas.
+- **Mi día del adulto:** metas diarias (ejercicio, lectura, jugar con los hijos, comida en familia sin celulares, amigos, menos pantallas). Se sincronizan, no dan puntos, y algunas avisan al hogar.
+- **PIN del modo adulto:** 4 números por teléfono para abrir perfiles de adulto desde "¿Quién usa la app?". Se pone, cambia o quita desde el menú del panel. Se guarda solo un resumen (SHA-256).
+- Los chicos ven un mensaje cuando no tienen tareas en un momento del día.
+
 ## 0.5.0 — 2026-10-30 · Rutina y premios editables
 
 - **Rutina y premios:** el adulto crea, edita y borra tareas (nombre, momento del día, hora, puntos y quién la valida) y premios (nombre, puntos e ícono). Se sincronizan con todos los teléfonos del hogar.

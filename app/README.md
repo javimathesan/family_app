@@ -105,9 +105,8 @@ test/                       Pruebas de reglas, estado, guardado y navegación
 
 ## Pendiente para próximas iteraciones
 
-- Notificaciones push al adulto (Firebase Cloud Messaging).
-- PIN para el modo adulto en un teléfono compartido.
+- Notificaciones push al adulto (Firebase Cloud Messaging + Cloud Functions; requiere plan Blaze).
 - Recuperar el acceso si se reinstala la app (hoy hay que volver a invitar al teléfono).
-- Que el adulto pueda editar tareas, horarios, puntos y premios.
+- Validación con foto real (cámara + Firebase Storage).
 - Ícono propio de la app y pantalla de inicio.
 - Modo oscuro elegible y más personalización (fondo, tamaño de texto, temas).
