@@ -2,6 +2,14 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.4.0 — 2026-10-30 · Avatares con disfraces
+
+- Disfraces originales que se desbloquean una vez con puntos: superhéroe, princesa, ninja, astronauta, pirata, dinosaurio, unicornio y uniforme estilo anime (sin personajes con marca registrada).
+- Corona: accesorio que se desbloquea con puntos.
+- Dibujo mejorado: contornos, manos, zapatos, orejas y brillo; peinados puntiagudo, coletas y rodete; ojos brillantes estilo anime; más colores.
+- Lo desbloqueado se guarda en el teléfono y en la nube.
+- Tocar el avatar en Hoy abre el editor.
+
 ## 0.3.0 — 2026-10-30 · Hogar compartido entre teléfonos (Firebase)
 
 ### Agregado
