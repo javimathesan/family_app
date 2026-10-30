@@ -88,12 +88,15 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Adultos del hogar'), findsOneWidget);
 
+    await tester.ensureVisible(find.text('Rutina y premios'));
     await tester.tap(find.text('Rutina y premios'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Agregar'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Pasear al perro');
     await tester.pump();
+    await tester.ensureVisible(find.text('Guardar'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Guardar'));
     await tester.pumpAndSettle();
 

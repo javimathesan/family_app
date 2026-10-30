@@ -54,14 +54,20 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('PIN del modo adulto'), findsOneWidget);
     await tester.enterText(find.byType(TextField), '1111');
-    await tester.tap(find.text('Aceptar'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Aceptar'));
     await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing, reason: 'el diálogo se cierra');
     expect(find.text('Mi familia'), findsNothing);
+    // Espera a que se vaya el aviso de PIN incorrecto.
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.text('Papá'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '4821');
-    await tester.tap(find.text('Aceptar'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Aceptar'));
     await tester.pumpAndSettle();
     expect(find.text('Mi familia'), findsOneWidget);
     expect(find.text('Mi día'), findsOneWidget);
