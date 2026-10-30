@@ -90,7 +90,8 @@ void main() {
       await tester.enterText(find.widgetWithText(TextField, 'Lugar (opcional)'), 'Clínica');
       await tester.tap(find.text('Tomi'));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('Guardar'));
+      await tester.dragUntilVisible(find.text('Guardar'), find.byType(ListView).last, const Offset(0, -300));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Guardar'));
       await tester.pumpAndSettle();
       expect(store.events.single.title, 'Turno médico');
