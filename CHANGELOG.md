@@ -2,6 +2,11 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.16.1 — 2026-10-31 · Arreglo en Juegos (modo oscuro)
+
+- Palabras y Tiro al blanco ahora son dos tarjetas lado a lado en "Para practicar", con el mismo estilo que los juegos. Antes estaban pegadas y, en modo oscuro, el título no se leía.
+- El repaso de Palabras también se lee bien en modo oscuro.
+
 ## 0.16.0 — 2026-10-31 · Palabras que no se terminan, Colorín, Tiro al blanco y familias amigas
 
 ### Palabras

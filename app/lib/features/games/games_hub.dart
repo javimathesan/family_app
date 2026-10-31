@@ -75,27 +75,33 @@ class GamesHub extends StatelessWidget {
           ),
         if (me.role.isAdult && session.isAdmin) _RuleCard(rule: store.gamesRule, minutes: store.gamesMinutes),
         const SizedBox(height: 8),
-        Card(
-          color: const Color(0xFFE3F2FD),
-          child: ListTile(
-            leading: const Text('🔤', style: TextStyle(fontSize: 30)),
-            title: const Text('Aprender palabras', style: TextStyle(fontWeight: FontWeight.w800)),
-            subtitle: const Text('Inglés, portugués y coreano con tarjetas y quiz. No gasta tiempo de juego.'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => Navigator.of(context).pushNamed(Routes.words),
-          ),
-        ),
-        Card(
-          color: const Color(0xFFE0F7FA),
-          child: ListTile(
-            leading: const Text('🎯', style: TextStyle(fontSize: 30)),
-            title: const Text('Tiro al blanco', style: TextStyle(fontWeight: FontWeight.w800)),
-            subtitle: Text('30 segundos de puntería · tu récord: ${store.bestScore(me.id, 'tiro')}'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: locked ? null : () => Navigator.of(context).pushNamed(Routes.target),
-          ),
-        ),
         const SizedBox(height: 8),
+        Text('Para practicar', style: sectionTitle(context)),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _QuickCard(
+                emoji: '🔤',
+                title: 'Palabras',
+                subtitle: 'Inglés, portugués y coreano · no gasta tiempo de juego',
+                color: const Color(0xFFBBDEFB),
+                onTap: () => Navigator.of(context).pushNamed(Routes.words),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _QuickCard(
+                emoji: '🎯',
+                title: 'Tiro al blanco',
+                subtitle: '30 segundos · tu récord: ${store.bestScore(me.id, 'tiro')}',
+                color: const Color(0xFFB2EBF2),
+                onTap: locked ? null : () => Navigator.of(context).pushNamed(Routes.target),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
         Text('Nuevo juego', style: sectionTitle(context)),
         const SizedBox(height: 8),
         GridView.count(
@@ -205,6 +211,47 @@ class GamesHub extends StatelessWidget {
     }
     final match = store.createMatch(kind, [me.id, ...result.rivals], sameDevice: result.sameDevice, friendshipId: result.friendshipId);
     Navigator.of(context).pushNamed(Routes.matchOf(match.id));
+  }
+}
+
+/// Acceso grande a Palabras o a un juego rápido, con el mismo estilo que los juegos.
+class _QuickCard extends StatelessWidget {
+  const _QuickCard({required this.emoji, required this.title, required this.subtitle, required this.color, required this.onTap});
+
+  final String emoji;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: onTap == null ? .45 : 1,
+      child: Material(
+        color: color,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: onTap,
+          child: SizedBox(
+            height: 140,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(emoji, style: const TextStyle(fontSize: 30)),
+                  const Spacer(),
+                  Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.black87)),
+                  Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

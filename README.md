@@ -3,7 +3,7 @@
 App móvil familiar que convierte la rutina diaria de los hijos en hábitos y responsabilidades. Cada tarea cumplida suma puntos que se canjean por premios, y los adultos siguen el progreso, la salud básica, la agenda y el ánimo del día desde su propio panel.
 
 - **Paquete:** `com.javimathesan.familyapp` (Android; iOS más adelante).
-- **Versión actual:** 0.16 (prueba). [Registro de cambios](CHANGELOG.md).
+- **Versión actual:** 0.16.1 (prueba). [Registro de cambios](CHANGELOG.md).
 - **Versión de prueba:** cada cambio en `main` publica el APK firmado en [la versión `prueba`](https://github.com/javimathesan/family_app/releases/tag/prueba).
 
 ## Qué tiene hoy (v0.16)

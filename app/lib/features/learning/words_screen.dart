@@ -84,7 +84,8 @@ class _WordsScreenState extends State<WordsScreen> {
             ],
             if (review.length >= 4) ...[
               const SizedBox(height: 12),
-              Card(
+              InfoCard(
+                padding: EdgeInsets.zero,
                 color: const Color(0xFFFFF3E0),
                 child: ListTile(
                   leading: const Text('🔁', style: TextStyle(fontSize: 28)),
