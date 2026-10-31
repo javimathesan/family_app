@@ -35,7 +35,7 @@ jobs:
           flutter test --machine > test-results.jsonl
           code=$?
           # Un aviso por prueba fallida, con lo que imprimió (el detalle del error).
-          jq -rs '
+          jq -cR 'fromjson? // empty' test-results.jsonl | jq -rs '
             (map(select(.type=="testStart")) | map({key: (.test.id|tostring), value: .test.name}) | from_entries) as $names
             | (map(select(.type=="error")) | map(.testID) | unique) as $failed
             | . as $all
@@ -43,7 +43,7 @@ jobs:
             | "::error title=" + (($names[($id|tostring)] // "prueba") | gsub("%";"%25") | gsub(":";"%3A") | gsub(",";"%2C"))
               + "::" + ([ $all[] | select((.type=="print" or .type=="error") and .testID==$id) | (.message // ((.error // "") + "\n" + (.stackTrace // ""))) ]
                         | join("\n") | .[0:6000] | gsub("%";"%25") | gsub("\r";"") | gsub("\n";"%0A"))
-          ' test-results.jsonl
+          '
           exit $code
 
   compilar-android:
