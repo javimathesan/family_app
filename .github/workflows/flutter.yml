@@ -36,7 +36,7 @@ jobs:
           code=$?
           # Un aviso por prueba fallida, con lo que imprimió (el detalle del error).
           echo "::notice title=pruebas::$(wc -l < test-results.jsonl) líneas"
-          jq -cR 'fromjson? // empty' test-results.jsonl > events.jsonl 2> jq1.err
+          jq -cR 'fromjson? | select(type=="object")' test-results.jsonl > events.jsonl 2> jq1.err
           jq -rs 2> jq2.err '
             (map(select(.type=="testStart")) | map({key: (.test.id|tostring), value: .test.name}) | from_entries) as $names
             | (map(select(.type=="error")) | map(.testID) | unique) as $failed
