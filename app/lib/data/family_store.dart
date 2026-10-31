@@ -66,6 +66,10 @@ class FamilyStore extends ChangeNotifier {
   final Set<String> _relinking = {};
   final List<GameMatch> _matches = [];
   final List<AgendaEvent> _events = [];
+
+  /// Familias amigas y partidas con ellas (solo en la nube).
+  final List<Friendship> _friendships = [];
+  final List<GameMatch> _sharedMatches = [];
   GamesRule _gamesRule = GamesRule.half;
 
   /// Minutos de juego por día para los chicos (0 = sin límite).
@@ -639,12 +643,24 @@ class FamilyStore extends ChangeNotifier {
     Map<String, int>? gameSeconds,
     List<AgendaEvent>? events,
     bool? plus,
+    List<Friendship>? friendships,
+    List<GameMatch>? sharedMatches,
     WeeklyChallenge? challenge,
     bool clearChallenge = false,
     FamilyCrest? crest,
   }) {
     if (crest != null) _crest = crest;
     if (plus != null) _plus = plus;
+    if (friendships != null) {
+      _friendships
+        ..clear()
+        ..addAll(friendships);
+    }
+    if (sharedMatches != null) {
+      _sharedMatches
+        ..clear()
+        ..addAll(sharedMatches);
+    }
     if (challenge != null || clearChallenge) _challenge = challenge;
     if (events != null) {
       _events
@@ -754,6 +770,8 @@ class FamilyStore extends ChangeNotifier {
       gameSeconds: const {},
       events: const [],
       plus: false,
+      friendships: const [],
+      sharedMatches: const [],
       clearChallenge: true,
     );
     _crest = null;

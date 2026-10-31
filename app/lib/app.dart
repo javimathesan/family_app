@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'data/app_session.dart';
 import 'data/family_store.dart';
 import 'features/adult/crest_screen.dart';
+import 'features/adult/friends_screen.dart';
 import 'features/adult/reliability_screen.dart';
 import 'features/adult/settings_screen.dart';
 import 'features/adult/tablet_mode_screen.dart';
@@ -50,6 +51,7 @@ abstract final class Routes {
   static const tablet = '/tablet';
   static const medals = '/medallas';
   static const room = '/mi-cuarto';
+  static const friends = '/amigos';
   static const match = '/juegos/partida';
   static const target = '/juegos/tiro';
 
@@ -101,6 +103,7 @@ class FamilyApp extends StatefulWidget {
       Routes.tablet => const TabletModeScreen(),
       Routes.medals => MedalsScreen(memberId: uri.queryParameters['id']),
       Routes.room => const RoomScreen(),
+      Routes.friends => FriendsScreen(initialCode: uri.queryParameters['code']),
       final p when p.startsWith('${Routes.words}/') => _wordGame(p.substring(Routes.words.length + 1), uri),
       Routes.target => const TargetGameScreen(),
       Routes.match => GameScreen(matchId: uri.queryParameters['id'] ?? ''),

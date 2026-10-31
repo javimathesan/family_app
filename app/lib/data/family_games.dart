@@ -3,23 +3,73 @@ part of 'family_store.dart';
 /// Área de juegos: partidas por turnos entre miembros del hogar.
 extension FamilyGames on FamilyStore {
   /// Partidas, la más reciente primero.
-  List<GameMatch> get matches => [..._matches]..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+  List<GameMatch> get matches => [..._matches, ..._sharedMatches]..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
 
   GameMatch? matchById(String id) {
-    for (final m in _matches) {
+    for (final m in [..._matches, ..._sharedMatches]) {
       if (m.id == id) return m;
     }
     return null;
+  }
+
+  void _saveMatch(GameMatch m) {
+    if (m.withFriends) {
+      sync?.sharedMatchSaved(m);
+    } else {
+      sync?.matchSaved(m);
+    }
   }
 
   List<GameMatch> matchesOf(String memberId) => [for (final m in matches) if (m.players.contains(memberId)) m];
 
   /// Partidas en las que le toca jugar.
   int myTurnCount(String memberId) =>
-      _matches.where((m) => !m.finished && m.currentPlayer == memberId).length;
+      matches.where((m) => !m.finished && m.currentPlayer == memberId).length;
 
-  /// Nombre para mostrar de un jugador.
-  String playerName(String id) => id == botPlayerId ? 'Robi' : (memberById(id)?.nickname ?? 'Alguien');
+  /// Nombre para mostrar de un jugador (de la familia, de una familia amiga o Robi).
+  String playerName(String id) {
+    if (id == botPlayerId) return 'Robi';
+    if (memberById(id) case final m?) return m.nickname;
+    for (final f in _friendships) {
+      for (final k in f.theirs) {
+        if (k.id == id) return k.nickname;
+      }
+    }
+    for (final g in _sharedMatches) {
+      if (g.names[id] case final n?) return n;
+    }
+    return 'Alguien';
+  }
+
+  /// Avatar de un jugador de una familia amiga (`null` si no es de afuera).
+  AvatarConfig? friendAvatar(String id) {
+    for (final f in _friendships) {
+      for (final k in f.theirs) {
+        if (k.id == id) return k.avatar;
+      }
+    }
+    return null;
+  }
+
+  List<Friendship> get friendships => [for (final f in _friendships) if (f.active) f];
+
+  /// Amigos de otras familias con los que puede jugar este miembro.
+  List<({Friendship friendship, FriendKid kid})> friendRivalsOf(String memberId) => [
+        for (final f in friendships)
+          if (f.mine.any((k) => k.id == memberId))
+            for (final k in f.theirs) (friendship: f, kid: k),
+      ];
+
+  /// Manda una reacción fija a la partida (sin chat libre).
+  void react(String matchId, String by, String text) {
+    final m = matchById(matchId);
+    if (m == null || !gameReactions.contains(text)) return;
+    m
+      ..reaction = text
+      ..reactionBy = by;
+    _saveMatch(m);
+    _changed();
+  }
 
   /// Los adultos juegan siempre; los chicos según la regla del hogar.
   bool canPlayGames(String memberId) => gamesLock(memberId) == null;
@@ -73,10 +123,9 @@ extension FamilyGames on FamilyStore {
 
   /// Borra las partidas terminadas en las que participó.
   int removeFinishedMatches(String memberId) {
-    final ids = [for (final m in _matches) if (m.finished && m.players.contains(memberId)) m.id];
+    final ids = [for (final m in matches) if (m.finished && m.players.contains(memberId)) m.id];
     for (final id in ids) {
-      _matches.removeWhere((m) => m.id == id);
-      sync?.matchRemoved(id);
+      removeMatch(id);
     }
     if (ids.isNotEmpty) _changed();
     return ids.length;
@@ -92,7 +141,7 @@ extension FamilyGames on FamilyStore {
   }
 
   /// Arranca una partida. [players] en orden de turno: el primero empieza.
-  GameMatch createMatch(GameKind kind, List<String> players, {bool sameDevice = false}) {
+  GameMatch createMatch(GameKind kind, List<String> players, {bool sameDevice = false, String? friendshipId}) {
     if (players.length < kind.minPlayers || players.length > kind.maxPlayers) {
       throw ArgumentError('${kind.label} es para ${kind.minPlayers} a ${kind.maxPlayers} jugadores');
     }
@@ -106,10 +155,16 @@ extension FamilyGames on FamilyStore {
       createdAt: now,
       updatedAt: now,
       state: initialGameState(kind, players.length),
-      sameDevice: sameDevice || players.contains(botPlayerId),
+      sameDevice: friendshipId == null && (sameDevice || players.contains(botPlayerId)),
+      friendshipId: friendshipId,
+      names: {for (final p in players) p: playerName(p)},
     );
-    _matches.add(match);
-    sync?.matchSaved(match);
+    if (friendshipId != null) {
+      _sharedMatches.add(match);
+    } else {
+      _matches.add(match);
+    }
+    _saveMatch(match);
     final others = [for (final p in players) if (p != creator) playerName(p)];
     _addNotice(
       '${playerName(creator)} empezó ${kind.label} con ${_joinNames(others)}',
@@ -139,7 +194,7 @@ extension FamilyGames on FamilyStore {
       ..draw = draw
       ..lastBy = mover
       ..updatedAt = _clock();
-    sync?.matchSaved(m);
+    _saveMatch(m);
     if (m.finished) {
       final text = draw
           ? '${m.kind.label}: empate entre ${_joinNames([for (final p in m.players) playerName(p)])}'
@@ -151,6 +206,13 @@ extension FamilyGames on FamilyStore {
 
   /// Borra la partida (abandonar o limpiar terminadas).
   void removeMatch(String matchId) {
+    final shared = _sharedMatches.where((m) => m.id == matchId).toList();
+    if (shared.isNotEmpty) {
+      _sharedMatches.removeWhere((m) => m.id == matchId);
+      sync?.sharedMatchRemoved(matchId);
+      _changed();
+      return;
+    }
     final before = _matches.length;
     _matches.removeWhere((m) => m.id == matchId);
     if (_matches.length == before) return;
@@ -202,6 +264,10 @@ Map<String, dynamic> _matchToJson(GameMatch m) => {
       'draw': m.draw,
       'sameDevice': m.sameDevice,
       'lastBy': m.lastBy,
+      'friendshipId': m.friendshipId,
+      'names': m.names,
+      'reaction': m.reaction,
+      'reactionBy': m.reactionBy,
     };
 
 GameMatch? _matchFromJson(Map<String, dynamic> j) {
@@ -220,6 +286,10 @@ GameMatch? _matchFromJson(Map<String, dynamic> j) {
     draw: j['draw'] as bool? ?? false,
     sameDevice: j['sameDevice'] as bool? ?? false,
     lastBy: j['lastBy'] as String?,
+    friendshipId: j['friendshipId'] as String?,
+    names: (j['names'] as Map?)?.map((k, v) => MapEntry(k as String, '$v')),
+    reaction: j['reaction'] as String?,
+    reactionBy: j['reactionBy'] as String?,
   );
 }
 

@@ -562,10 +562,26 @@ class GameMatch {
     this.draw = false,
     this.sameDevice = false,
     this.lastBy,
-  });
+    this.friendshipId,
+    Map<String, String>? names,
+    this.reaction,
+    this.reactionBy,
+  }) : names = names ?? {};
 
   final String id;
   final GameKind kind;
+
+  /// Si es una partida con una familia amiga: la amistad que la permite.
+  final String? friendshipId;
+
+  /// Apodos de los jugadores de la otra familia.
+  final Map<String, String> names;
+
+  /// Última reacción (frase o emoji fijo, sin chat libre) y quién la mandó.
+  String? reaction;
+  String? reactionBy;
+
+  bool get withFriends => friendshipId != null;
 
   /// Ids de los jugadores en orden de turno (puede incluir [botPlayerId]).
   final List<String> players;
@@ -788,3 +804,34 @@ class FamilyCrest {
     );
   }
 }
+
+// ------------------------------------------------------- familias amigas
+
+/// Un chico (o adulto) que una familia comparte con una familia amiga: solo
+/// apodo y avatar.
+@immutable
+class FriendKid {
+  const FriendKid({required this.id, required this.nickname, required this.avatar});
+  final String id;
+  final String nickname;
+  final AvatarConfig avatar;
+}
+
+/// Amistad entre dos hogares, aprobada por un adulto de cada uno.
+class Friendship {
+  Friendship({required this.id, required this.otherHome, required this.mine, required this.theirs, this.active = true});
+  final String id;
+
+  /// Nombre del otro hogar.
+  final String otherHome;
+
+  /// Quiénes de mi hogar pueden jugar con ellos.
+  final List<FriendKid> mine;
+
+  /// Quiénes del otro hogar pueden jugar con nosotros.
+  final List<FriendKid> theirs;
+  final bool active;
+}
+
+/// Reacciones fijas en las partidas: no hay chat libre.
+const gameReactions = ['👍 ¡Buena jugada!', '😄', '😮', '🤔', '⏰ ¡Te toca!', '🏆 ¡Bien jugado!', '🙌 ¡Revancha!'];

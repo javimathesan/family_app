@@ -44,4 +44,8 @@ abstract class FamilySync {
 
   /// Se borraron las novedades anteriores a esa fecha.
   void noticesDeleted(DateTime before);
+
+  /// Partidas con familias amigas (se guardan fuera del hogar).
+  void sharedMatchSaved(GameMatch match);
+  void sharedMatchRemoved(String matchId);
 }

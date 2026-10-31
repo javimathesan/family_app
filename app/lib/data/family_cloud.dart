@@ -335,6 +335,8 @@ class FamilyCloud implements FamilySync {
       ]);
     }, onError: onError));
 
+    _attachFriends(store, homeId, onError);
+
     _subs.add(_games(homeId).orderBy('updatedAt', descending: true).limit(30).snapshots().listen((snap) {
       store.applyRemote(matches: [
         for (final doc in snap.docs)
@@ -525,4 +527,145 @@ class FamilyCloud implements FamilySync {
         }
         await batch.commit();
       });
+
+  // ------------------------------------------------------- familias amigas
+
+  CollectionReference<Map<String, dynamic>> get _friendships => db.collection('friendships');
+  CollectionReference<Map<String, dynamic>> get _sharedGames => db.collection('sharedGames');
+
+  /// Qué lado (A o B) es este hogar en cada amistad.
+  final Map<String, String> _friendSide = {};
+  final Map<String, Map<String, dynamic>> _friendDocs = {};
+  final Map<String, Map<String, dynamic>> _sharedDocs = {};
+
+  static List<Map<String, dynamic>> kidsToJson(List<FriendKid> kids) => [
+        for (final k in kids) {'id': k.id, 'nickname': k.nickname, 'avatar': FamilyStore.avatarToJson(k.avatar)},
+      ];
+
+  static List<FriendKid> _kidsFrom(Object? raw) => [
+        if (raw is List)
+          for (final k in raw)
+            if (k is Map)
+              FriendKid(
+                id: k['id'] as String,
+                nickname: k['nickname'] as String? ?? 'Amigo',
+                avatar: FamilyStore.memberFromJson({'id': 'x', 'nickname': 'x', 'role': 'child', 'avatar': k['avatar']}).avatar,
+              ),
+      ];
+
+  void _attachFriends(FamilyStore store, String homeId, void Function(Object) onError) {
+    _friendSide.clear();
+    _friendDocs.clear();
+    _sharedDocs.clear();
+    void publishFriends() {
+      store.applyRemote(friendships: [
+        for (final e in _friendDocs.entries)
+          Friendship(
+            id: e.key,
+            otherHome: (_friendSide[e.key] == 'A' ? e.value['nameB'] : e.value['nameA']) as String? ?? 'Familia amiga',
+            mine: _kidsFrom(_friendSide[e.key] == 'A' ? e.value['kidsA'] : e.value['kidsB']),
+            theirs: _kidsFrom(_friendSide[e.key] == 'A' ? e.value['kidsB'] : e.value['kidsA']),
+            active: e.value['status'] == 'active',
+          ),
+      ]);
+    }
+
+    for (final side in ['A', 'B']) {
+      _subs.add(_friendships.where('home$side', isEqualTo: homeId).snapshots().listen((snap) {
+        _friendDocs.removeWhere((id, _) => _friendSide[id] == side);
+        for (final doc in snap.docs) {
+          _friendSide[doc.id] = side;
+          _friendDocs[doc.id] = doc.data();
+        }
+        publishFriends();
+      }, onError: onError));
+      _subs.add(_sharedGames.where('home$side', isEqualTo: homeId).snapshots().listen((snap) {
+        _sharedDocs.removeWhere((id, d) => d['home$side'] == homeId);
+        for (final doc in snap.docs) {
+          _sharedDocs[doc.id] = doc.data();
+        }
+        store.applyRemote(sharedMatches: [
+          for (final e in _sharedDocs.entries)
+            if (FamilyStore.matchFromJson({...e.value, 'id': e.key}) case final m?) m,
+        ]);
+      }, onError: onError));
+    }
+  }
+
+  /// Código para que otra familia se haga amiga (vence en 24 horas). [kids]
+  /// son los de este hogar que van a poder jugar con ellos.
+  Future<String> createFriendInvite({required String homeId, required String homeName, required List<FriendKid> kids}) async {
+    for (var attempt = 0; attempt < 5; attempt++) {
+      final code = 'AMI-${List.generate(4, (_) => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[_random.nextInt(32)]).join()}';
+      final ref = db.collection('friendInvites').doc(code);
+      if ((await ref.get()).exists) continue;
+      await ref.set({
+        'homeId': homeId,
+        'homeName': homeName,
+        'kids': kidsToJson(kids),
+        'createdBy': uid,
+        'expiresAt': Timestamp.fromDate(_clock().add(const Duration(hours: 24))),
+        'usedBy': null,
+      });
+      return code;
+    }
+    throw const JoinException('No se pudo generar un código. Probá de nuevo.');
+  }
+
+  /// Busca un código de amistad. Devuelve el nombre del otro hogar.
+  Future<({String homeId, String homeName})> lookupFriendInvite(String code) async {
+    final snap = await db.collection('friendInvites').doc(code.trim().toUpperCase()).get();
+    final data = snap.data();
+    if (data == null) throw const JoinException('Ese código no existe. Revisá que esté bien escrito.');
+    if (data['usedBy'] != null) throw const JoinException('Ese código ya se usó. Pedile uno nuevo a la otra familia.');
+    if ((data['expiresAt'] as Timestamp).toDate().isBefore(_clock())) {
+      throw const JoinException('El código venció. Pedile uno nuevo a la otra familia.');
+    }
+    if (data['homeId'] == _homeId) throw const JoinException('Ese código es de tu propio hogar.');
+    return (homeId: data['homeId'] as String, homeName: data['homeName'] as String? ?? 'Familia amiga');
+  }
+
+  /// Acepta el código: queda la amistad entre los dos hogares.
+  Future<void> acceptFriendInvite(String code, {required String homeName, required List<FriendKid> kids}) async {
+    final home = _homeId;
+    if (home == null) return;
+    final c = code.trim().toUpperCase();
+    final invite = (await db.collection('friendInvites').doc(c).get()).data()!;
+    final ref = _friendships.doc();
+    final batch = db.batch()
+      ..update(db.collection('friendInvites').doc(c), {'usedBy': uid})
+      ..set(ref, {
+        'homeA': invite['homeId'],
+        'nameA': invite['homeName'],
+        'kidsA': invite['kids'] ?? const [],
+        'homeB': home,
+        'nameB': homeName,
+        'kidsB': kidsToJson(kids),
+        'status': 'active',
+        'inviteCode': c,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    await batch.commit();
+  }
+
+  /// Cambia quiénes de este hogar pueden jugar con esa familia.
+  Future<void> setFriendKids(String friendshipId, List<FriendKid> kids) =>
+      _friendships.doc(friendshipId).update({'kids${_friendSide[friendshipId] ?? 'A'}': kidsToJson(kids)});
+
+  /// Termina la amistad: ya no se pueden crear ni seguir partidas.
+  Future<void> endFriendship(String friendshipId) => _friendships.doc(friendshipId).update({'status': 'ended'});
+
+  @override
+  void sharedMatchSaved(GameMatch match) => _write((h) async {
+        final f = _friendDocs[match.friendshipId];
+        if (f == null) return;
+        await _sharedGames.doc(match.id).set({
+          ...FamilyStore.matchToJson(match),
+          'homeA': f['homeA'],
+          'homeB': f['homeB'],
+        });
+      });
+
+  @override
+  void sharedMatchRemoved(String matchId) => _write((h) => _sharedGames.doc(matchId).delete());
 }

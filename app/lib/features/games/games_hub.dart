@@ -4,6 +4,7 @@ import '../../app.dart';
 import '../../data/app_session.dart';
 import '../../data/family_store.dart';
 import '../../models/models.dart';
+import '../../widgets/avatar_view.dart';
 import '../../widgets/common.dart';
 
 /// Área de juegos como pantalla propia (desde el panel del adulto).
@@ -172,14 +173,37 @@ class GamesHub extends StatelessWidget {
       for (final m in store.members)
         if (m.id != me.id && !store.isPendingMember(m.id)) m,
     ];
-    final result = await showModalBottomSheet<({List<String> rivals, bool sameDevice})>(
+    final result = await showModalBottomSheet<({List<String> rivals, bool sameDevice, String? friendshipId})>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (ctx) => _NewGameSheet(kind: kind, candidates: candidates, isDemo: !session.isCloud),
+      builder: (ctx) => _NewGameSheet(
+        kind: kind,
+        candidates: candidates,
+        friends: store.friendRivalsOf(me.id),
+        isDemo: !session.isCloud,
+      ),
     );
     if (result == null || !context.mounted) return;
-    final match = store.createMatch(kind, [me.id, ...result.rivals], sameDevice: result.sameDevice);
+    // La primera vez que un chico juega con otra familia, un recordatorio de seguridad.
+    if (result.friendshipId != null && !me.role.isAdult && !session.flag('seguridad_${me.id}')) {
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('🛡️ Jugar con otras familias'),
+          content: const Text(
+            'Solo jugás con familias que aprobaron tus papás.\n\n'
+            '• Nunca compartas tu nombre completo, dirección, colegio ni teléfono.\n'
+            '• No hay chat: solo reacciones.\n'
+            '• Si algo te hace sentir mal, contale a un adulto de tu casa.',
+          ),
+          actions: [FilledButton(onPressed: () => Navigator.pop(ctx), child: const Text('¡Entendido!'))],
+        ),
+      );
+      await session.setFlag('seguridad_${me.id}');
+      if (!context.mounted) return;
+    }
+    final match = store.createMatch(kind, [me.id, ...result.rivals], sameDevice: result.sameDevice, friendshipId: result.friendshipId);
     Navigator.of(context).pushNamed(Routes.matchOf(match.id));
   }
 }
@@ -320,7 +344,10 @@ class _RuleCard extends StatelessWidget {
 }
 
 class _NewGameSheet extends StatefulWidget {
-  const _NewGameSheet({required this.kind, required this.candidates, required this.isDemo});
+  const _NewGameSheet({required this.kind, required this.candidates, required this.friends, required this.isDemo});
+
+  /// Chicos de familias amigas con los que puede jugar.
+  final List<({Friendship friendship, FriendKid kid})> friends;
 
   final GameKind kind;
   final List<Member> candidates;
@@ -334,9 +361,35 @@ class _NewGameSheetState extends State<_NewGameSheet> {
   final List<String> _rivals = [];
   bool? _sameDevice;
 
+  /// Si eligió amigos de otra familia, la amistad (no se mezcla con Robi ni con otras).
+  String? _friendshipId;
+
   int get _maxRivals => widget.kind.maxPlayers - 1;
 
+  void _toggleFriend(Friendship f, String id) {
+    setState(() {
+      if (_friendshipId != f.id) {
+        _rivals.clear();
+        _friendshipId = f.id;
+      }
+      if (_rivals.contains(id)) {
+        _rivals.remove(id);
+        if (_rivals.isEmpty) _friendshipId = null;
+      } else if (_maxRivals == 1) {
+        _rivals
+          ..clear()
+          ..add(id);
+      } else if (_rivals.length < _maxRivals) {
+        _rivals.add(id);
+      }
+    });
+  }
+
   void _toggle(String id) {
+    if (_friendshipId != null) {
+      _rivals.clear();
+      _friendshipId = null;
+    }
     setState(() {
       if (_rivals.contains(id)) {
         _rivals.remove(id);
@@ -358,7 +411,8 @@ class _NewGameSheetState extends State<_NewGameSheet> {
   @override
   Widget build(BuildContext context) {
     final withBot = _rivals.contains(botPlayerId);
-    final sameDevice = withBot || (_sameDevice ?? _defaultSameDevice);
+    final withFriends = _friendshipId != null;
+    final sameDevice = !withFriends && (withBot || (_sameDevice ?? _defaultSameDevice));
     final ready = _rivals.length >= widget.kind.minPlayers - 1;
     return SafeArea(
       child: Padding(
@@ -389,7 +443,26 @@ class _NewGameSheetState extends State<_NewGameSheet> {
                   ),
               ],
             ),
+            if (widget.friends.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text('Familias amigas', style: mutedText(context).copyWith(fontWeight: FontWeight.w800)),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final f in widget.friends)
+                    FilterChip(
+                      avatar: AvatarView(config: f.kid.avatar, size: 22),
+                      label: Text('${f.kid.nickname} · ${f.friendship.otherHome}'),
+                      selected: _friendshipId == f.friendship.id && _rivals.contains(f.kid.id),
+                      onSelected: (_) => _toggleFriend(f.friendship, f.kid.id),
+                    ),
+                ],
+              ),
+            ],
             const SizedBox(height: 8),
+            if (!withFriends)
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               value: sameDevice,
@@ -403,7 +476,7 @@ class _NewGameSheetState extends State<_NewGameSheet> {
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                onPressed: ready ? () => Navigator.pop(context, (rivals: [..._rivals], sameDevice: sameDevice)) : null,
+                onPressed: ready ? () => Navigator.pop(context, (rivals: [..._rivals], sameDevice: sameDevice, friendshipId: _friendshipId)) : null,
                 icon: const Icon(Icons.play_arrow),
                 label: const Text('¡A jugar!'),
               ),

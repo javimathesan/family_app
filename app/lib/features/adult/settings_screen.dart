@@ -108,6 +108,8 @@ class SettingsScreen extends StatelessWidget {
                 tile(Icons.translate, 'Idiomas de Palabras', () => nav.pushNamed(Routes.words),
                     subtitle: store.languages.map((c) => switch (c) { 'en' => 'Inglés', 'pt' => 'Portugués', _ => 'Coreano' }).join(', ')),
                 tile(Icons.shield_outlined, 'Escudo de la familia', () => nav.pushNamed(Routes.crest)),
+                tile(Icons.diversity_3, 'Familias amigas', () => nav.pushNamed(Routes.friends),
+                    subtitle: store.friendships.isEmpty ? 'Jugar con otras familias' : '${store.friendships.length} amistades'),
                 tile(Icons.qr_code_2, 'Invitar con QR', () => nav.pushNamed(Routes.invite)),
                 tile(Icons.person_add_alt, 'Hijo sin celular', () => AdultHomeScreen.addChildWithoutPhone(context)),
                 if (session.isCloud) tile(Icons.phonelink_setup, 'Teléfono nuevo de alguien', () => AdultHomeScreen.relinkPhone(context)),

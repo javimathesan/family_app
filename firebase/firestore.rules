@@ -42,6 +42,48 @@ service cloud.firestore {
       allow delete: if isAdmin(resource.data.homeId);
     }
 
+    // ------------------------------------------------- familias amigas
+    // Una familia genera un código (un adulto administrador) y la otra lo
+    // acepta (otro adulto administrador): doble aprobación. Solo se
+    // comparten apodos y avatares de quienes cada familia elige.
+    match /friendInvites/{code} {
+      allow get: if signedIn();
+      allow create: if isAdmin(request.resource.data.homeId)
+        && request.resource.data.usedBy == null;
+      allow update: if signedIn()
+        && resource.data.usedBy == null
+        && resource.data.expiresAt > request.time
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedBy'])
+        && request.resource.data.usedBy == request.auth.uid;
+      allow delete: if isAdmin(resource.data.homeId);
+    }
+
+    match /friendships/{friendshipId} {
+      allow read: if isMember(resource.data.homeA);
+      allow read: if isMember(resource.data.homeB);
+      allow create: if isAdmin(request.resource.data.homeB)
+        && request.resource.data.status == 'active'
+        && getAfter(/databases/$(database)/documents/friendInvites/$(request.resource.data.inviteCode)).data.homeId == request.resource.data.homeA
+        && getAfter(/databases/$(database)/documents/friendInvites/$(request.resource.data.inviteCode)).data.usedBy == request.auth.uid;
+      // Cada familia cambia solo su lista; cualquiera de las dos puede terminarla.
+      allow update: if (isAdmin(resource.data.homeA)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['kidsA', 'status']))
+        || (isAdmin(resource.data.homeB)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['kidsB', 'status']));
+    }
+
+    // Partidas entre dos familias amigas (con la amistad activa).
+    match /sharedGames/{gameId} {
+      function friendsOk(data) {
+        return get(/databases/$(database)/documents/friendships/$(data.friendshipId)).data.status == 'active';
+      }
+      allow read: if isMember(resource.data.homeA);
+      allow read: if isMember(resource.data.homeB);
+      allow create, update: if (isMember(request.resource.data.homeA) || isMember(request.resource.data.homeB))
+        && friendsOk(request.resource.data);
+      allow delete: if isMember(resource.data.homeA) || isMember(resource.data.homeB);
+    }
+
     // Paquetes de palabras: los lee cualquier teléfono; se cargan desde la
     // consola o con tools/vocabulario.
     match /vocab/{packId} {

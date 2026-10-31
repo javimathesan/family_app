@@ -316,6 +316,26 @@ class AppSession extends ChangeNotifier {
 
   Future<Invitation> lookupInvite(String code) => _requireCloud().lookupInvite(code);
 
+  // ------------------------------------------------------- familias amigas
+
+  /// Miembros de este hogar como "amigos" para compartir (solo apodo y avatar).
+  List<FriendKid> asFriendKids(Iterable<Member> members) => [
+        for (final m in members) FriendKid(id: m.id, nickname: m.nickname, avatar: m.avatar),
+      ];
+
+  Future<String> createFriendInvite(List<Member> kids) =>
+      _requireCloud().createFriendInvite(homeId: homeId!, homeName: store.homeName, kids: asFriendKids(kids));
+
+  Future<({String homeId, String homeName})> lookupFriendInvite(String code) => _requireCloud().lookupFriendInvite(code);
+
+  Future<void> acceptFriendInvite(String code, List<Member> kids) =>
+      _requireCloud().acceptFriendInvite(code, homeName: store.homeName, kids: asFriendKids(kids));
+
+  Future<void> setFriendKids(String friendshipId, List<Member> kids) =>
+      _requireCloud().setFriendKids(friendshipId, asFriendKids(kids));
+
+  Future<void> endFriendship(String friendshipId) => _requireCloud().endFriendship(friendshipId);
+
   /// Se une al hogar de la invitación; queda esperando la aprobación.
   Future<void> joinHome(Invitation invite, String nickname) async {
     final c = _requireCloud();

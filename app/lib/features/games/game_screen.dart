@@ -70,8 +70,11 @@ class _GameScreenState extends State<GameScreen> {
     }
     final me = store.currentMember?.id ?? '';
     final locked = !store.canPlayGames(me);
+    // Con una familia amiga, solo mientras la amistad siga activa.
+    final friendsOk = !match.withFriends || store.friendships.any((f) => f.id == match.friendshipId);
     final canAct = !match.finished &&
         !locked &&
+        friendsOk &&
         match.currentPlayer != botPlayerId &&
         (match.currentPlayer == me || (match.sameDevice && match.players.contains(me)));
     _maybeBot(store, match, me);
@@ -102,6 +105,34 @@ class _GameScreenState extends State<GameScreen> {
             _StatusLine(match: match, me: me, locked: locked),
             const SizedBox(height: 12),
             _board(context, store, match, me, canAct),
+            if (match.players.contains(me) && !match.sameDevice) ...[
+              const SizedBox(height: 12),
+              if (match.reaction != null && match.reactionBy != null)
+                Center(
+                  child: Chip(
+                    avatar: const Icon(Icons.chat_bubble_outline, size: 18),
+                    label: Text('${store.playerName(match.reactionBy!)}: ${match.reaction}'),
+                  ),
+                ),
+              SizedBox(
+                height: 44,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    for (final r in gameReactions)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: ActionChip(label: Text(r), onPressed: () => store.react(match.id, me, r)),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+            if (match.withFriends && !friendsOk)
+              const Padding(
+                padding: EdgeInsets.only(top: 12),
+                child: Text('La amistad con esa familia terminó: la partida quedó pausada.', textAlign: TextAlign.center),
+              ),
             if (match.finished) ...[
               const SizedBox(height: 16),
               FilledButton.icon(
@@ -481,8 +512,12 @@ class _Players extends StatelessWidget {
                 children: [
                   if (member != null)
                     AvatarView(config: member.avatar, size: 32)
+                  else if (store.friendAvatar(id) case final a?)
+                    AvatarView(config: a, size: 32)
+                  else if (id == botPlayerId)
+                    const CircleAvatar(radius: 16, child: Icon(Icons.smart_toy_outlined, size: 20))
                   else
-                    const CircleAvatar(radius: 16, child: Icon(Icons.smart_toy_outlined, size: 20)),
+                    const CircleAvatar(radius: 16, child: Icon(Icons.person_outline, size: 20)),
                   const SizedBox(width: 6),
                   Container(
                     width: 12,
