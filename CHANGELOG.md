@@ -2,6 +2,13 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.13.0 — 2026-10-30 · Agenda personal, más disfraces y personalización
+
+- **Agenda personal:** los chicos también pueden agendar (un examen, entregar una maqueta…) con aviso o alarma. Lo ven ellos y los adultos, y a los adultos les llega en Novedades. Los adultos pueden marcar algo como **"Solo para mí"**: no aparece en la app de los demás ni les avisa. Cada uno edita lo suyo; los adultos, además, lo que no es privado.
+- **Disfraces nuevos:** bombero, doctora, mago, chef, futbolista y robot (se desbloquean con puntos), y accesorio moño. **De Family App Plus:** sirena, dragón, hada y caballero, y la aureola.
+- **Personalizar mi app** (paleta en Hoy o menú del adulto): modo automático, claro u **oscuro**, 4 colores y 4 fondos libres. Con Plus: 6 colores y 4 fondos más, y tarjetas de mi color, con borde o bien redondas. Cada miembro tiene su propia configuración y se guarda en la nube.
+- En la demostración, todo lo de Plus está abierto para probarlo.
+
 ## 0.12.0 — 2026-10-30 · Niveles de palabras, resumen semanal y reto de la semana
 
 - **Palabras por niveles:** el básico tiene los 7 temas de antes; el medio suma ropa, el cuerpo, el cielo y el clima, frutas y verduras, acciones y lugares; el avanzado trae frases útiles, días de la semana y emociones. El avanzado queda para **Family App Plus** (contenido pago, todavía sin cobro) y en la demostración está abierto para probarlo.
