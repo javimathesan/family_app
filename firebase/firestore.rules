@@ -22,6 +22,12 @@ service cloud.firestore {
       return signedIn() && request.auth.uid in homeData(homeId).adminUids;
     }
 
+    // El perfil (miembro) que usa este teléfono.
+    function isMe(homeId, memberId) {
+      return signedIn()
+        && get(/databases/$(database)/documents/homes/$(homeId)/members/$(memberId)).data.uid == request.auth.uid;
+    }
+
     // Invitaciones de un solo uso. Se leen por código (no se pueden listar).
     match /invites/{code} {
       allow get: if signedIn();
@@ -58,7 +64,16 @@ service cloud.firestore {
             && getAfter(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.usedBy == request.auth.uid);
         // Teléfono nuevo de un perfil existente: con una invitación para ese
         // perfil, solo puede ponerse como su teléfono y quedar pendiente.
-        allow update: if isMember(homeId)
+        // Los adultos administradores cambian cualquier perfil. Cada teléfono
+        // solo cambia el suyo: avatar, colores, cuarto y puntos (los puntos
+        // suben de a poco: tareas, quiz o reto; bajan al canjear).
+        allow update: if isAdmin(homeId)
+          || (isMember(homeId)
+            && resource.data.uid == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['nickname', 'avatar', 'accent', 'look', 'unlocked', 'balance', 'room'])
+            && (!('balance' in request.resource.data.diff(resource.data).affectedKeys())
+                || request.resource.data.balance - resource.data.balance <= 150))
           || (signedIn()
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['uid', 'pending', 'relink', 'inviteCode'])
             && request.resource.data.uid == request.auth.uid
@@ -69,17 +84,32 @@ service cloud.firestore {
         allow delete: if isAdmin(homeId);
       }
 
+      // Día de cada miembro: lo escribe su teléfono o un adulto administrador.
       match /days/{dayId} {
-        allow read, write: if isMember(homeId);
+        allow read: if isMember(homeId);
+        allow write: if isAdmin(homeId)
+          || (isMember(homeId)
+            && dayId.matches(request.resource.data.memberId + '_.*')
+            && isMe(homeId, request.resource.data.memberId));
       }
 
+      // Canjes: cada uno pide los suyos; solo los adultos aprueban o rechazan.
       match /redemptions/{redemptionId} {
-        allow read, write: if isMember(homeId);
+        allow read: if isMember(homeId);
+        allow create: if isAdmin(homeId)
+          || (isMember(homeId)
+            && request.resource.data.status == 'pending'
+            && isMe(homeId, request.resource.data.memberId));
+        allow update, delete: if isAdmin(homeId);
       }
 
-      // Agenda familiar.
+      // Agenda familiar: cada uno maneja lo suyo; los administradores, todo.
       match /events/{eventId} {
-        allow read, write: if isMember(homeId);
+        allow read: if isMember(homeId);
+        allow create: if isAdmin(homeId)
+          || (isMember(homeId) && isMe(homeId, request.resource.data.createdBy));
+        allow update, delete: if isAdmin(homeId)
+          || (isMember(homeId) && isMe(homeId, resource.data.createdBy));
       }
 
       // Partidas del Área de juegos.

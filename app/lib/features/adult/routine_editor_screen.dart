@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../data/app_session.dart';
 import '../../data/family_store.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
@@ -12,6 +13,10 @@ class RoutineEditorScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final session = SessionScope.of(context);
+    if (!session.flag('tour_routine')) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => session.setFlag('tour_routine'));
+    }
     return DefaultTabController(
       length: 2,
       child: Builder(
@@ -66,6 +71,7 @@ class _TasksTab extends StatelessWidget {
             InfoCard(
               padding: EdgeInsets.zero,
               child: ListTile(
+                leading: Text(t.icon, style: const TextStyle(fontSize: 26)),
                 title: Text(t.name, style: const TextStyle(fontWeight: FontWeight.w700)),
                 subtitle: Text('${hhmm(t.time)} · ${t.validation.label} · ${_whoLabel(store, t)}'),
                 trailing: Text('+${t.points}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
@@ -127,6 +133,7 @@ class _TaskFormState extends State<_TaskForm> {
   late int _points = widget.task?.points ?? 5;
   late Validation _validation = widget.task?.validation ?? Validation.self;
   late Set<String> _assigned = {...?widget.task?.assignedTo};
+  late String? _emoji = widget.task?.emoji;
 
   @override
   void dispose() {
@@ -160,6 +167,26 @@ class _TaskFormState extends State<_TaskForm> {
               ),
               onChanged: (_) => setState(() {}),
             ),
+            Text('Dibujito', style: sectionTitle(context)),
+            const SizedBox(height: 6),
+            SizedBox(
+              height: 48,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  for (final e in taskEmojis)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: ChoiceChip(
+                        label: Text(e, style: const TextStyle(fontSize: 20)),
+                        selected: (_emoji ?? taskEmojiFor(widget.task?.id ?? '', name)) == e,
+                        onSelected: (_) => setState(() => _emoji = e),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
             Text('Momento del día', style: sectionTitle(context)),
             const SizedBox(height: 6),
             Wrap(
@@ -296,6 +323,7 @@ class _TaskFormState extends State<_TaskForm> {
                                 validation: _validation,
                                 windowMinutes: widget.task?.windowMinutes ?? 30,
                                 assignedTo: _assigned,
+                                emoji: _emoji,
                               ),
                             ),
                           ),

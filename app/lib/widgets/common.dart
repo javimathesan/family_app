@@ -49,8 +49,11 @@ class IconBadge extends StatelessWidget {
   }
 }
 
-TextStyle mutedText(BuildContext context) =>
-    const TextStyle(fontSize: 13, color: AppColors.muted);
+TextStyle mutedText(BuildContext context) => TextStyle(
+      fontSize: 13,
+      // En modo oscuro el gris es más claro para que se lea bien.
+      color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFFA6ACC0) : AppColors.muted,
+    );
 
 TextStyle? sectionTitle(BuildContext context) =>
     Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800);

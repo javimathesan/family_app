@@ -30,7 +30,8 @@ abstract final class AppTheme {
 
   static ThemeData _build(Color accent, Brightness brightness, MemberLook look) {
     final isDark = brightness == Brightness.dark;
-    final bgOption = LookOptions.backgrounds[look.background.clamp(0, LookOptions.backgrounds.length - 1)].color;
+    final world = look.world > 0 && look.world < LookOptions.worlds.length ? LookOptions.worlds[look.world] : null;
+    final bgOption = world?.background ?? LookOptions.backgrounds[look.background.clamp(0, LookOptions.backgrounds.length - 1)].color;
     // En oscuro, el fondo elegido apenas tiñe el gris noche.
     final ground = isDark ? Color.lerp(const Color(0xFF12141D), bgOption, 0.06)! : bgOption;
     final baseSurface = isDark ? const Color(0xFF1B1E2B) : AppColors.card;

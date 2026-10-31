@@ -218,7 +218,7 @@ class _Stat extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(label, style: mutedText(context).copyWith(fontSize: 12, fontWeight: FontWeight.w700)),
-            Text(value, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.ink)),
+            Text(value, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
           ],
         ),
       ),

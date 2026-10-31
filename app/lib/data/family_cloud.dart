@@ -257,6 +257,7 @@ class FamilyCloud implements FamilySync {
         plus: data['plus'] == true,
         challenge: WeeklyChallenge.fromJson(data['challenge']),
         clearChallenge: data['challenge'] == null,
+        crest: FamilyCrest.fromJson(data['crest']),
         languages: data['languages'] is List ? (data['languages'] as List).cast<String>() : null,
       );
     }, onError: onError));
@@ -397,6 +398,7 @@ class FamilyCloud implements FamilySync {
         'avatar': FamilyStore.avatarToJson(member.avatar),
         'unlocked': member.unlocked.toList(),
         'look': member.look.toJson(),
+        'room': member.room,
       }));
 
   @override

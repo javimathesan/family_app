@@ -69,8 +69,7 @@ void main() {
     await tester.pumpWidget(FamilyApp(store: store, session: session));
     await tester.tap(find.text('Papá'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.widgetWithText(OutlinedButton, 'Juegos'));
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Juegos'));
+    await tester.tap(find.widgetWithText(NavigationDestination, 'Juegos'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Reglas de juego de los chicos'));
     await tester.pumpAndSettle();

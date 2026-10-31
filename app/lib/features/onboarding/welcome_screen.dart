@@ -6,6 +6,7 @@ import '../../data/family_store.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/avatar_view.dart';
 import '../../widgets/common.dart';
+import '../../widgets/crest_badge.dart';
 import '../../widgets/pin_dialog.dart';
 
 /// Inicio: elegir qué hacer la primera vez, esperar aprobación o elegir perfil.
@@ -143,11 +144,25 @@ class _ProfilePicker extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 32, 20, 24),
       children: [
-        Text('Family App', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
-        const SizedBox(height: 4),
-        Text(
-          session.isDemo ? '${store.homeName} · demostración' : (store.homeName.isEmpty ? 'Cargando tu hogar…' : store.homeName),
-          style: mutedText(context).copyWith(fontSize: 15),
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Family App', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 4),
+                  Text(
+                    session.isDemo ? '${store.homeName} · demostración' : (store.homeName.isEmpty ? 'Cargando tu hogar…' : store.homeName),
+                    style: mutedText(context).copyWith(fontSize: 15),
+                  ),
+                  if (store.crest?.motto.isNotEmpty ?? false)
+                    Text('"${store.crest!.motto}"', style: mutedText(context).copyWith(fontStyle: FontStyle.italic)),
+                ],
+              ),
+            ),
+            if (store.crest != null) CrestBadge(crest: store.crest!, size: 64),
+          ],
         ),
         const SizedBox(height: 24),
         Text('¿Quién usa la app?', style: sectionTitle(context)),
@@ -175,6 +190,14 @@ class _ProfilePicker extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
+        ],
+        if (profiles.where((m) => !m.role.isAdult).length > 1) ...[
+          const SizedBox(height: 4),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.of(context).pushNamed(Routes.tablet),
+            icon: const Icon(Icons.tablet_android),
+            label: const Text('Modo tablet familiar'),
+          ),
         ],
         if (session.isDemo) ...[
           const SizedBox(height: 12),

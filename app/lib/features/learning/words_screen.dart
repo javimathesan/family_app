@@ -7,6 +7,7 @@ import '../../data/app_session.dart';
 import '../../data/family_store.dart';
 import '../../learning/vocabulary.dart';
 import '../../services/speech.dart';
+import '../../widgets/celebration.dart';
 import '../../widgets/common.dart';
 
 /// Idiomas que ve el hogar (en el orden de [Lang]).
@@ -375,6 +376,7 @@ class _WordQuizScreenState extends State<WordQuizScreen> {
       _index = _quiz.length;
       _awarded = points;
     });
+    if (points > 0) celebrate(context, text: '+$points pts');
   }
 
   @override

@@ -50,8 +50,12 @@ extension FamilyGames on FamilyStore {
     final before = gameSecondsToday(memberId);
     final after = before + seconds;
     _gameSeconds[memberId] = after;
-    if (after ~/ 60 != before ~/ 60) sync?.gameTimeChanged(memberId, FamilyStore.dayKey(_clock()), after);
-    _changed();
+    // Se avisa (y se guarda en la nube) solo al completar cada minuto, para no
+    // redibujar las pantallas cada 10 segundos.
+    if (after ~/ 60 != before ~/ 60) {
+      sync?.gameTimeChanged(memberId, FamilyStore.dayKey(_clock()), after);
+      _changed();
+    }
   }
 
   void setGamesMinutes(int minutes) {
@@ -168,6 +172,9 @@ extension FamilyGames on FamilyStore {
     day[wordQuizId] = completion;
     sync?.taskChanged(memberId, FamilyStore.dayKey(_clock()), wordQuizId, completion);
     _addBalance(memberId, correct);
+    // Para la medalla de palabras: los días que hizo el quiz.
+    m.unlocked.add('quiz:${FamilyStore.dayKey(_clock())}');
+    sync?.memberUpdated(m);
     _addNotice('${m.nickname} practicó $language: $correct de 5 en el quiz de palabras', kind: NoticeKind.game, memberId: memberId);
     _changed();
     return correct;

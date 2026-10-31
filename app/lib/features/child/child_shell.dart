@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../data/family_store.dart';
+import '../../widgets/world_backdrop.dart';
 import '../games/games_hub.dart';
 import 'calendar_screen.dart';
 import 'rewards_screen.dart';
@@ -33,7 +34,10 @@ class _ChildShellState extends State<ChildShell> {
     final me = store.currentMember;
     final myTurn = me == null ? 0 : store.myTurnCount(me.id);
     return Scaffold(
-      body: SafeArea(child: IndexedStack(index: _index, children: pages)),
+      body: WorldBackdrop(
+        world: me?.look.world ?? 0,
+        child: SafeArea(child: IndexedStack(index: _index, children: pages)),
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: _go,

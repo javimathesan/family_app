@@ -294,10 +294,6 @@ class _RuleCard extends StatelessWidget {
   final GamesRule rule;
   final int minutes;
 
-  static const minuteOptions = [0, 15, 30, 45, 60, 90];
-
-  static String minutesLabel(int m) => m == 0 ? 'Sin límite' : '$m min';
-
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -306,70 +302,7 @@ class _RuleCard extends StatelessWidget {
         title: const Text('Reglas de juego de los chicos', style: TextStyle(fontWeight: FontWeight.w700)),
         subtitle: Text('${rule.label} · ${minutes == 0 ? 'sin límite de tiempo' : '$minutes min por día'}'),
         trailing: const Icon(Icons.edit_outlined),
-        onTap: () => showModalBottomSheet<void>(
-          context: context,
-          showDragHandle: true,
-          isScrollControlled: true,
-          builder: (ctx) => ListenableBuilder(
-            listenable: FamilyScope.of(context),
-            builder: (ctx, _) {
-              final store = FamilyScope.of(context);
-              return SafeArea(
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
-                        child: Text('Cuándo pueden jugar (los adultos juegan siempre)', style: TextStyle(fontWeight: FontWeight.w800)),
-                      ),
-                      RadioGroup<GamesRule>(
-                        groupValue: store.gamesRule,
-                        onChanged: (r) {
-                          if (r != null) store.setGamesRule(r);
-                        },
-                        child: Column(
-                          children: [
-                            for (final r in GamesRule.values)
-                              RadioListTile<GamesRule>(
-                                value: r,
-                                title: Text(r.label, style: const TextStyle(fontWeight: FontWeight.w700)),
-                                subtitle: Text(r.description),
-                              ),
-                          ],
-                        ),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
-                        child: Text('Tiempo de juego por día', style: TextStyle(fontWeight: FontWeight.w800)),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            for (final m in minuteOptions)
-                              ChoiceChip(
-                                label: Text(minutesLabel(m)),
-                                selected: store.gamesMinutes == m,
-                                onSelected: (_) => store.setGamesMinutes(m),
-                              ),
-                          ],
-                        ),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        child: Text('Cuenta el tiempo con una partida abierta. Aprender palabras no gasta tiempo de juego.'),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
+        onTap: () => showGameRules(context),
       ),
     );
   }
@@ -470,3 +403,75 @@ class _NewGameSheetState extends State<_NewGameSheet> {
     );
   }
 }
+
+/// Reglas de juego de los chicos: cuándo pueden jugar y cuántos minutos.
+Future<void> showGameRules(BuildContext context) {
+  return showModalBottomSheet<void>(
+          context: context,
+          showDragHandle: true,
+          isScrollControlled: true,
+          builder: (ctx) => ListenableBuilder(
+            listenable: FamilyScope.of(context),
+            builder: (ctx, _) {
+              final store = FamilyScope.of(context);
+              return SafeArea(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        child: Text('Cuándo pueden jugar (los adultos juegan siempre)', style: TextStyle(fontWeight: FontWeight.w800)),
+                      ),
+                      RadioGroup<GamesRule>(
+                        groupValue: store.gamesRule,
+                        onChanged: (r) {
+                          if (r != null) store.setGamesRule(r);
+                        },
+                        child: Column(
+                          children: [
+                            for (final r in GamesRule.values)
+                              RadioListTile<GamesRule>(
+                                value: r,
+                                title: Text(r.label, style: const TextStyle(fontWeight: FontWeight.w700)),
+                                subtitle: Text(r.description),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
+                        child: Text('Tiempo de juego por día', style: TextStyle(fontWeight: FontWeight.w800)),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final m in _minuteOptions)
+                              ChoiceChip(
+                                label: Text(_minutesLabel(m)),
+                                selected: store.gamesMinutes == m,
+                                onSelected: (_) => store.setGamesMinutes(m),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        child: Text('Cuenta el tiempo con una partida abierta. Aprender palabras no gasta tiempo de juego.'),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+}
+
+const _minuteOptions = [0, 15, 30, 45, 60, 90];
+
+String _minutesLabel(int m) => m == 0 ? 'Sin límite' : '$m min';

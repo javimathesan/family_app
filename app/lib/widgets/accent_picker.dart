@@ -123,6 +123,38 @@ Future<void> showAccentPicker(BuildContext context) {
                       ),
                   ],
                 ),
+                title('Festejo'),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (var i = 0; i < LookOptions.parties.length; i++)
+                      ChoiceChip(
+                        avatar: Text(LookOptions.parties[i].emoji),
+                        label: Text(LookOptions.parties[i].plus && !plus ? '${LookOptions.parties[i].name} ⭐' : LookOptions.parties[i].name),
+                        selected: look.party == i,
+                        onSelected: (_) => LookOptions.parties[i].plus && !plus
+                            ? _plusSoon(sheetContext)
+                            : store.setLook(me.id, look.copyWith(party: i)),
+                      ),
+                  ],
+                ),
+                title('Mundo ⭐'),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (var i = 0; i < LookOptions.worlds.length; i++)
+                      ChoiceChip(
+                        avatar: i == 0 ? null : Text(LookOptions.worlds[i].emojis.characters.first),
+                        label: Text(LookOptions.worlds[i].name),
+                        selected: look.world == i,
+                        onSelected: (_) => i > 0 && !plus
+                            ? _plusSoon(sheetContext)
+                            : store.setLook(me.id, look.copyWith(world: i)),
+                      ),
+                  ],
+                ),
                 title('Tarjetas'),
                 Wrap(
                   spacing: 8,

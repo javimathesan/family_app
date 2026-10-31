@@ -9,6 +9,8 @@ import 'family_sync.dart';
 
 part 'family_agenda.dart';
 part 'family_challenge.dart';
+part 'family_room.dart';
+part 'family_medals.dart';
 part 'family_games.dart';
 
 /// Estado del hogar en memoria.
@@ -75,6 +77,16 @@ class FamilyStore extends ChangeNotifier {
 
   /// Reto de la semana (o `null` si no hay).
   WeeklyChallenge? _challenge;
+
+  /// Escudo de la familia (o `null` si todavía no lo armaron).
+  FamilyCrest? _crest;
+  FamilyCrest? get crest => _crest;
+
+  void setCrest(FamilyCrest crest) {
+    _crest = crest;
+    sync?.homeSettingsChanged({'crest': crest.toJson()});
+    notifyListeners();
+  }
   bool get hasPlus => _plus;
 
   /// Segundos jugados hoy por cada miembro.
@@ -148,7 +160,7 @@ class FamilyStore extends ChangeNotifier {
     _addBalance(memberId, -cost);
     m.unlocked.add(itemId);
     sync?.memberUpdated(m);
-    _addNotice('${m.nickname} desbloqueó algo nuevo para su avatar', memberId: memberId);
+    _addNotice('${m.nickname} desbloqueó algo nuevo con sus puntos', memberId: memberId);
     notifyListeners();
     return true;
   }
@@ -617,7 +629,9 @@ class FamilyStore extends ChangeNotifier {
     bool? plus,
     WeeklyChallenge? challenge,
     bool clearChallenge = false,
+    FamilyCrest? crest,
   }) {
+    if (crest != null) _crest = crest;
     if (plus != null) _plus = plus;
     if (challenge != null || clearChallenge) _challenge = challenge;
     if (events != null) {
@@ -730,6 +744,7 @@ class FamilyStore extends ChangeNotifier {
       plus: false,
       clearChallenge: true,
     );
+    _crest = null;
   }
 
   // ------------------------------------------------------------ persistencia
@@ -755,6 +770,7 @@ class FamilyStore extends ChangeNotifier {
         'gamesRule': _gamesRule.name,
         'gamesMinutes': _gamesMinutes,
         'challenge': _challenge?.toJson(),
+        'crest': _crest?.toJson(),
         'languages': _languages,
         'gameSeconds': _gameSeconds,
         'matches': [for (final m in _matches) _matchToJson(m)],
@@ -816,6 +832,7 @@ class FamilyStore extends ChangeNotifier {
     _gamesRule = GamesRule.values.asNameMap()[json['gamesRule']] ?? GamesRule.half;
     _gamesMinutes = json['gamesMinutes'] as int? ?? 0;
     _challenge = WeeklyChallenge.fromJson(json['challenge']);
+    _crest = FamilyCrest.fromJson(json['crest']);
     _events
       ..clear()
       ..addAll([for (final e in (json['events'] as List?) ?? const []) _eventFromJson((e as Map).cast<String, dynamic>())]);
@@ -939,6 +956,7 @@ class FamilyStore extends ChangeNotifier {
         'avatar': avatarToJson(m.avatar),
         'unlocked': m.unlocked.toList(),
         'look': m.look.toJson(),
+        'room': m.room,
       };
 
   static Map<String, dynamic> avatarToJson(AvatarConfig a) => {
@@ -963,6 +981,7 @@ class FamilyStore extends ChangeNotifier {
       uid: j['uid'] as String?,
       unlocked: {...?(j['unlocked'] as List?)?.cast<String>()},
       look: MemberLook.fromJson(j['look']),
+      room: (j['room'] as Map?)?.cast<String, dynamic>(),
       avatar: AvatarConfig(
         skin: (a['skin'] as num?)?.toInt() ?? 1,
         hairStyle: (a['hairStyle'] as num?)?.toInt() ?? 0,
@@ -1004,6 +1023,7 @@ class FamilyStore extends ChangeNotifier {
         'validation': t.validation.name,
         'window': t.windowMinutes,
         'assigned': t.assignedTo.toList(),
+        'emoji': t.emoji,
       };
 
   static TaskTemplate templateFromJson(Map<String, dynamic> j) => TaskTemplate(
@@ -1015,6 +1035,7 @@ class FamilyStore extends ChangeNotifier {
         validation: Validation.values.asNameMap()[j['validation']] ?? Validation.self,
         windowMinutes: (j['window'] as num?)?.toInt() ?? 30,
         assignedTo: {...?(j['assigned'] as List?)?.cast<String>()},
+        emoji: j['emoji'] as String?,
       );
 
   static Map<String, dynamic> rewardToJson(Reward r) => {

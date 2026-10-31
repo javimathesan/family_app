@@ -3,7 +3,12 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'data/app_session.dart';
 import 'data/family_store.dart';
-import 'features/adult/adult_home_screen.dart';
+import 'features/adult/crest_screen.dart';
+import 'features/adult/reliability_screen.dart';
+import 'features/adult/settings_screen.dart';
+import 'features/adult/tablet_mode_screen.dart';
+import 'features/child/medals_screen.dart';
+import 'features/child/room_screen.dart';
 import 'features/adult/notices_screen.dart';
 import 'features/adult/routine_editor_screen.dart';
 import 'features/adult/week_report_screen.dart';
@@ -38,13 +43,18 @@ abstract final class Routes {
   static const agenda = '/agenda';
   static const week = '/adulto/semana';
   static const privacy = '/privacidad';
+  static const reliability = '/ajustes/avisos';
+  static const crest = '/ajustes/escudo';
+  static const tablet = '/tablet';
+  static const medals = '/medallas';
+  static const room = '/mi-cuarto';
   static const match = '/juegos/partida';
 
   /// Ruta de una partida.
   static String matchOf(String id) => '$match?id=$id';
 }
 
-class FamilyApp extends StatelessWidget {
+class FamilyApp extends StatefulWidget {
   const FamilyApp({super.key, required this.store, required this.session});
 
   final FamilyStore store;
@@ -57,7 +67,7 @@ class FamilyApp extends StatelessWidget {
     final uri = Uri.tryParse(settings.name ?? Routes.welcome) ?? Uri();
     final Widget page = switch (uri.path) {
       Routes.child => const ChildShell(),
-      Routes.adult => const AdultHomeScreen(),
+      Routes.adult => const AdultShell(),
       Routes.invite => InviteScreen(relinkMemberId: uri.queryParameters['relink']),
       Routes.routine => const RoutineEditorScreen(),
       Routes.notices => const NoticesScreen(),
@@ -69,6 +79,11 @@ class FamilyApp extends StatelessWidget {
       Routes.agenda => const AgendaScreen(),
       Routes.week => const WeekReportScreen(),
       Routes.privacy => const PrivacyScreen(),
+      Routes.reliability => const ReliabilityScreen(),
+      Routes.crest => const CrestScreen(),
+      Routes.tablet => const TabletModeScreen(),
+      Routes.medals => MedalsScreen(memberId: uri.queryParameters['id']),
+      Routes.room => const RoomScreen(),
       '${Routes.words}/tarjetas' => FlashcardsScreen(
           lang: Lang.byCode(uri.queryParameters['lang'] ?? '') ?? Lang.en,
           topic: topicById(uri.queryParameters['topic'] ?? ''),
@@ -84,16 +99,53 @@ class FamilyApp extends StatelessWidget {
   }
 
   @override
+  State<FamilyApp> createState() => _FamilyAppState();
+}
+
+/// Colores de quien usa la app. Solo avisa cuando cambian, así marcar una
+/// tarea no vuelve a armar toda la app.
+typedef _Looks = ({Color accent, MemberLook look});
+
+class _FamilyAppState extends State<FamilyApp> {
+  late final ValueNotifier<_Looks> _looks = ValueNotifier(_current());
+
+  _Looks _current() {
+    final member = widget.store.currentMember;
+    final look = member?.look ?? const MemberLook();
+    // Un mundo temático (Plus) trae su propio color.
+    final world = look.world > 0 && look.world < LookOptions.worlds.length ? LookOptions.worlds[look.world] : null;
+    return (accent: world?.accent ?? member?.accent ?? AppColors.defaultAccent, look: look);
+  }
+
+  void _onStore() {
+    final next = _current();
+    if (next != _looks.value) _looks.value = next;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    widget.store.addListener(_onStore);
+  }
+
+  @override
+  void dispose() {
+    widget.store.removeListener(_onStore);
+    _looks.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SessionScope(
-      session: session,
+      session: widget.session,
       child: FamilyScope(
-        store: store,
-        child: ListenableBuilder(
-          listenable: store,
-          builder: (context, _) {
-            final accent = store.currentMember?.accent ?? AppColors.defaultAccent;
-            final look = store.currentMember?.look ?? const MemberLook();
+        store: widget.store,
+        child: ValueListenableBuilder<_Looks>(
+          valueListenable: _looks,
+          builder: (context, looks, _) {
+            final accent = looks.accent;
+            final look = looks.look;
             return MaterialApp(
               title: 'Family App',
               debugShowCheckedModeBanner: false,
@@ -107,7 +159,16 @@ class FamilyApp extends StatelessWidget {
               locale: const Locale('es', 'AR'),
               supportedLocales: const [Locale('es', 'AR'), Locale('en')],
               localizationsDelegates: GlobalMaterialLocalizations.delegates,
-              onGenerateRoute: onGenerateRoute,
+              onGenerateRoute: FamilyApp.onGenerateRoute,
+              // En tablets el contenido queda centrado y no se estira de lado a lado.
+              builder: (context, child) => LayoutBuilder(
+                builder: (context, box) => box.maxWidth <= 900
+                    ? child!
+                    : ColoredBox(
+                        color: Theme.of(context).scaffoldBackgroundColor,
+                        child: Center(child: SizedBox(width: 900, child: child)),
+                      ),
+              ),
             );
           },
         ),

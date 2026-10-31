@@ -111,7 +111,7 @@ void main() {
       await tester.pumpWidget(FamilyApp(store: store, session: session));
       await tester.tap(find.text('Papá'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(OutlinedButton, 'Agenda'));
+      await tester.tap(find.widgetWithText(NavigationDestination, 'Agenda'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Agregar'));
       await tester.pumpAndSettle();

@@ -56,6 +56,27 @@ class LocalNotifier with WidgetsBindingObserver {
     _scheduleAgenda();
   }
 
+  AndroidFlutterLocalNotificationsPlugin? get _android =>
+      _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+
+  /// Si el teléfono deja mostrar avisos (`null` si no se sabe).
+  Future<bool?> notificationsEnabled() async {
+    try {
+      return await _android?.areNotificationsEnabled();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Si puede hacer sonar alarmas a la hora exacta (`null` si no se sabe).
+  Future<bool?> exactAlarmsAllowed() async {
+    try {
+      return await _android?.canScheduleExactNotifications();
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Permiso para que los recordatorios con alarma suenen a la hora exacta.
   Future<void> askExactAlarms() async {
     if (!_ready) return;

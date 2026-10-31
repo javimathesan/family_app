@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show listEquals;
 
 /// Rol de un miembro dentro del hogar.
 enum MemberRole {
@@ -106,7 +107,9 @@ class Member {
     this.uid,
     Set<String>? unlocked,
     this.look = const MemberLook(),
-  }) : unlocked = unlocked ?? {};
+    Map<String, dynamic>? room,
+  })  : unlocked = unlocked ?? {},
+        room = room ?? {};
 
   final String id;
 
@@ -124,6 +127,9 @@ class Member {
 
   /// Cómo ve su app: modo claro u oscuro, fondo y tarjetas.
   MemberLook look;
+
+  /// Su cuarto y su mascota: qué eligió en cada lugar y el nombre de la mascota.
+  final Map<String, dynamic> room;
 }
 
 /// Modo de color de la app.
@@ -139,7 +145,15 @@ enum LookMode {
 /// Personalización de cada miembro. Algunas opciones son de Family App Plus.
 @immutable
 class MemberLook {
-  const MemberLook({this.mode = LookMode.system, this.background = 0, this.cards = 0});
+  const MemberLook({
+    this.mode = LookMode.system,
+    this.background = 0,
+    this.cards = 0,
+    this.party = 0,
+    this.world = 0,
+    this.home = const [],
+    this.hidden = const [],
+  });
 
   final LookMode mode;
 
@@ -149,10 +163,44 @@ class MemberLook {
   /// Índice de [LookOptions.cards].
   final int cards;
 
-  MemberLook copyWith({LookMode? mode, int? background, int? cards}) =>
-      MemberLook(mode: mode ?? this.mode, background: background ?? this.background, cards: cards ?? this.cards);
+  /// Festejo al completar algo: índice de [LookOptions.parties].
+  final int party;
 
-  Map<String, dynamic> toJson() => {'mode': mode.name, 'bg': background, 'cards': cards};
+  /// Mundo temático (0 = ninguno): índice de [LookOptions.worlds].
+  final int world;
+
+  /// Orden de las tarjetas de la pantalla Hoy (ids) y las que se ocultan.
+  final List<String> home;
+  final List<String> hidden;
+
+  MemberLook copyWith({
+    LookMode? mode,
+    int? background,
+    int? cards,
+    int? party,
+    int? world,
+    List<String>? home,
+    List<String>? hidden,
+  }) =>
+      MemberLook(
+        mode: mode ?? this.mode,
+        background: background ?? this.background,
+        cards: cards ?? this.cards,
+        party: party ?? this.party,
+        world: world ?? this.world,
+        home: home ?? this.home,
+        hidden: hidden ?? this.hidden,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'mode': mode.name,
+        'bg': background,
+        'cards': cards,
+        'party': party,
+        'world': world,
+        'home': home,
+        'hidden': hidden,
+      };
 
   static MemberLook fromJson(Object? raw) {
     if (raw is! Map) return const MemberLook();
@@ -160,15 +208,26 @@ class MemberLook {
       mode: LookMode.values.asNameMap()[raw['mode']] ?? LookMode.system,
       background: (raw['bg'] as num?)?.toInt() ?? 0,
       cards: (raw['cards'] as num?)?.toInt() ?? 0,
+      party: (raw['party'] as num?)?.toInt() ?? 0,
+      world: (raw['world'] as num?)?.toInt() ?? 0,
+      home: ((raw['home'] as List?) ?? const []).cast<String>().toList(),
+      hidden: ((raw['hidden'] as List?) ?? const []).cast<String>().toList(),
     );
   }
 
   @override
   bool operator ==(Object other) =>
-      other is MemberLook && other.mode == mode && other.background == background && other.cards == cards;
+      other is MemberLook &&
+      other.mode == mode &&
+      other.background == background &&
+      other.cards == cards &&
+      other.party == party &&
+      other.world == world &&
+      listEquals(other.home, home) &&
+      listEquals(other.hidden, hidden);
 
   @override
-  int get hashCode => Object.hash(mode, background, cards);
+  int get hashCode => Object.hash(mode, background, cards, party, world, Object.hashAll(home), Object.hashAll(hidden));
 }
 
 /// Opciones de personalización. Las marcadas `plus` son de Family App Plus.
@@ -182,6 +241,25 @@ abstract final class LookOptions {
     (name: 'Rosa', color: Color(0xFFFFEDF4), plus: true),
     (name: 'Durazno', color: Color(0xFFFFEBDD), plus: true),
     (name: 'Cielo noche', color: Color(0xFFE3E7FF), plus: true),
+  ];
+
+  /// Festejos al completar una tarea, un reto o ganar.
+  static const parties = <({String name, String emoji, bool plus})>[
+    (name: 'Confeti', emoji: '🎉', plus: false),
+    (name: 'Estrellas', emoji: '⭐', plus: false),
+    (name: 'Globos', emoji: '🎈', plus: false),
+    (name: 'Corazones', emoji: '💖', plus: true),
+    (name: 'Fuegos artificiales', emoji: '🎆', plus: true),
+  ];
+
+  /// Mundos temáticos de Family App Plus: color, fondo y dibujitos.
+  static const worlds = <({String name, String emojis, Color accent, Color background})>[
+    (name: 'Ninguno', emojis: '', accent: Color(0xFF2563EB), background: Color(0xFFF5F6FA)),
+    (name: 'Espacio', emojis: '🚀🪐⭐🌙👽', accent: Color(0xFF4338CA), background: Color(0xFFE6E8FF)),
+    (name: 'Océano', emojis: '🐠🐙🐚🌊🐬', accent: Color(0xFF0369A1), background: Color(0xFFE0F2FE)),
+    (name: 'Dinosaurios', emojis: '🦖🦕🌋🌿🥚', accent: Color(0xFF15803D), background: Color(0xFFE7F7E9)),
+    (name: 'Castillo', emojis: '🏰👑🦄✨🌸', accent: Color(0xFFBE185D), background: Color(0xFFFFEAF3)),
+    (name: 'Selva', emojis: '🐒🦜🌴🐯🍌', accent: Color(0xFFB45309), background: Color(0xFFFFF3DC)),
   ];
 
   static const cards = <({String name, bool plus})>[
@@ -214,11 +292,18 @@ class TaskTemplate {
     this.validation = Validation.self,
     this.windowMinutes = 30,
     this.assignedTo = const {},
+    this.emoji,
   });
 
   final String id;
   final String name;
   final DayBlock block;
+
+  /// Dibujito de la tarea (lo puede elegir la familia).
+  final String? emoji;
+
+  /// El emoji elegido o uno según el nombre de la tarea.
+  String get icon => emoji ?? taskEmojiFor(id, name);
 
   /// Hijos a los que les toca. Vacío = a todos.
   final Set<String> assignedTo;
@@ -241,9 +326,11 @@ class TaskTemplate {
     Validation? validation,
     int? windowMinutes,
     Set<String>? assignedTo,
+    String? emoji,
   }) =>
       TaskTemplate(
         id: id,
+        emoji: emoji ?? this.emoji,
         name: name ?? this.name,
         block: block ?? this.block,
         time: time ?? this.time,
@@ -615,5 +702,83 @@ class WeeklyChallenge {
     final type = ChallengeType.values.asNameMap()[raw['type']];
     if (type == null) return null;
     return WeeklyChallenge(type: type, target: (raw['target'] as num).toInt(), bonus: (raw['bonus'] as num).toInt());
+  }
+}
+
+/// Emojis para elegir en las tareas.
+const taskEmojis = [
+  '⏰', '🪥', '🛏️', '🥣', '🍽️', '🧽', '🎒', '🏫', '⚽', '🏠', '🛁', '📚', '✏️', '🌙',
+  '🐶', '🐱', '🌱', '🧹', '👕', '🧸', '🎹', '🎨', '💧', '🍎', '🚲', '📖', '🗑️', '🧺',
+];
+
+/// Emoji por defecto según la tarea.
+String taskEmojiFor(String id, String name) {
+  const byId = {
+    'levantarse': '⏰',
+    'aseo': '🧼',
+    'cama': '🛏️',
+    'desayuno': '🥣',
+    'mesa': '🍽️',
+    'vajilla': '🧽',
+    'dientes_am': '🪥',
+    'dientes_pm': '🪥',
+    'utiles': '🎒',
+    'entrada': '🏫',
+    'salida': '🚸',
+    'deporte': '⚽',
+    'llegar': '🏠',
+    'banio': '🛁',
+    'estudiar': '📚',
+    'cena': '🍽️',
+  };
+  if (byId[id] case final e?) return e;
+  final n = name.toLowerCase();
+  const byWord = {
+    'perro': '🐶', 'gato': '🐱', 'mascota': '🐾', 'planta': '🌱', 'regar': '🌱', 'ropa': '👕',
+    'juguete': '🧸', 'leer': '📖', 'estudi': '📚', 'tarea': '✏️', 'diente': '🪥', 'baño': '🛁',
+    'cama': '🛏️', 'basura': '🗑️', 'agua': '💧', 'comer': '🍽️', 'música': '🎹', 'piano': '🎹',
+  };
+  for (final e in byWord.entries) {
+    if (n.contains(e.key)) return e.value;
+  }
+  return '⭐';
+}
+
+// ------------------------------------------------------- escudo familiar
+
+/// Escudo de la familia: forma, color y dibujo.
+@immutable
+class FamilyCrest {
+  const FamilyCrest({this.shape = 0, this.color = 0xFF2563EB, this.emoji = '🏠', this.motto = ''});
+
+  /// 0 escudo, 1 círculo, 2 estrella, 3 corazón.
+  final int shape;
+  final int color;
+  final String emoji;
+
+  /// Lema corto (opcional), por ejemplo "Juntos podemos".
+  final String motto;
+
+  static const shapes = ['Escudo', 'Círculo', 'Estrella', 'Corazón'];
+  static const emojis = ['🏠', '🦁', '🐻', '🦉', '🌻', '⭐', '🌈', '⚽', '🎵', '🚀', '🌳', '❤️', '🐬', '🦊', '🍀', '👑'];
+  static const colors = [0xFF2563EB, 0xFF0F766E, 0xFF7C3AED, 0xFFC2410C, 0xFFDB2777, 0xFFDC2626, 0xFF15803D, 0xFF1E2235];
+
+  FamilyCrest copyWith({int? shape, int? color, String? emoji, String? motto}) => FamilyCrest(
+        shape: shape ?? this.shape,
+        color: color ?? this.color,
+        emoji: emoji ?? this.emoji,
+        motto: motto ?? this.motto,
+      );
+
+  Map<String, dynamic> toJson() => {'shape': shape, 'color': color, 'emoji': emoji, 'motto': motto};
+
+  static FamilyCrest? fromJson(Object? raw) {
+    if (raw is! Map) return null;
+    return FamilyCrest(
+      shape: (raw['shape'] as num?)?.toInt() ?? 0,
+      color: (raw['color'] as num?)?.toInt() ?? 0xFF2563EB,
+      emoji: raw['emoji'] as String? ?? '🏠',
+      motto: raw['motto'] as String? ?? '',
+    );
   }
 }

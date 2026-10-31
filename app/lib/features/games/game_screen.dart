@@ -11,6 +11,7 @@ import '../../games/ludo.dart';
 import '../../games/tateti.dart';
 import '../../models/models.dart';
 import '../../widgets/avatar_view.dart';
+import '../../widgets/celebration.dart';
 import '../../widgets/common.dart';
 import 'boards.dart';
 
@@ -31,6 +32,9 @@ class _GameScreenState extends State<GameScreen> {
 
   /// Cuenta el tiempo de juego de los chicos mientras la partida está abierta.
   Timer? _clock;
+
+  /// Para festejar solo las partidas que terminan con la pantalla abierta.
+  final DateTime _openedAt = DateTime.now();
 
   @override
   void initState() {
@@ -69,6 +73,11 @@ class _GameScreenState extends State<GameScreen> {
         match.currentPlayer != botPlayerId &&
         (match.currentPlayer == me || (match.sameDevice && match.players.contains(me)));
     _maybeBot(store, match, me);
+    if (!match.finished) {
+      _celebrated = false;
+    } else if (match.updatedAt.isAfter(_openedAt)) {
+      _maybeCelebrate(match, me);
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -336,6 +345,20 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   // --------------------------------------------------------------- Robi
+
+  /// Festeja una sola vez cuando gana alguien que juega en este teléfono.
+  bool _celebrated = false;
+
+  void _maybeCelebrate(GameMatch match, String me) {
+    if (_celebrated || match.winner == null) return;
+    final winner = match.players[match.winner!];
+    if (winner == botPlayerId || !(winner == me || match.sameDevice)) return;
+    _celebrated = true;
+    final store = FamilyScope.of(context);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) celebrate(context, text: '¡Ganó ${store.playerName(winner)}! 🏆');
+    });
+  }
 
   void _maybeBot(FamilyStore store, GameMatch match, String me) {
     if (match.finished || match.currentPlayer != botPlayerId || !match.players.contains(me)) return;

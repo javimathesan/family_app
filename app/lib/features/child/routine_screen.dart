@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../data/family_store.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
+import '../../services/speech.dart';
+import '../../widgets/celebration.dart';
 import '../../widgets/common.dart';
 
 /// Rutina del día agrupada por bloques (mañana, colegio, tarde, noche).
@@ -102,7 +104,9 @@ class _TaskTile extends StatelessWidget {
     final completion = store.completionOf(memberId, task.id);
     final done = completion != null;
     final pending = completion?.pendingApproval ?? false;
-    final subtitle = pending ? 'Esperando que un adulto lo valide' : '${hhmm(task.time)} · ${task.validation.label}';
+    final subtitle = pending ? 'Esperando que un adulto lo valide' : '${hhmm(task.time)} · ${task.validation.label} · +${task.points} pts';
+    // Los más chicos ven todo más grande y pueden escuchar la tarea.
+    final peques = store.memberById(memberId)?.mode == AgeMode.peques;
 
     return Material(
       color: Theme.of(context).colorScheme.surface,
@@ -114,23 +118,34 @@ class _TaskTile extends StatelessWidget {
         value: done,
         onChanged: (_) {
           final points = store.toggleTask(memberId, task.id);
-          if (points > 0) {
-            final msg = task.validation == Validation.self
-                ? '¡Bien! +$points pts'
-                : 'Listo. Se suman cuando un adulto lo valide.';
+          if (points > 0 && task.validation == Validation.self) {
+            celebrate(context, text: '¡Bien! +$points pts');
+          } else if (points > 0) {
             ScaffoldMessenger.of(context)
               ..hideCurrentSnackBar()
-              ..showSnackBar(SnackBar(content: Text(msg), duration: const Duration(seconds: 2)));
+              ..showSnackBar(const SnackBar(content: Text('Listo. Se suman cuando un adulto lo valide.'), duration: Duration(seconds: 2)));
           }
         },
         controlAffinity: ListTileControlAffinity.leading,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Text(task.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-        subtitle: Text(subtitle, style: mutedText(context)),
-        secondary: Text(
-          '+${task.points}',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: done ? accent : AppColors.muted),
+        title: Row(
+          children: [
+            Text(task.icon, style: TextStyle(fontSize: peques ? 30 : 22)),
+            const SizedBox(width: 8),
+            Expanded(child: Text(task.name, style: TextStyle(fontWeight: FontWeight.w700, fontSize: peques ? 19 : null))),
+          ],
         ),
+        subtitle: Text(subtitle, style: mutedText(context)),
+        secondary: peques
+            ? IconButton(
+                tooltip: 'Escuchar',
+                onPressed: () => Speech.instance.say(task.name, 'es-ES'),
+                icon: const Icon(Icons.volume_up),
+              )
+            : Text(
+                '+${task.points}',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: done ? accent : AppColors.muted),
+              ),
       ),
     );
   }

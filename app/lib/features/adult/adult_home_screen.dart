@@ -6,9 +6,9 @@ import '../../data/family_store.dart';
 import '../../domain/points.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
-import '../../widgets/accent_picker.dart';
 import '../../widgets/avatar_view.dart';
 import '../../widgets/common.dart';
+import '../../widgets/crest_badge.dart';
 import '../../widgets/mood_face.dart';
 import '../../widgets/pin_dialog.dart';
 
@@ -59,7 +59,18 @@ class AdultHomeScreen extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      Text('Mi familia', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text('Mi familia',
+                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
+                          ),
+                          if (store.crest != null) ...[
+                            const SizedBox(width: 8),
+                            CrestBadge(crest: store.crest!, size: 32),
+                          ],
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -71,25 +82,6 @@ class AdultHomeScreen extends StatelessWidget {
                     label: Text('${session.unreadNotices > 99 ? '99+' : session.unreadNotices}'),
                     child: const Icon(Icons.notifications_none),
                   ),
-                ),
-                PopupMenuButton<String>(
-                  tooltip: 'Más opciones',
-                  onSelected: (value) => _onMenu(context, value),
-                  itemBuilder: (_) => [
-                    const PopupMenuItem(value: 'switch', child: Text('Cambiar de usuario')),
-                    PopupMenuItem(value: 'pin', child: Text(session.hasPin ? 'Cambiar o quitar el PIN' : 'Poner PIN al modo adulto')),
-                    const PopupMenuItem(value: 'look', child: Text('Personalizar mi app')),
-                    const PopupMenuItem(value: 'week', child: Text('Resumen de la semana')),
-                    if (session.isAdmin) const PopupMenuItem(value: 'challenge', child: Text('Reto de la semana')),
-                    if (session.isCloud && session.isAdmin)
-                      const PopupMenuItem(value: 'relink', child: Text('Teléfono nuevo de alguien')),
-                    const PopupMenuItem(value: 'privacy', child: Text('Privacidad y datos')),
-                    if (session.isDemo) ...const [
-                      PopupMenuItem(value: 'reset', child: Text('Restablecer datos de ejemplo')),
-                      PopupMenuItem(value: 'leave', child: Text('Salir de la demostración')),
-                    ] else
-                      const PopupMenuItem(value: 'leave', child: Text('Desvincular este teléfono')),
-                  ],
                 ),
               ],
             ),
@@ -106,6 +98,7 @@ class AdultHomeScreen extends StatelessWidget {
                 ),
               ],
             ),
+            if (session.isCloud && session.isAdmin && !session.flag('tour_hidden')) const _FirstSteps(),
             if (session.isAdmin) ...[
               const SizedBox(height: 12),
               FilledButton.icon(
@@ -127,7 +120,7 @@ class AdultHomeScreen extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () => _addChildWithoutPhone(context),
+                      onPressed: () => addChildWithoutPhone(context),
                       icon: const Icon(Icons.person_add_alt),
                       label: const Text('Hijo sin celular'),
                     ),
@@ -135,30 +128,6 @@ class AdultHomeScreen extends StatelessWidget {
                 ],
               ),
             ],
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => Navigator.of(context).pushNamed(Routes.agenda),
-                    icon: const Icon(Icons.event_note_outlined),
-                    label: const Text('Agenda'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => Navigator.of(context).pushNamed(Routes.games),
-                    icon: Badge(
-                      isLabelVisible: me != null && store.myTurnCount(me.id) > 0,
-                      label: Text('${me == null ? 0 : store.myTurnCount(me.id)}'),
-                      child: const Icon(Icons.sports_esports_outlined),
-                    ),
-                    label: const Text('Juegos'),
-                  ),
-                ),
-              ],
-            ),
             if (me != null)
               for (final e in store.eventsOn(store.now, me.id).where((e) => e.at.isAfter(store.now)).take(2))
                 Padding(
@@ -308,7 +277,7 @@ class AdultHomeScreen extends StatelessWidget {
   }
 
   /// El adulto elige el reto de la semana para los chicos.
-  Future<void> _editChallenge(BuildContext context) async {
+  static Future<void> editChallenge(BuildContext context) async {
     final store = FamilyScope.of(context);
     var type = store.challenge?.type ?? ChallengeType.rutina;
     var target = store.challenge?.target ?? type.targets[1];
@@ -392,7 +361,7 @@ class AdultHomeScreen extends StatelessWidget {
   }
 
   /// Elige a quién se le cambió o borró el teléfono y muestra su QR.
-  Future<void> _relinkPhone(BuildContext context) async {
+  static Future<void> relinkPhone(BuildContext context) async {
     final store = FamilyScope.of(context);
     final me = store.currentMember?.id;
     final options = [
@@ -422,17 +391,10 @@ class AdultHomeScreen extends StatelessWidget {
     Navigator.of(context).pushNamed('${Routes.invite}?relink=$picked');
   }
 
-  Future<void> _onMenu(BuildContext context, String value) async {
+  /// Cambiar de usuario, restablecer la demo, salir o desvincular.
+  static Future<void> sessionAction(BuildContext context, String value) async {
     if (value == 'switch') {
       Navigator.of(context).pushReplacementNamed(Routes.welcome);
-      return;
-    }
-    if (value == 'pin') return _managePin(context);
-    if (value == 'relink') return _relinkPhone(context);
-    if (value == 'challenge') return _editChallenge(context);
-    if (value == 'look') return showAccentPicker(context);
-    if (value == 'week' || value == 'privacy') {
-      Navigator.of(context).pushNamed(value == 'week' ? Routes.week : Routes.privacy);
       return;
     }
     final session = SessionScope.of(context);
@@ -469,7 +431,7 @@ class AdultHomeScreen extends StatelessWidget {
 
   /// Poner, cambiar o quitar el PIN que protege los perfiles de adulto en
   /// este teléfono (para cuando los chicos lo usan).
-  Future<void> _managePin(BuildContext context) async {
+  static Future<void> managePin(BuildContext context) async {
     final session = SessionScope.of(context);
     final messenger = ScaffoldMessenger.of(context);
     if (session.hasPin) {
@@ -513,7 +475,7 @@ class AdultHomeScreen extends StatelessWidget {
     messenger.showSnackBar(const SnackBar(content: Text('PIN guardado en este teléfono.')));
   }
 
-  Future<void> _addChildWithoutPhone(BuildContext context) async {
+  static Future<void> addChildWithoutPhone(BuildContext context) async {
     final store = FamilyScope.of(context);
     final result = await showDialog<(String, AgeMode)>(
       context: context,
@@ -698,6 +660,83 @@ class _ApprovalCard extends StatelessWidget {
                 Expanded(child: FilledButton(onPressed: onApprove, child: const Text('Aprobar'))),
               ],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Primeros pasos para quien crea el hogar.
+class _FirstSteps extends StatelessWidget {
+  const _FirstSteps();
+
+  @override
+  Widget build(BuildContext context) {
+    final store = FamilyScope.of(context);
+    final session = SessionScope.of(context);
+    final me = store.currentMember;
+    final nav = Navigator.of(context);
+    final steps = [
+      (
+        'Armá tu avatar',
+        session.flag('tour_avatar'),
+        () => nav.pushNamed(Routes.avatar),
+      ),
+      (
+        'Sumá a otro adulto (P2)',
+        store.members.where((m) => m.role.isAdult).length > 1,
+        () => nav.pushNamed(Routes.invite),
+      ),
+      (
+        'Sumá a tus hijos',
+        store.children.isNotEmpty,
+        () => nav.pushNamed(Routes.invite),
+      ),
+      (
+        'Revisá la rutina y los premios',
+        session.flag('tour_routine'),
+        () => nav.pushNamed(Routes.routine),
+      ),
+      (
+        'Que los avisos lleguen siempre',
+        session.flag('tour_battery'),
+        () => nav.pushNamed(Routes.reliability),
+      ),
+    ];
+    final done = steps.where((s) => s.$2).length;
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: InfoCard(
+        color: const Color(0xFFEFF6FF),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.flag_outlined),
+                const SizedBox(width: 8),
+                Expanded(child: Text('Primeros pasos · $done de ${steps.length}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900))),
+                IconButton(
+                  tooltip: 'Ocultar',
+                  icon: const Icon(Icons.close),
+                  onPressed: () => session.setFlag('tour_hidden'),
+                ),
+              ],
+            ),
+            LinearProgressIndicator(value: done / steps.length, borderRadius: BorderRadius.circular(4)),
+            const SizedBox(height: 4),
+            for (final (title, ok, go) in steps)
+              ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(ok ? Icons.check_circle : Icons.radio_button_unchecked, color: ok ? const Color(0xFF2E7D32) : null),
+                title: Text(title, style: TextStyle(fontWeight: FontWeight.w700, decoration: ok ? TextDecoration.lineThrough : null)),
+                trailing: ok ? null : const Icon(Icons.chevron_right),
+                onTap: ok ? null : go,
+              ),
+            if (done == steps.length)
+              TextButton(onPressed: () => session.setFlag('tour_hidden'), child: const Text('¡Listo! Ocultar')),
           ],
         ),
       ),

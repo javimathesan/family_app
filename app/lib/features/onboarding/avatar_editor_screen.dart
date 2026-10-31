@@ -97,6 +97,7 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
 
   void _save(FamilyStore store, Member me) {
     store.updateAvatar(me.id, _config!);
+    SessionScope.of(context).setFlag('tour_avatar');
     final nav = Navigator.of(context);
     if (nav.canPop()) {
       nav.pop();

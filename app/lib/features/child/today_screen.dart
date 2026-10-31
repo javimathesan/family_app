@@ -9,6 +9,8 @@ import '../../theme/app_theme.dart';
 import '../../widgets/accent_picker.dart';
 import '../../widgets/avatar_view.dart';
 import '../../widgets/common.dart';
+import '../../widgets/celebration.dart';
+import 'room_screen.dart';
 
 /// Pantalla "Hoy": puntos del día, próxima tarea y registro de salud.
 class TodayScreen extends StatelessWidget {
@@ -99,6 +101,51 @@ class TodayScreen extends StatelessWidget {
             ),
           ),
         ),
+        const SizedBox(height: 16),
+        if (next != null)
+          InfoCard(
+            child: Row(
+              children: [
+                const IconBadge(icon: Icons.schedule, background: AppColors.warmBg, color: AppColors.warmInk),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('SIGUE · ${hhmm(next.time)}',
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.warmInk)),
+                      Text(next.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+                      Text('+${next.points} pts al marcarla a tiempo', style: mutedText(context)),
+                    ],
+                  ),
+                ),
+                OutlinedButton(onPressed: onOpenRoutine, child: const Text('Ver')),
+              ],
+            ),
+          ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => Navigator.of(context).pushNamed(Routes.room),
+                icon: const Text('🏠'),
+                label: const Text('Mi cuarto'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => Navigator.of(context).pushNamed(Routes.medals),
+                icon: const Text('🏅'),
+                label: const Text('Medallas'),
+              ),
+            ),
+          ],
+        ),
+        for (final id in todayOrder(me.look))
+          if (!me.look.hidden.contains(id)) ...switch (id) {
+            'paravos' => [
         if (forMe.isNotEmpty) ...[
           const SizedBox(height: 16),
           InfoCard(
@@ -124,6 +171,9 @@ class TodayScreen extends StatelessWidget {
             ),
           ),
         ],
+      ],
+            'mascota' => [const SizedBox(height: 16), _PetCard(memberId: me.id)],
+            'reto' => [
         if (challenge != null) ...[
           const SizedBox(height: 16),
           InfoCard(
@@ -154,7 +204,9 @@ class TodayScreen extends StatelessWidget {
                   const Text('¡Reto cumplido! 🏅 El lunes empieza otro.', style: TextStyle(fontWeight: FontWeight.w700))
                 else if (store.canClaimChallenge(me.id))
                   FilledButton.icon(
-                    onPressed: () => store.claimChallenge(me.id),
+                    onPressed: () {
+                      if (store.claimChallenge(me.id)) celebrate(context, text: '¡Reto cumplido! 🏅');
+                    },
                     icon: const Icon(Icons.emoji_events),
                     label: Text('¡Cobrar +${challenge.bonus} pts!'),
                   )
@@ -164,6 +216,8 @@ class TodayScreen extends StatelessWidget {
             ),
           ),
         ],
+      ],
+            'agenda' => [
         const SizedBox(height: 16),
         InfoCard(
           color: const Color(0xFFFFF8E1),
@@ -189,6 +243,8 @@ class TodayScreen extends StatelessWidget {
             ),
           ),
         ),
+      ],
+            'palabra' => [
         const SizedBox(height: 16),
         InfoCard(
           color: const Color(0xFFE3F2FD),
@@ -212,28 +268,8 @@ class TodayScreen extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 16),
-        if (next != null)
-          InfoCard(
-            child: Row(
-              children: [
-                const IconBadge(icon: Icons.schedule, background: AppColors.warmBg, color: AppColors.warmInk),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('SIGUE · ${hhmm(next.time)}',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.warmInk)),
-                      Text(next.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
-                      Text('+${next.points} pts al marcarla a tiempo', style: mutedText(context)),
-                    ],
-                  ),
-                ),
-                OutlinedButton(onPressed: onOpenRoutine, child: const Text('Ver')),
-              ],
-            ),
-          ),
+      ],
+            'cuerpo' => [
         const SizedBox(height: 20),
         Text('Mi cuerpo hoy', style: sectionTitle(context)),
         const SizedBox(height: 10),
@@ -309,6 +345,17 @@ class TodayScreen extends StatelessWidget {
           ],
         ),
       ],
+            _ => const <Widget>[],
+          },
+        const SizedBox(height: 12),
+        Center(
+          child: TextButton.icon(
+            onPressed: () => showTodayOrder(context),
+            icon: const Icon(Icons.tune),
+            label: const Text('Ordenar mi pantalla'),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -359,6 +406,111 @@ class _HealthTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Tarjetas de la pantalla Hoy que se pueden ordenar u ocultar.
+const todayCards = <String, String>{
+  'paravos': 'Para vos (lo que te aprobaron)',
+  'mascota': 'Mi mascota',
+  'reto': 'Reto de la semana',
+  'agenda': 'Hoy en la agenda',
+  'palabra': 'Palabra del día',
+  'cuerpo': 'Mi cuerpo hoy (agua, popó y pipí)',
+};
+
+/// Orden de las tarjetas: el elegido y, al final, las que falten.
+List<String> todayOrder(MemberLook look) => [
+      for (final id in look.home) if (todayCards.containsKey(id)) id,
+      for (final id in todayCards.keys) if (!look.home.contains(id)) id,
+    ];
+
+/// Hoja para ordenar y ocultar las tarjetas de Hoy.
+Future<void> showTodayOrder(BuildContext context) {
+  return showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (ctx) => ListenableBuilder(
+      listenable: FamilyScope.of(context),
+      builder: (ctx, _) {
+        final store = FamilyScope.of(context);
+        final me = store.currentMember;
+        if (me == null) return const SizedBox.shrink();
+        final order = todayOrder(me.look);
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 0, 16, 4),
+                child: Text('Ordenar mi pantalla', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+              ),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Text('Arrastrá para cambiar el orden y apagá lo que no quieras ver.'),
+              ),
+              Flexible(
+                child: ReorderableListView(
+                  shrinkWrap: true,
+                  onReorder: (from, to) {
+                    final next = [...order];
+                    final item = next.removeAt(from);
+                    next.insert(to > from ? to - 1 : to, item);
+                    store.setLook(me.id, me.look.copyWith(home: next));
+                  },
+                  children: [
+                    for (final id in order)
+                      SwitchListTile(
+                        key: ValueKey(id),
+                        value: !me.look.hidden.contains(id),
+                        title: Text(todayCards[id]!, style: const TextStyle(fontWeight: FontWeight.w700)),
+                        secondary: const Icon(Icons.drag_handle),
+                        onChanged: (on) => store.setLook(
+                          me.id,
+                          me.look.copyWith(hidden: on ? [...me.look.hidden]..remove(id) : [...me.look.hidden, id]),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    ),
+  );
+}
+
+/// Tarjeta de la mascota: cómo está hoy y acceso al cuarto.
+class _PetCard extends StatelessWidget {
+  const _PetCard({required this.memberId});
+
+  final String memberId;
+
+  @override
+  Widget build(BuildContext context) {
+    final store = FamilyScope.of(context);
+    void open() => Navigator.of(context).pushNamed(Routes.room);
+    if (!store.hasPet(memberId)) {
+      return InfoCard(
+        color: const Color(0xFFFFF0E6),
+        child: ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const Text('🐾', style: TextStyle(fontSize: 34)),
+          title: const Text('Adoptá una mascota', style: TextStyle(fontWeight: FontWeight.w800)),
+          subtitle: const Text('Vive en tu cuarto y crece cuando cumplís tu rutina.'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: open,
+        ),
+      );
+    }
+    return InkWell(
+      onTap: open,
+      borderRadius: BorderRadius.circular(20),
+      child: RoomView(memberId: memberId),
     );
   }
 }

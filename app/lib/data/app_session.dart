@@ -137,6 +137,16 @@ class AppSession extends ChangeNotifier {
     };
   }
 
+  // ------------------------------------------------------------- marcas
+
+  /// Marcas simples de este teléfono (pasos hechos, carteles cerrados…).
+  bool flag(String key) => _prefs.getBool('flag_$key') ?? false;
+
+  Future<void> setFlag(String key, [bool value = true]) async {
+    await _prefs.setBool('flag_$key', value);
+    notifyListeners();
+  }
+
   // -------------------------------------------------------------------- PIN
 
   /// PIN de 4 dígitos para abrir perfiles de adulto en este teléfono.
