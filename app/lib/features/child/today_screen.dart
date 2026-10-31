@@ -6,6 +6,7 @@ import '../../learning/vocabulary.dart';
 import '../../models/models.dart';
 import '../learning/words_screen.dart';
 import '../../theme/app_theme.dart';
+import '../../services/speech.dart';
 import '../../widgets/accent_picker.dart';
 import '../../widgets/avatar_view.dart';
 import '../../widgets/common.dart';
@@ -101,6 +102,10 @@ class TodayScreen extends StatelessWidget {
             ),
           ),
         ),
+        if (!me.role.isAdult && !store.kidStepsClaimed(me.id)) ...[
+          const SizedBox(height: 16),
+          _KidSteps(member: me),
+        ],
         const SizedBox(height: 16),
         if (next != null)
           InfoCard(
@@ -264,7 +269,12 @@ class TodayScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              SpeakButton(text: wotd.word.inLang(wotd.lang), lang: wotd.lang, size: 24),
+              SpeakButton(
+                text: wotd.word.inLang(wotd.lang),
+                lang: wotd.lang,
+                size: 24,
+                onSpoken: () => store.markStep(me.id, 'palabra'),
+              ),
             ],
           ),
         ),
@@ -511,6 +521,110 @@ class _PetCard extends StatelessWidget {
       onTap: open,
       borderRadius: BorderRadius.circular(20),
       child: RoomView(memberId: memberId),
+    );
+  }
+}
+
+/// Mis primeros pasos: armar la app a su gusto. Con regalo al terminar.
+/// En modo peques cada paso se puede escuchar.
+class _KidSteps extends StatelessWidget {
+  const _KidSteps({required this.member});
+
+  final Member member;
+
+  @override
+  Widget build(BuildContext context) {
+    final store = FamilyScope.of(context);
+    final steps = store.kidSteps(member.id);
+    final done = steps.where((s) => s.done).length;
+    final peques = member.mode == AgeMode.peques;
+    final nav = Navigator.of(context);
+    void go(String id) {
+      switch (id) {
+        case 'avatar':
+          nav.pushNamed(Routes.avatar);
+        case 'color':
+          showAccentPicker(context);
+        case 'mascota':
+          nav.pushNamed(Routes.room);
+        case 'tarea':
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(const SnackBar(content: Text('Andá a "Rutina" abajo y marcá una tarea que ya hiciste.')));
+        case 'palabra':
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(const SnackBar(content: Text('Tocá el parlante 🔊 de la palabra del día, más abajo.')));
+      }
+    }
+
+    return InfoCard(
+      color: const Color(0xFFFFF4D6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text('👋', style: TextStyle(fontSize: 26)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text('Mis primeros pasos · $done de ${steps.length}',
+                    style: TextStyle(fontSize: peques ? 19 : 16, fontWeight: FontWeight.w900)),
+              ),
+              if (peques)
+                IconButton(
+                  tooltip: 'Escuchar',
+                  onPressed: () => Speech.instance.say(
+                    'Tus primeros pasos. ${[for (final s in steps) if (!s.done) s.title].join('. ')}',
+                    'es-ES',
+                  ),
+                  icon: const Icon(Icons.volume_up),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          LinearProgressIndicator(value: done / steps.length, minHeight: 8, borderRadius: BorderRadius.circular(4)),
+          for (final s in steps)
+            ListTile(
+              dense: !peques,
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(s.done ? Icons.check_circle : Icons.radio_button_unchecked,
+                  color: s.done ? const Color(0xFF2E7D32) : null, size: peques ? 30 : 24),
+              title: Text(s.title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: peques ? 18 : null,
+                    decoration: s.done ? TextDecoration.lineThrough : null,
+                  )),
+              trailing: s.done
+                  ? null
+                  : (peques
+                      ? IconButton(
+                          tooltip: 'Escuchar',
+                          onPressed: () => Speech.instance.say(s.title, 'es-ES'),
+                          icon: const Icon(Icons.volume_up_outlined),
+                        )
+                      : const Icon(Icons.chevron_right)),
+              onTap: s.done ? null : () => go(s.id),
+            ),
+          if (done == steps.length)
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () {
+                  if (store.claimKidSteps(member.id)) {
+                    celebrate(context, text: '¡Bienvenido! +${FamilyMedals.welcomeBonus} pts 👋');
+                  }
+                },
+                icon: const Icon(Icons.card_giftcard),
+                label: Text('¡Cobrar mi regalo! +${FamilyMedals.welcomeBonus} pts'),
+              ),
+            )
+          else
+            Text('Al terminar ganás ${FamilyMedals.welcomeBonus} puntos y la medalla "¡Bienvenido!".',
+                style: mutedText(context)),
+        ],
+      ),
     );
   }
 }

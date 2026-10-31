@@ -52,7 +52,7 @@ void main() {
     test('medallas', () {
       final store = FamilyStore.demo(clock: clock);
       final medals = store.medalsOf('tomi');
-      expect(medals.length, 13);
+      expect(medals.length, 14);
       expect(medals.firstWhere((m) => m.id == 'primera').earned, isTrue, reason: 'la demo tiene historial');
       expect(medals.firstWhere((m) => m.id == 'robi').earned, isFalse);
       store.signInAs('tomi');
@@ -60,6 +60,40 @@ void main() {
       store.playMove(g.id, {'cells': [0, 0, 0, 1, 1, -1, -1, -1, -1]}, nextTurn: 1, winner: 0);
       expect(store.medalsOf('tomi').firstWhere((m) => m.id == 'robi').earned, isTrue);
     });
+  });
+
+  test('primeros pasos de los chicos y regalo', () {
+    final store = FamilyStore.demo(clock: clock);
+    expect(store.kidStepsClaimed('tomi'), isFalse);
+    expect(store.claimKidSteps('tomi'), isFalse);
+    store.updateAvatar('tomi', const AvatarConfig(skin: 2));
+    store.setAccent('tomi', const Color(0xFF7C3AED));
+    store.setRoom('tomi', 'pet', 2);
+    store.toggleTask('tomi', 'aseo');
+    store.markStep('tomi', 'palabra');
+    expect(store.kidSteps('tomi').every((s) => s.done), isTrue);
+    final before = store.balanceOf('tomi');
+    expect(store.claimKidSteps('tomi'), isTrue);
+    expect(store.balanceOf('tomi'), before + FamilyMedals.welcomeBonus);
+    expect(store.claimKidSteps('tomi'), isFalse);
+    expect(store.medalsOf('tomi').firstWhere((m) => m.id == 'bienvenida').earned, isTrue);
+  });
+
+  test('limpiar novedades en este teléfono', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final store = FamilyStore.demo(clock: clock);
+    final session = AppSession(store: store, prefs: prefs, storage: FamilyStorage(prefs));
+    final all = session.visibleNotices.length;
+    expect(all, greaterThan(0));
+    await session.hideNotices([session.visibleNotices.first]);
+    expect(session.visibleNotices.length, all - 1);
+    await session.clearNotices();
+    expect(session.visibleNotices, isEmpty);
+    store.toggleTask('tomi', 'aseo');
+    expect(session.visibleNotices, isEmpty, reason: 'mismo instante que la limpieza');
+    store.deleteNoticesBefore(DateTime(2100));
+    expect(store.notices, isEmpty);
   });
 
   test('orden de las tarjetas de Hoy', () {
@@ -112,7 +146,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Medallas'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('de 13 medallas'), findsOneWidget);
+    expect(find.textContaining('de 14 medallas'), findsOneWidget);
   });
 
   testWidgets('ajustes del adulto, escudo y modo tablet', (tester) async {

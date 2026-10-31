@@ -514,4 +514,14 @@ class FamilyCloud implements FamilySync {
 
   @override
   void eventRemoved(String eventId) => _write((h) => _events(h).doc(eventId).delete());
+
+  @override
+  void noticesDeleted(DateTime before) => _write((h) async {
+        final old = await _notices(h).where('time', isLessThan: Timestamp.fromDate(before)).limit(450).get();
+        final batch = db.batch();
+        for (final doc in old.docs) {
+          batch.delete(doc.reference);
+        }
+        await batch.commit();
+      });
 }

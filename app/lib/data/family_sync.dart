@@ -41,4 +41,7 @@ abstract class FamilySync {
   /// Se creó o cambió un evento de la agenda.
   void eventSaved(AgendaEvent event);
   void eventRemoved(String eventId);
+
+  /// Se borraron las novedades anteriores a esa fecha.
+  void noticesDeleted(DateTime before);
 }

@@ -209,17 +209,21 @@ class _WordsScreenState extends State<WordsScreen> {
 
 /// Botón para escuchar una palabra.
 class SpeakButton extends StatelessWidget {
-  const SpeakButton({super.key, required this.text, required this.lang, this.size = 32});
+  const SpeakButton({super.key, required this.text, required this.lang, this.size = 32, this.onSpoken});
 
   final String text;
   final Lang lang;
   final double size;
+  final VoidCallback? onSpoken;
 
   @override
   Widget build(BuildContext context) => IconButton.filledTonal(
         tooltip: 'Escuchar',
         iconSize: size,
-        onPressed: () => Speech.instance.say(text, lang.ttsLocale),
+        onPressed: () {
+          Speech.instance.say(text, lang.ttsLocale);
+          onSpoken?.call();
+        },
         icon: const Icon(Icons.volume_up),
       );
 }

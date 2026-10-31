@@ -38,7 +38,7 @@ class _NoticesScreenState extends State<NoticesScreen> {
     final store = FamilyScope.of(context);
     final session = SessionScope.of(context);
     final people = store.members.where((m) => !store.isPendingMember(m.id)).toList();
-    final notices = store.notices.where((n) {
+    final notices = session.visibleNotices.where((n) {
       if (_filter == null) return true;
       if (_filter == '!') return n.isImportant;
       return n.memberId == _filter;
@@ -53,6 +53,16 @@ class _NoticesScreenState extends State<NoticesScreen> {
             tooltip: 'Qué avisos recibir',
             onPressed: () => _chooseMode(context, session),
             icon: const Icon(Icons.tune),
+          ),
+          PopupMenuButton<String>(
+            tooltip: 'Limpiar',
+            icon: const Icon(Icons.delete_sweep_outlined),
+            onSelected: (v) => _clean(context, v),
+            itemBuilder: (_) => [
+              const PopupMenuItem(value: 'mine', child: Text('Limpiar todo en este teléfono')),
+              if (session.isAdmin)
+                const PopupMenuItem(value: 'old', child: Text('Borrar para todos lo de hace más de 7 días')),
+            ],
           ),
         ],
       ),
@@ -74,6 +84,11 @@ class _NoticesScreenState extends State<NoticesScreen> {
             ),
           ),
           const SizedBox(height: 12),
+          if (days.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text('Deslizá una novedad para sacarla de la lista.', style: mutedText(context)),
+            ),
           if (days.isEmpty)
             InfoCard(
               child: Text(
@@ -90,7 +105,19 @@ class _NoticesScreenState extends State<NoticesScreen> {
               padding: EdgeInsets.zero,
               child: Column(
                 children: [
-                  for (final row in _rowsFor(store, day.notices)) _NoticeTile(row: row, unread: row.time.isAfter(_seenBefore!)),
+                  for (final row in _rowsFor(store, day.notices))
+                    Dismissible(
+                      key: ValueKey('n_${row.time.millisecondsSinceEpoch}_${row.text}'),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        color: Colors.red.shade400,
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 20),
+                        child: const Icon(Icons.delete_outline, color: Colors.white),
+                      ),
+                      onDismissed: (_) => session.hideNotices(row.sources),
+                      child: _NoticeTile(row: row, unread: row.time.isAfter(_seenBefore!)),
+                    ),
                 ],
               ),
             ),
@@ -98,6 +125,31 @@ class _NoticesScreenState extends State<NoticesScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _clean(BuildContext context, String what) async {
+    final session = SessionScope.of(context);
+    final store = FamilyScope.of(context);
+    final everyone = what == 'old';
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(everyone ? '¿Borrar el historial viejo?' : '¿Limpiar las novedades?'),
+        content: Text(everyone
+            ? 'Se borran para todos los teléfonos del hogar las novedades de hace más de 7 días.'
+            : 'Se limpian solo en este teléfono. Los demás las siguen viendo y las nuevas van a seguir llegando.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(everyone ? 'Borrar' : 'Limpiar')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    if (everyone) {
+      store.deleteNoticesBefore(store.now.subtract(const Duration(days: 7)));
+    } else {
+      await session.clearNotices();
+    }
   }
 
   Future<void> _chooseMode(BuildContext context, AppSession session) async {
@@ -159,11 +211,14 @@ String _dayTitle(DateTime now, DateTime date) {
 
 /// Una línea de la lista: un aviso suelto o varias tareas juntas.
 class _Row {
-  _Row({required this.time, required this.text, required this.kind, this.detail});
+  _Row({required this.time, required this.text, required this.kind, required this.sources, this.detail});
   final DateTime time;
   final String text;
   final NoticeKind kind;
   final String? detail;
+
+  /// Avisos que forman esta línea (para sacarlos todos juntos).
+  final List<FamilyNotice> sources;
 }
 
 /// Junta las tareas comunes de cada miembro del día en una sola línea.
@@ -174,13 +229,13 @@ List<_Row> _rowsFor(FamilyStore store, List<FamilyNotice> notices) {
     if (n.kind == NoticeKind.task && n.memberId != null) {
       taskGroups.putIfAbsent(n.memberId!, () => []).add(n);
     } else {
-      rows.add(_Row(time: n.time, text: n.text, kind: n.isAlert ? NoticeKind.alert : n.kind));
+      rows.add(_Row(time: n.time, text: n.text, kind: n.isAlert ? NoticeKind.alert : n.kind, sources: [n]));
     }
   }
   taskGroups.forEach((memberId, list) {
     final who = store.memberById(memberId)?.nickname ?? 'Alguien';
     if (list.length == 1) {
-      rows.add(_Row(time: list.first.time, text: list.first.text, kind: NoticeKind.task));
+      rows.add(_Row(time: list.first.time, text: list.first.text, kind: NoticeKind.task, sources: list));
       return;
     }
     final names = [for (final n in list.reversed) n.text.split(': ').last];
@@ -188,6 +243,7 @@ List<_Row> _rowsFor(FamilyStore store, List<FamilyNotice> notices) {
       time: list.first.time,
       text: '$who completó ${list.length} tareas',
       kind: NoticeKind.task,
+      sources: list,
       detail: names.join(' · '),
     ));
   });

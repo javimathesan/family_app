@@ -128,6 +128,7 @@ class FamilyStore extends ChangeNotifier {
     final m = memberById(memberId);
     if (m == null) return;
     m.avatar = avatar;
+    m.unlocked.add('paso:avatar');
     sync?.memberUpdated(m);
     notifyListeners();
   }
@@ -136,6 +137,7 @@ class FamilyStore extends ChangeNotifier {
     final m = memberById(memberId);
     if (m == null) return;
     m.accent = accent;
+    m.unlocked.add('paso:color');
     sync?.memberUpdated(m);
     notifyListeners();
   }
@@ -145,6 +147,7 @@ class FamilyStore extends ChangeNotifier {
     final m = memberById(memberId);
     if (m == null || m.look == look) return;
     m.look = look;
+    m.unlocked.add('paso:color');
     sync?.memberUpdated(m);
     notifyListeners();
   }
@@ -478,6 +481,13 @@ class FamilyStore extends ChangeNotifier {
     final after = max(0, before + delta);
     _balances[memberId] = after;
     if (after != before) sync?.balanceChanged(memberId, after - before);
+  }
+
+  /// Borra para todos las novedades anteriores a [before] (solo administradores).
+  void deleteNoticesBefore(DateTime before) {
+    _notices.removeWhere((n) => n.time.isBefore(before));
+    sync?.noticesDeleted(before);
+    notifyListeners();
   }
 
   void _addNotice(String text, {bool alert = false, NoticeKind kind = NoticeKind.info, String? memberId}) {

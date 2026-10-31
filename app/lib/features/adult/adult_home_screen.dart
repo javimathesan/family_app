@@ -242,7 +242,7 @@ class AdultHomeScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 6),
-            if (store.notices.isEmpty)
+            if (session.visibleNotices.isEmpty)
               InfoCard(
                 child: Text(
                   'Acá vas a ver cuando tus hijos completen tareas, lleguen a su meta de agua o pidan premios.',
@@ -254,7 +254,7 @@ class AdultHomeScreen extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 child: Column(
                   children: [
-                    for (final n in store.notices.take(4))
+                    for (final n in session.visibleNotices.take(4))
                       ListTile(
                         dense: true,
                         leading: Text(
@@ -682,7 +682,7 @@ class FirstStepsCard extends StatelessWidget {
     return [
       (
         'Armá tu avatar',
-        session.flag('tour_avatar'),
+        session.flag('tour_avatar') || (store.currentMember?.unlocked.contains('paso:avatar') ?? false),
         () => nav.pushNamed(Routes.avatar),
       ),
       (

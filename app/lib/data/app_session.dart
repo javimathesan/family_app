@@ -57,6 +57,8 @@ class AppSession extends ChangeNotifier {
   static const _kPin = 'session_pin';
   static const _kNoticesSeen = 'notices_seen';
   static const _kNotifyMode = 'notify_mode';
+  static const _kNoticesCleared = 'notices_cleared';
+  static const _kNoticesHidden = 'notices_hidden';
 
   SessionMode mode = SessionMode.none;
   String? homeId;
@@ -109,7 +111,40 @@ class AppSession extends ChangeNotifier {
 
   bool isUnread(FamilyNotice n) => n.time.isAfter(noticesSeenAt) && n.memberId != _viewerId;
 
-  int get unreadNotices => store.notices.where(isUnread).length;
+  int get unreadNotices => visibleNotices.where(isUnread).length;
+
+  /// Novedades que muestra este teléfono: las de los últimos 30 días que no
+  /// se limpiaron ni se borraron acá. Limpiar en un teléfono no las borra
+  /// de los demás.
+  List<FamilyNotice> get visibleNotices {
+    final cleared = _prefs.getInt(_kNoticesCleared);
+    final since = store.now.subtract(const Duration(days: 30));
+    final hidden = (_prefs.getStringList(_kNoticesHidden) ?? const []).toSet();
+    return [
+      for (final n in store.notices)
+        if (n.time.isAfter(since) &&
+            (cleared == null || n.time.millisecondsSinceEpoch > cleared) &&
+            !hidden.contains(noticeKey(n)))
+          n,
+    ];
+  }
+
+  static String noticeKey(FamilyNotice n) => '${n.time.millisecondsSinceEpoch}|${n.text}';
+
+  /// Saca estos avisos de la lista de este teléfono.
+  Future<void> hideNotices(Iterable<FamilyNotice> notices) async {
+    final hidden = [...?_prefs.getStringList(_kNoticesHidden), for (final n in notices) noticeKey(n)];
+    // Se guardan los últimos 400 para no crecer sin fin.
+    await _prefs.setStringList(_kNoticesHidden, hidden.length > 400 ? hidden.sublist(hidden.length - 400) : hidden);
+    notifyListeners();
+  }
+
+  /// Limpia todas las novedades de este teléfono (las nuevas siguen llegando).
+  Future<void> clearNotices() async {
+    await _prefs.setInt(_kNoticesCleared, store.now.millisecondsSinceEpoch);
+    await _prefs.remove(_kNoticesHidden);
+    notifyListeners();
+  }
 
   Future<void> markNoticesSeen() async {
     await _prefs.setInt(_kNoticesSeen, store.now.millisecondsSinceEpoch);

@@ -57,6 +57,48 @@ extension FamilyMedals on FamilyStore {
       Medal('moda', '👗', 'A la moda', 'Desbloqueá 3 disfraces.', earned: outfits >= 3),
       Medal('deco', '🛋️', 'Decorador', 'Poné 4 cosas en tu cuarto.', earned: roomItemsPlaced(memberId) >= 4),
       Medal('mascota', '🐾', 'Gran cuidador', 'Llevá a tu mascota al nivel 3.', earned: hasPet(memberId) && petLevel(memberId) >= 3),
+      Medal('bienvenida', '👋', '¡Bienvenido!', 'Completá tus primeros pasos.', earned: m.unlocked.contains('paso:premio')),
     ];
+  }
+
+  // ------------------------------------------------- primeros pasos (chicos)
+
+  /// Puntos de regalo al completar los primeros pasos.
+  static const welcomeBonus = 20;
+
+  /// Primeros pasos de un chico: armar su app y su mundo.
+  List<({String id, String title, bool done})> kidSteps(String memberId) {
+    final m = memberById(memberId);
+    final marks = m?.unlocked ?? const <String>{};
+    final didTask = doneToday(memberId) > 0 || historyOf(memberId).any((d) => d.points > 0);
+    return [
+      (id: 'avatar', title: 'Armá tu avatar', done: marks.contains('paso:avatar')),
+      (id: 'color', title: 'Elegí tu color', done: marks.contains('paso:color')),
+      (id: 'mascota', title: 'Adoptá tu mascota', done: hasPet(memberId)),
+      (id: 'tarea', title: 'Marcá tu primera tarea', done: didTask),
+      (id: 'palabra', title: 'Escuchá la palabra del día', done: marks.contains('paso:palabra')),
+    ];
+  }
+
+  bool kidStepsClaimed(String memberId) => memberById(memberId)?.unlocked.contains('paso:premio') ?? true;
+
+  /// Marca un paso hecho (por ejemplo, escuchar la palabra del día).
+  void markStep(String memberId, String step) {
+    final m = memberById(memberId);
+    if (m == null || !m.unlocked.add('paso:$step')) return;
+    sync?.memberUpdated(m);
+    _changed();
+  }
+
+  /// Cobra el regalo de bienvenida (una sola vez).
+  bool claimKidSteps(String memberId) {
+    final m = memberById(memberId);
+    if (m == null || kidStepsClaimed(memberId) || kidSteps(memberId).any((s) => !s.done)) return false;
+    m.unlocked.add('paso:premio');
+    sync?.memberUpdated(m);
+    _addBalance(memberId, welcomeBonus);
+    _addNotice('${m.nickname} completó sus primeros pasos 👋 (+$welcomeBonus pts)', kind: NoticeKind.reward, memberId: memberId);
+    _changed();
+    return true;
   }
 }
