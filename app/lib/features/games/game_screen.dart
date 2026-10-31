@@ -6,6 +6,7 @@ import '../../app.dart';
 import '../../data/family_store.dart';
 import '../../games/barrio.dart';
 import '../../games/chess.dart';
+import '../../games/colorin.dart';
 import '../../games/cuatro.dart';
 import '../../games/ludo.dart';
 import '../../games/tateti.dart';
@@ -14,6 +15,7 @@ import '../../widgets/avatar_view.dart';
 import '../../widgets/celebration.dart';
 import '../../widgets/common.dart';
 import 'boards.dart';
+import 'colorin_view.dart';
 
 /// Pantalla de una partida: jugadores, turno y tablero.
 class GameScreen extends StatefulWidget {
@@ -168,6 +170,8 @@ class _GameScreenState extends State<GameScreen> {
         );
       case GameKind.barrio:
         return _barrio(context, store, match, canAct);
+      case GameKind.colorin:
+        return ColorinView(match: match, me: me, canAct: canAct, onStep: (step) => _colorinStep(store, match, step));
       case GameKind.ajedrez:
         final position = Chess.fromJson(s);
         // Cada uno ve sus piezas abajo; en un solo teléfono, las blancas.
@@ -274,6 +278,10 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   // ------------------------------------------------------------ jugadas
+
+  void _colorinStep(FamilyStore store, GameMatch match, ColorinStep step) {
+    store.playMove(match.id, step.state.toJson(), nextTurn: step.nextTurn, winner: step.winner, by: match.currentPlayer);
+  }
 
   void _barrioStep(FamilyStore store, GameMatch match, BarrioStep step) {
     store.playMove(
@@ -383,6 +391,16 @@ class _GameScreenState extends State<GameScreen> {
           }
         case GameKind.ajedrez:
           _chessMove(store, m, Chess.fromJson(m.state).botMove());
+        case GameKind.colorin:
+          final state = ColorinState.fromJson(m.state);
+          final choice = state.botChoice(m.turn);
+          if (choice.card != null) {
+            _colorinStep(store, m, state.play(m.turn, choice.card!, chosen: choice.color, saidLast: true));
+          } else if (!state.drew) {
+            _colorinStep(store, m, state.draw(m.turn));
+          } else {
+            _colorinStep(store, m, state.pass(m.turn));
+          }
         case GameKind.barrio:
           final state = BarrioState.fromJson(m.state);
           if (state.buying) {
@@ -431,7 +449,7 @@ class _Players extends StatelessWidget {
     if (match.kind == GameKind.ludo) {
       return ludoColors[Ludo.seatsFor(match.players.length)[i]];
     }
-    if (match.kind == GameKind.barrio) return ludoColors[i];
+    if (match.kind == GameKind.barrio || match.kind == GameKind.colorin) return ludoColors[i];
     if (match.kind == GameKind.ajedrez) return i == 0 ? Colors.white : Colors.black87;
     return twoPlayerColors[i];
   }

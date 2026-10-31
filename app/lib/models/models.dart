@@ -533,7 +533,8 @@ enum GameKind {
   cuatro('4 en línea', 'Soltá fichas y uní 4', Icons.view_column_outlined, 2, 2),
   ludo('Ludo', 'De 2 a 4: dados, fichas y carrera a la meta', Icons.casino_outlined, 2, 4),
   ajedrez('Ajedrez', 'El clásico, con ayuda de movimientos', Icons.castle, 2, 2),
-  barrio('Mi Barrio', 'Comprá lugares del barrio y cobrá alquiler', Icons.location_city, 2, 4);
+  barrio('Mi Barrio', 'Comprá lugares del barrio y cobrá alquiler', Icons.location_city, 2, 4),
+  colorin('Colorín', 'Cartas de colores: bloqueo, reversa, +2 y +4', Icons.style, 2, 4);
 
   const GameKind(this.label, this.description, this.icon, this.minPlayers, this.maxPlayers);
   final String label;

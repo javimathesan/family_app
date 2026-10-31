@@ -84,6 +84,16 @@ class GamesHub extends StatelessWidget {
             onTap: () => Navigator.of(context).pushNamed(Routes.words),
           ),
         ),
+        Card(
+          color: const Color(0xFFE0F7FA),
+          child: ListTile(
+            leading: const Text('🎯', style: TextStyle(fontSize: 30)),
+            title: const Text('Tiro al blanco', style: TextStyle(fontWeight: FontWeight.w800)),
+            subtitle: Text('30 segundos de puntería · tu récord: ${store.bestScore(me.id, 'tiro')}'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: locked ? null : () => Navigator.of(context).pushNamed(Routes.target),
+          ),
+        ),
         const SizedBox(height: 8),
         Text('Nuevo juego', style: sectionTitle(context)),
         const SizedBox(height: 8),
@@ -187,6 +197,7 @@ class _GameCard extends StatelessWidget {
     GameKind.ludo: Color(0xFFC8E6C9),
     GameKind.ajedrez: Color(0xFFD7CCC8),
     GameKind.barrio: Color(0xFFF8BBD0),
+    GameKind.colorin: Color(0xFFFFF59D),
   };
 
   @override

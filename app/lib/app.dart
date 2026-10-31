@@ -17,6 +17,7 @@ import 'features/agenda/agenda_screen.dart';
 import 'features/child/child_shell.dart';
 import 'features/games/game_screen.dart';
 import 'features/games/games_hub.dart';
+import 'features/games/target_game.dart';
 import 'features/learning/word_games.dart';
 import 'features/learning/words_screen.dart';
 import 'learning/vocabulary.dart';
@@ -50,6 +51,7 @@ abstract final class Routes {
   static const medals = '/medallas';
   static const room = '/mi-cuarto';
   static const match = '/juegos/partida';
+  static const target = '/juegos/tiro';
 
   /// Ruta de una partida.
   static String matchOf(String id) => '$match?id=$id';
@@ -100,6 +102,7 @@ class FamilyApp extends StatefulWidget {
       Routes.medals => MedalsScreen(memberId: uri.queryParameters['id']),
       Routes.room => const RoomScreen(),
       final p when p.startsWith('${Routes.words}/') => _wordGame(p.substring(Routes.words.length + 1), uri),
+      Routes.target => const TargetGameScreen(),
       Routes.match => GameScreen(matchId: uri.queryParameters['id'] ?? ''),
       _ => const WelcomeScreen(),
     };
