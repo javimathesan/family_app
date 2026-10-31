@@ -115,7 +115,7 @@ class _WordsScreenState extends State<WordsScreen> {
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: 10,
               crossAxisSpacing: 10,
-              childAspectRatio: 1.6,
+              childAspectRatio: 1.35,
               children: [
                 for (final t in topicsOf(_level))
                   Material(
@@ -137,7 +137,7 @@ class _WordsScreenState extends State<WordsScreen> {
                               ],
                             ),
                             const Spacer(),
-                            Text(t.label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                            Text(t.label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
                             Text('${t.words.length} palabras', style: mutedText(context)),
                           ],
                         ),
