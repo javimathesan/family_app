@@ -190,7 +190,8 @@ void main() {
         await tester.pumpAndSettle();
       }
       expect(find.text('5 de 5'), findsOneWidget);
-      expect(find.text('¡Ganaste 5 puntos!'), findsOneWidget);
+      expect(find.textContaining('¡Ganaste 5 puntos!'), findsOneWidget);
+      expect(find.textContaining('Nuevas estrellas'), findsOneWidget);
     });
   });
 }
