@@ -2,6 +2,13 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.15.0 — 2026-10-31 · Mis primeros pasos y limpieza de Novedades
+
+- **Mis primeros pasos (chicos):** tarjeta en Hoy con 5 pasos: armar el avatar, elegir el color, adoptar la mascota, marcar la primera tarea y escuchar la palabra del día. Al terminarlos cobran +20 puntos y la medalla "¡Bienvenido!". En modo peques todo se ve más grande y cada paso se puede escuchar.
+- **Primeros pasos (adultos):** se retoman desde Ajustes, que muestra qué falta. El paso del avatar ahora se recuerda por perfil y no por teléfono.
+- **Family App Plus:** Ajustes muestra si está activo. Se activa poniendo `plus: true` en el hogar desde la consola de Firebase; las reglas impiden cambiarlo desde la app.
+- **Novedades más cortas:** se ven solo los últimos 30 días; se puede deslizar una para sacarla, "Limpiar todo en este teléfono" (no afecta a los demás) y, para administradores, "Borrar para todos lo de hace más de 7 días".
+
 ## 0.14.0 — 2026-10-31 · Más prolija, más útil y más linda
 
 ### Para el adulto
