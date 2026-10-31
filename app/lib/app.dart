@@ -6,6 +6,8 @@ import 'data/family_store.dart';
 import 'features/adult/adult_home_screen.dart';
 import 'features/adult/notices_screen.dart';
 import 'features/adult/routine_editor_screen.dart';
+import 'features/adult/week_report_screen.dart';
+import 'features/onboarding/privacy_screen.dart';
 import 'features/agenda/agenda_screen.dart';
 import 'features/child/child_shell.dart';
 import 'features/games/game_screen.dart';
@@ -33,6 +35,8 @@ abstract final class Routes {
   static const games = '/juegos';
   static const words = '/palabras';
   static const agenda = '/agenda';
+  static const week = '/adulto/semana';
+  static const privacy = '/privacidad';
   static const match = '/juegos/partida';
 
   /// Ruta de una partida.
@@ -62,6 +66,8 @@ class FamilyApp extends StatelessWidget {
       Routes.games => const GamesScreen(),
       Routes.words => const WordsScreen(),
       Routes.agenda => const AgendaScreen(),
+      Routes.week => const WeekReportScreen(),
+      Routes.privacy => const PrivacyScreen(),
       '${Routes.words}/tarjetas' => FlashcardsScreen(
           lang: Lang.byCode(uri.queryParameters['lang'] ?? '') ?? Lang.en,
           topic: topicById(uri.queryParameters['topic'] ?? ''),

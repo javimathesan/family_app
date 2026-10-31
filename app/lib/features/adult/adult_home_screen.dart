@@ -77,8 +77,10 @@ class AdultHomeScreen extends StatelessWidget {
                   itemBuilder: (_) => [
                     const PopupMenuItem(value: 'switch', child: Text('Cambiar de usuario')),
                     PopupMenuItem(value: 'pin', child: Text(session.hasPin ? 'Cambiar o quitar el PIN' : 'Poner PIN al modo adulto')),
+                    const PopupMenuItem(value: 'week', child: Text('Resumen de la semana')),
                     if (session.isCloud && session.isAdmin)
                       const PopupMenuItem(value: 'relink', child: Text('Teléfono nuevo de alguien')),
+                    const PopupMenuItem(value: 'privacy', child: Text('Privacidad y datos')),
                     if (session.isDemo) ...const [
                       PopupMenuItem(value: 'reset', child: Text('Restablecer datos de ejemplo')),
                       PopupMenuItem(value: 'leave', child: Text('Salir de la demostración')),
@@ -180,7 +182,16 @@ class AdultHomeScreen extends StatelessWidget {
               _MyDay(member: me),
             ],
             const SizedBox(height: 20),
-            Text('Hijos', style: sectionTitle(context)),
+            Row(
+              children: [
+                Expanded(child: Text('Hijos', style: sectionTitle(context))),
+                TextButton.icon(
+                  onPressed: () => Navigator.of(context).pushNamed(Routes.week),
+                  icon: const Icon(Icons.bar_chart, size: 20),
+                  label: const Text('Semana'),
+                ),
+              ],
+            ),
             const SizedBox(height: 10),
             if (children.isEmpty)
               InfoCard(
@@ -331,6 +342,10 @@ class AdultHomeScreen extends StatelessWidget {
     }
     if (value == 'pin') return _managePin(context);
     if (value == 'relink') return _relinkPhone(context);
+    if (value == 'week' || value == 'privacy') {
+      Navigator.of(context).pushNamed(value == 'week' ? Routes.week : Routes.privacy);
+      return;
+    }
     final session = SessionScope.of(context);
     final store = FamilyScope.of(context);
     final reset = value == 'reset';

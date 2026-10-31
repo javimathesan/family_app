@@ -36,13 +36,27 @@ class Word {
   String? hint(Lang lang) => lang == Lang.ko ? koRoman : null;
 }
 
+/// Nivel de dificultad de los temas.
+enum WordLevel {
+  basico('Básico', 'Las primeras palabras'),
+  medio('Medio', 'Más temas y palabras'),
+  avanzado('Avanzado', 'Frases, días y emociones');
+
+  const WordLevel(this.label, this.description);
+  final String label;
+  final String description;
+}
+
 class Topic {
-  const Topic(this.id, this.label, this.emoji, this.words);
+  const Topic(this.id, this.label, this.emoji, this.words, {this.level = WordLevel.basico});
   final String id;
   final String label;
   final String emoji;
   final List<Word> words;
+  final WordLevel level;
 }
+
+List<Topic> topicsOf(WordLevel level) => [for (final t in topics) if (t.level == level) t];
 
 /// Vocabulario básico por temas.
 const topics = [
@@ -121,12 +135,101 @@ const topics = [
     Word('🧑‍🤝‍🧑', 'amigo', 'friend', 'amigo', '친구', 'chingu'),
     Word('✂️', 'tijera', 'scissors', 'tesoura', '가위', 'gawi'),
   ]),
+  // ------------------------------------------------------------- nivel medio
+  Topic('ropa', 'Ropa', '👕', level: WordLevel.medio, [
+    Word('👕', 'remera', 't-shirt', 'camiseta', '티셔츠', 'tisyeocheu'),
+    Word('👖', 'pantalón', 'pants', 'calça', '바지', 'baji'),
+    Word('👟', 'zapatillas', 'sneakers', 'tênis', '운동화', 'undonghwa'),
+    Word('🧢', 'gorra', 'cap', 'boné', '모자', 'moja'),
+    Word('🧦', 'medias', 'socks', 'meias', '양말', 'yangmal'),
+    Word('🧥', 'campera', 'jacket', 'jaqueta', '재킷', 'jaekit'),
+    Word('👗', 'vestido', 'dress', 'vestido', '원피스', 'wonpiseu'),
+    Word('🧣', 'bufanda', 'scarf', 'cachecol', '목도리', 'mokdori'),
+  ]),
+  Topic('cuerpo', 'El cuerpo', '🧍', level: WordLevel.medio, [
+    Word('🗣️', 'cabeza', 'head', 'cabeça', '머리', 'meori'),
+    Word('👀', 'ojos', 'eyes', 'olhos', '눈', 'nun'),
+    Word('👃', 'nariz', 'nose', 'nariz', '코', 'ko'),
+    Word('👄', 'boca', 'mouth', 'boca', '입', 'ip'),
+    Word('👂', 'oreja', 'ear', 'orelha', '귀', 'gwi'),
+    Word('✋', 'mano', 'hand', 'mão', '손', 'son'),
+    Word('🦶', 'pie', 'foot', 'pé', '발', 'bal'),
+    Word('🦷', 'diente', 'tooth', 'dente', '이빨', 'ippal'),
+  ]),
+  Topic('clima', 'El cielo y el clima', '⛅', level: WordLevel.medio, [
+    Word('☀️', 'sol', 'sun', 'sol', '해', 'hae'),
+    Word('🌙', 'luna', 'moon', 'lua', '달', 'dal'),
+    Word('⭐', 'estrella', 'star', 'estrela', '별', 'byeol'),
+    Word('☁️', 'nube', 'cloud', 'nuvem', '구름', 'gureum'),
+    Word('🌧️', 'lluvia', 'rain', 'chuva', '비', 'bi'),
+    Word('❄️', 'nieve', 'snow', 'neve', '눈', 'nun'),
+    Word('🌬️', 'viento', 'wind', 'vento', '바람', 'baram'),
+    Word('🌈', 'arcoíris', 'rainbow', 'arco-íris', '무지개', 'mujigae'),
+  ]),
+  Topic('frutas', 'Frutas y verduras', '🥕', level: WordLevel.medio, [
+    Word('🍓', 'frutilla', 'strawberry', 'morango', '딸기', 'ttalgi'),
+    Word('🍇', 'uva', 'grapes', 'uva', '포도', 'podo'),
+    Word('🍉', 'sandía', 'watermelon', 'melancia', '수박', 'subak'),
+    Word('🍊', 'mandarina', 'tangerine', 'tangerina', '귤', 'gyul'),
+    Word('🥕', 'zanahoria', 'carrot', 'cenoura', '당근', 'danggeun'),
+    Word('🍅', 'tomate', 'tomato', 'tomate', '토마토', 'tomato'),
+    Word('🥔', 'papa', 'potato', 'batata', '감자', 'gamja'),
+    Word('🌽', 'choclo', 'corn', 'milho', '옥수수', 'oksusu'),
+  ]),
+  Topic('acciones', 'Acciones', '🏃', level: WordLevel.medio, [
+    Word('🍽️', 'comer', 'to eat', 'comer', '먹다', 'meokda'),
+    Word('🥤', 'tomar', 'to drink', 'beber', '마시다', 'masida'),
+    Word('😴', 'dormir', 'to sleep', 'dormir', '자다', 'jada'),
+    Word('🏃', 'correr', 'to run', 'correr', '달리다', 'dallida'),
+    Word('📖', 'leer', 'to read', 'ler', '읽다', 'ikda'),
+    Word('✍️', 'escribir', 'to write', 'escrever', '쓰다', 'sseuda'),
+    Word('🧸', 'jugar', 'to play', 'brincar', '놀다', 'nolda'),
+    Word('🎤', 'cantar', 'to sing', 'cantar', '노래하다', 'noraehada'),
+  ]),
+  Topic('lugares', 'Lugares', '🗺️', level: WordLevel.medio, [
+    Word('🌳', 'parque', 'park', 'parque', '공원', 'gongwon'),
+    Word('🏥', 'hospital', 'hospital', 'hospital', '병원', 'byeongwon'),
+    Word('🛒', 'supermercado', 'supermarket', 'supermercado', '슈퍼마켓', 'syupeomaket'),
+    Word('🏖️', 'playa', 'beach', 'praia', '해변', 'haebyeon'),
+    Word('📚', 'biblioteca', 'library', 'biblioteca', '도서관', 'doseogwan'),
+    Word('🍴', 'restaurante', 'restaurant', 'restaurante', '식당', 'sikdang'),
+    Word('🎬', 'cine', 'cinema', 'cinema', '영화관', 'yeonghwagwan'),
+    Word('🏙️', 'ciudad', 'city', 'cidade', '도시', 'dosi'),
+  ]),
+  // ---------------------------------------------------------- nivel avanzado
+  Topic('frases', 'Frases útiles', '💬', level: WordLevel.avanzado, [
+    Word('👋', 'hola', 'hello', 'olá', '안녕하세요', 'annyeonghaseyo'),
+    Word('🙏', 'gracias', 'thank you', 'obrigado', '감사합니다', 'gamsahamnida'),
+    Word('🥺', 'por favor', 'please', 'por favor', '부탁해요', 'butakaeyo'),
+    Word('😔', 'perdón', 'sorry', 'desculpa', '미안해요', 'mianhaeyo'),
+    Word('🌅', 'buen día', 'good morning', 'bom dia', '좋은 아침', 'joeun achim'),
+    Word('🌙', 'buenas noches', 'good night', 'boa noite', '잘 자요', 'jal jayo'),
+    Word('❤️', 'te quiero', 'I love you', 'eu te amo', '사랑해요', 'saranghaeyo'),
+    Word('🤔', '¿cómo estás?', 'how are you?', 'tudo bem?', '잘 지내요?', 'jal jinaeyo?'),
+  ]),
+  Topic('dias', 'Días de la semana', '📅', level: WordLevel.avanzado, [
+    Word('1️⃣', 'lunes', 'Monday', 'segunda-feira', '월요일', 'woryoil'),
+    Word('2️⃣', 'martes', 'Tuesday', 'terça-feira', '화요일', 'hwayoil'),
+    Word('3️⃣', 'miércoles', 'Wednesday', 'quarta-feira', '수요일', 'suyoil'),
+    Word('4️⃣', 'jueves', 'Thursday', 'quinta-feira', '목요일', 'mogyoil'),
+    Word('5️⃣', 'viernes', 'Friday', 'sexta-feira', '금요일', 'geumyoil'),
+    Word('6️⃣', 'sábado', 'Saturday', 'sábado', '토요일', 'toyoil'),
+    Word('7️⃣', 'domingo', 'Sunday', 'domingo', '일요일', 'iryoil'),
+  ]),
+  Topic('emociones', 'Emociones', '😊', level: WordLevel.avanzado, [
+    Word('😀', 'feliz', 'happy', 'feliz', '행복해요', 'haengbokhaeyo'),
+    Word('😢', 'triste', 'sad', 'triste', '슬퍼요', 'seulpeoyo'),
+    Word('😠', 'enojado', 'angry', 'bravo', '화나요', 'hwanayo'),
+    Word('🥱', 'cansado', 'tired', 'cansado', '피곤해요', 'pigonhaeyo'),
+    Word('😨', 'asustado', 'scared', 'assustado', '무서워요', 'museowoyo'),
+    Word('😮', 'sorprendido', 'surprised', 'surpreso', '놀랐어요', 'nollasseoyo'),
+  ]),
 ];
 
 Topic topicById(String id) => topics.firstWhere((t) => t.id == id, orElse: () => topics.first);
 
-/// Todas las palabras, para la palabra del día.
-final allWords = [for (final t in topics) ...t.words];
+/// Palabras de los niveles libres, para la palabra del día.
+final allWords = [for (final t in topics) if (t.level != WordLevel.avanzado) ...t.words];
 
 /// Palabra del día: la misma para toda la familia en un mismo día.
 ({Word word, Lang lang}) wordOfTheDay(DateTime day, List<Lang> langs) {

@@ -254,6 +254,7 @@ class FamilyCloud implements FamilySync {
             : null,
         gamesRule: GamesRule.values.asNameMap()[data['gamesRule']],
         gamesMinutes: (data['gamesMinutes'] as num?)?.toInt(),
+        plus: data['plus'] == true,
         languages: data['languages'] is List ? (data['languages'] as List).cast<String>() : null,
       );
     }, onError: onError));

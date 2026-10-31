@@ -69,6 +69,10 @@ class FamilyStore extends ChangeNotifier {
   /// Idiomas que se aprenden en Palabras (códigos de [Lang]).
   List<String> _languages = const ['en', 'pt', 'ko'];
 
+  /// El hogar tiene Family App Plus (contenido pago, como el nivel avanzado).
+  bool _plus = false;
+  bool get hasPlus => _plus;
+
   /// Segundos jugados hoy por cada miembro.
   final Map<String, int> _gameSeconds = {};
   final _random = Random();
@@ -533,6 +537,26 @@ class FamilyStore extends ChangeNotifier {
 
   // ------------------------------------------------------- calendario/avisos
 
+  /// Resumen de hoy, armado con lo que se hizo hasta ahora.
+  DaySummary todaySummary(String memberId) =>
+      summarizeDay(DateUtils.dateOnly(_clock()), _today[memberId] ?? const {}, _health[memberId], memberId: memberId);
+
+  /// Los últimos [days] días (incluido hoy), del más viejo al más nuevo.
+  /// Los días sin datos vienen en `null`.
+  List<({DateTime date, DaySummary? summary})> lastDays(String memberId, {int days = 7}) {
+    final today = DateUtils.dateOnly(_clock());
+    final history = historyOf(memberId);
+    return [
+      for (var i = days - 1; i >= 0; i--)
+        () {
+          final date = today.subtract(Duration(days: i));
+          if (i == 0) return (date: date, summary: todaySummary(memberId));
+          final found = history.where((s) => DateUtils.isSameDay(s.date, date));
+          return (date: date, summary: found.isEmpty ? null : found.first);
+        }(),
+    ];
+  }
+
   List<DaySummary> historyOf(String memberId) => List.unmodifiable(_history[memberId] ?? const []);
 
   List<FamilyNotice> get notices => List.unmodifiable(_notices);
@@ -577,7 +601,9 @@ class FamilyStore extends ChangeNotifier {
     List<String>? languages,
     Map<String, int>? gameSeconds,
     List<AgendaEvent>? events,
+    bool? plus,
   }) {
+    if (plus != null) _plus = plus;
     if (events != null) {
       _events
         ..clear()
@@ -685,6 +711,7 @@ class FamilyStore extends ChangeNotifier {
       languages: const ['en', 'pt', 'ko'],
       gameSeconds: const {},
       events: const [],
+      plus: false,
     );
   }
 

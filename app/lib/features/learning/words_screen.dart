@@ -23,6 +23,7 @@ class WordsScreen extends StatefulWidget {
 
 class _WordsScreenState extends State<WordsScreen> {
   Lang? _lang;
+  WordLevel _level = WordLevel.basico;
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +33,9 @@ class _WordsScreenState extends State<WordsScreen> {
     final langs = homeLanguages(store);
     final lang = langs.contains(_lang) ? _lang! : (langs.isEmpty ? Lang.en : langs.first);
     final isAdmin = (me?.role.isAdult ?? false) && session.isAdmin;
+    // En la demostración se puede probar todo; en un hogar real, el avanzado es de Plus.
+    final advancedOpen = store.hasPlus || !session.isCloud;
+    final locked = _level == WordLevel.avanzado && !advancedOpen;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Aprender palabras', style: TextStyle(fontWeight: FontWeight.w800))),
@@ -63,6 +67,46 @@ class _WordsScreenState extends State<WordsScreen> {
               ),
             ],
             const SizedBox(height: 16),
+            Text('Nivel', style: sectionTitle(context)),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final l in WordLevel.values)
+                  ChoiceChip(
+                    avatar: l == WordLevel.avanzado && !advancedOpen ? const Icon(Icons.lock_outline, size: 18) : null,
+                    label: Text(l.label),
+                    selected: l == _level,
+                    onSelected: (_) => setState(() => _level = l),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(_level.description, style: mutedText(context)),
+            const SizedBox(height: 16),
+            if (locked)
+              InfoCard(
+                color: const Color(0xFFF3E5F5),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.workspace_premium, color: Color(0xFF7B1FA2), size: 32),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text('Nivel avanzado: Family App Plus',
+                              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text('Incluye ${[for (final t in topicsOf(WordLevel.avanzado)) t.label.toLowerCase()].join(', ')}. '
+                        'Muy pronto se va a poder activar desde la app.'),
+                  ],
+                ),
+              ),
             Text('Temas', style: sectionTitle(context)),
             const SizedBox(height: 8),
             GridView.count(
@@ -73,19 +117,25 @@ class _WordsScreenState extends State<WordsScreen> {
               crossAxisSpacing: 10,
               childAspectRatio: 1.6,
               children: [
-                for (final t in topics)
+                for (final t in topicsOf(_level))
                   Material(
                     color: Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(18),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(18),
-                      onTap: () => _chooseMode(context, lang, t),
+                      onTap: locked ? null : () => _chooseMode(context, lang, t),
                       child: Padding(
                         padding: const EdgeInsets.all(12),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(t.emoji, style: const TextStyle(fontSize: 28)),
+                            Row(
+                              children: [
+                                Text(t.emoji, style: const TextStyle(fontSize: 28)),
+                                const Spacer(),
+                                if (locked) const Icon(Icons.lock_outline),
+                              ],
+                            ),
                             const Spacer(),
                             Text(t.label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
                             Text('${t.words.length} palabras', style: mutedText(context)),

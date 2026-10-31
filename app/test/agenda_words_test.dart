@@ -104,13 +104,15 @@ void main() {
 
   group('Palabras', () {
     test('todas las palabras tienen las 3 traducciones', () {
-      for (final w in allWords) {
+      for (final w in [for (final t in topics) ...t.words]) {
         for (final l in Lang.values) {
           expect(w.inLang(l), isNotEmpty);
         }
         expect(w.koRoman, isNotEmpty);
       }
-      expect(topics.length, 7);
+      expect(topicsOf(WordLevel.basico).length, 7);
+      expect(topicsOf(WordLevel.medio).length, 6);
+      expect(topicsOf(WordLevel.avanzado).length, 3);
     });
 
     test('la palabra del día cambia con el día y respeta los idiomas', () {
