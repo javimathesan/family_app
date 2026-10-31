@@ -125,7 +125,7 @@ void main() {
     await tester.pumpWidget(FamilyApp(store: store, session: session));
     await tester.tap(find.text('Tomi'));
     await tester.pumpAndSettle();
-    expect(find.text('Adoptá una mascota'), findsOneWidget);
+    expect(find.textContaining('Mis primeros pasos'), findsOneWidget);
 
     await tester.tap(find.widgetWithText(NavigationDestination, 'Rutina'));
     await tester.pumpAndSettle();
