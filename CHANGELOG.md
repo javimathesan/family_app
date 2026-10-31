@@ -2,6 +2,31 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.14.0 — 2026-10-31 · Más prolija, más útil y más linda
+
+### Para el adulto
+- **Barra inferior:** Inicio, Agenda, Juegos y **Ajustes**. Todo lo configurable está ahora en Ajustes (personalizar, avisos, PIN, rutina y premios, reglas de juego, reto, idiomas, escudo, invitar, teléfono nuevo, privacidad y sesión).
+- **Primeros pasos:** al crear un hogar aparece una lista con lo que conviene hacer (avatar, sumar a la pareja y a los hijos, revisar la rutina, configurar los avisos).
+- **Que los avisos lleguen siempre:** guía con el estado de los permisos, acceso directo al ahorro de batería y a las voces del teléfono, e instrucciones para Samsung, Xiaomi y Motorola.
+- **Escudo de la familia:** forma, color, dibujo y lema. Se ve en el inicio y en el panel.
+- **Modo tablet familiar:** todos los chicos en una pantalla para la tablet de la casa; cada uno toca su avatar y marca sus tareas. Para salir pide el PIN del adulto.
+
+### Para los chicos
+- **Festejos** con vibración al completar una tarea, ganar el quiz, cumplir el reto o ganar una partida (confeti, estrellas o globos; corazones y fuegos artificiales con Plus).
+- **Mi cuarto:** se decora con puntos (pared, piso, cama, cuadro, luz, estante, juguete y planta) y tiene una **mascota** que está feliz cuando cumplen la rutina y sube de nivel cada 3 días buenos.
+- **Medallas:** 13 medallas que se ganan solas (racha de 3 y 7 días, agua, premios, ganarle a Robi, palabras, reto, disfraces, cuarto y mascota).
+- **Hoy más corta y a gusto:** la próxima tarea arriba; el resto de las tarjetas se ordenan y se ocultan con "Ordenar mi pantalla".
+- **Tareas con dibujito:** cada tarea tiene un emoji (el adulto lo puede cambiar).
+- **Modo peques:** tareas más grandes y botón para escucharlas.
+- **Mundos ⭐ (Plus):** espacio, océano, dinosaurios, castillo y selva, con su color, fondo y dibujitos.
+
+### Por dentro
+- **Reglas de Firestore más estrictas:** cada teléfono solo cambia su propio perfil y sus puntos (de a poco); aprobar, rechazar y mover puntos de otros queda para los adultos administradores. **Hay que volver a publicarlas.**
+- El tema ya no redibuja toda la app con cada cambio; el tiempo de juego se actualiza por minuto.
+- Modo oscuro con mejor contraste en textos grises y tarjetas de color.
+- En tablets el contenido queda centrado.
+- La verificación de GitHub muestra el detalle de cada prueba que falla.
+
 ## 0.13.0 — 2026-10-30 · Agenda personal, más disfraces y personalización
 
 - **Agenda personal:** los chicos también pueden agendar (un examen, entregar una maqueta…) con aviso o alarma. Lo ven ellos y los adultos, y a los adultos les llega en Novedades. Los adultos pueden marcar algo como **"Solo para mí"**: no aparece en la app de los demás ni les avisa. Cada uno edita lo suyo; los adultos, además, lo que no es privado.

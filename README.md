@@ -3,10 +3,10 @@
 App móvil familiar que convierte la rutina diaria de los hijos en hábitos y responsabilidades. Cada tarea cumplida suma puntos que se canjean por premios, y los adultos siguen el progreso, la salud básica, la agenda y el ánimo del día desde su propio panel.
 
 - **Paquete:** `com.javimathesan.familyapp` (Android; iOS más adelante).
-- **Versión actual:** 0.13 (prueba). [Registro de cambios](CHANGELOG.md).
+- **Versión actual:** 0.14 (prueba). [Registro de cambios](CHANGELOG.md).
 - **Versión de prueba:** cada cambio en `main` publica el APK firmado en [la versión `prueba`](https://github.com/javimathesan/family_app/releases/tag/prueba).
 
-## Qué tiene hoy (v0.13)
+## Qué tiene hoy (v0.14)
 
 | Área | Qué hace |
 | --- | --- |
@@ -14,12 +14,14 @@ App móvil familiar que convierte la rutina diaria de los hijos en hábitos y re
 | **Rutina y puntos** | Tareas por momento del día, por hijo, con hora, puntos y validación (sola, foto o adulto). Puntos completos a tiempo, mitad fuera de horario. El adulto edita tareas y premios. |
 | **Premios** | Tienda con pedido y aprobación, puntos devueltos si se rechaza, alcancía mensual. |
 | **Salud y ánimo** | Agua (meta 8 vasos), popó/pipí con alerta a los 2 días, ánimo del día, calendario de caritas. |
-| **Panel del adulto** | Mi día (metas del adulto), Para aprobar, Novedades con campanita, **resumen de la semana**, **reto de la semana**. |
+| **Panel del adulto** | Barra con Inicio, Agenda, Juegos y Ajustes. Primeros pasos, Mi día (metas del adulto), Para aprobar, Novedades con campanita, **resumen de la semana**, **reto de la semana**, **escudo de la familia** y guía para que los avisos lleguen siempre. |
+| **Para los chicos** | Hoy ordenable, festejos al completar, **Mi cuarto** decorable con **mascota** que crece con la rutina, **medallas**, tareas con dibujito y modo peques con voz. |
+| **Tablet familiar** | Todos los chicos en una pantalla para la tablet de la casa; salida con PIN. |
 | **Avisos** | Novedades agrupadas por día e hijo; avisos del sistema con la app abierta o minimizada; preferencia por teléfono (importante / todo / nada); avisos a los chicos cuando les aprueban algo. |
 | **Agenda** | Turnos, exámenes, cumpleaños con lugar, día, hora, para quién y notas. Aviso o **alarma** que suena aunque la app esté cerrada. Los chicos agendan lo suyo y los padres lo ven; los adultos pueden marcar "solo para mí". |
 | **Juegos** | Tres en raya, 4 en línea, ludo, ajedrez y **Mi Barrio** (juego propio de propiedades); contra la familia (cada uno en su celular o pasando el teléfono) o contra Robi. Regla "primero la rutina", minutos por día y borrar partidas terminadas. |
 | **Palabras** | Inglés, portugués y coreano en 3 niveles (básico, medio y avanzado de Plus), tarjetas con voz, quiz con puntos una vez por día y palabra del día. |
-| **Avatar y personalización** | Avatar estilo Funko con 19 disfraces (4 de Plus) y accesorios que se desbloquean con puntos. Modo claro/oscuro, colores, fondos y tarjetas por miembro (opciones extra de Plus). Ícono propio. |
+| **Avatar y personalización** | Avatar estilo Funko con 19 disfraces (4 de Plus) y accesorios que se desbloquean con puntos. Modo claro/oscuro, colores, fondos, tarjetas, festejo y **mundos temáticos** por miembro (opciones extra de Plus). Ícono propio. |
 | **Privacidad** | Sin email, teléfono, ubicación ni fotos; solo apodos. Pantalla "Privacidad y datos" en la app. |
 
 ## Qué falta, por prioridad
@@ -48,7 +50,9 @@ Ver [docs/legal/](docs/legal/): borradores de **política de privacidad** y **t�
 - [ ] Cobro de **Family App Plus** con Google Play (nivel avanzado de palabras, disfraces y personalización extra). La app ya marca qué es de Plus.
 - [ ] Avisos con la app cerrada para novedades y turnos de juego (plan Blaze de Firebase + Cloud Functions).
 - [ ] Validación con foto real (Firebase Storage, también requiere Blaze).
-- [ ] Mascotas como tareas especiales y control de tiempo de pantallas.
+- [ ] Control de tiempo de pantallas.
+- [ ] Probar la app con letra grande (accesibilidad) y en tablets reales.
+- [ ] Ordenar dos atajos internos: el reto cobrado y los días de quiz se guardan junto a lo desbloqueado.
 - [ ] Estadísticas de uso para el administrador sin rastrear a los chicos (ver [docs/admin/](docs/admin/usuarios-y-estadisticas.md)).
 - [ ] Más juegos (sopa de letras, memoria) y jugar con amigos de otras familias con doble autorización.
 - [ ] iOS.
