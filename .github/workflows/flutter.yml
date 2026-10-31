@@ -42,7 +42,9 @@ jobs:
             | $failed[] as $id
             | "::error title=" + (($names[($id|tostring)] // "prueba") | gsub("%";"%25") | gsub(":";"%3A") | gsub(",";"%2C"))
               + "::" + ([ $all[] | select((.type=="print" or .type=="error") and .testID==$id) | (.message // ((.error // "") + "\n" + (.stackTrace // ""))) ]
-                        | join("\n") | .[0:6000] | gsub("%";"%25") | gsub("\r";"") | gsub("\n";"%0A"))
+                        | join("\n") | split("\n")
+                        | map(select(test("package:flutter|dart:async|package:stack_trace|package:matcher|asynchronous suspension|^\\s*$") | not))
+                        | join("\n") | .[0:1800] | gsub("%";"%25") | gsub("\r";"") | gsub("\n";"%0A"))
           '
           exit $code
 
