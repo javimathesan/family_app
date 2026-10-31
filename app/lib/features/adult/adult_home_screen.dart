@@ -675,7 +675,6 @@ class _FirstSteps extends StatelessWidget {
   Widget build(BuildContext context) {
     final store = FamilyScope.of(context);
     final session = SessionScope.of(context);
-    final me = store.currentMember;
     final nav = Navigator.of(context);
     final steps = [
       (

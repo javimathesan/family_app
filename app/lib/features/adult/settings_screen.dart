@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../app.dart';
 import '../../data/app_session.dart';
 import '../../data/family_store.dart';
-import '../../models/models.dart';
 import '../../widgets/accent_picker.dart';
 import '../../widgets/avatar_view.dart';
 import '../../widgets/common.dart';

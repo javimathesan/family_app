@@ -455,10 +455,10 @@ Future<void> showTodayOrder(BuildContext context) {
               Flexible(
                 child: ReorderableListView(
                   shrinkWrap: true,
-                  onReorder: (from, to) {
+                  onReorderItem: (from, to) {
                     final next = [...order];
                     final item = next.removeAt(from);
-                    next.insert(to > from ? to - 1 : to, item);
+                    next.insert(to, item);
                     store.setLook(me.id, me.look.copyWith(home: next));
                   },
                   children: [
@@ -470,7 +470,7 @@ Future<void> showTodayOrder(BuildContext context) {
                         secondary: const Icon(Icons.drag_handle),
                         onChanged: (on) => store.setLook(
                           me.id,
-                          me.look.copyWith(hidden: on ? [...me.look.hidden]..remove(id) : [...me.look.hidden, id]),
+                          me.look.copyWith(hidden: on ? ([...me.look.hidden]..remove(id)) : [...me.look.hidden, id]),
                         ),
                       ),
                   ],
