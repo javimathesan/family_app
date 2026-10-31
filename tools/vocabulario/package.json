@@ -1,0 +1,9 @@
+{
+  "name": "family-app-vocabulario",
+  "private": true,
+  "type": "module",
+  "description": "Sube paquetes de palabras a Firebase para que aparezcan en Family App sin actualizar la app.",
+  "dependencies": {
+    "firebase-admin": "^13.0.0"
+  }
+}

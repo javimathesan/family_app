@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../domain/points.dart';
 import '../games/game_setup.dart';
+import '../learning/vocabulary.dart';
 import '../models/models.dart';
 import 'family_sync.dart';
 
@@ -11,6 +12,7 @@ part 'family_agenda.dart';
 part 'family_challenge.dart';
 part 'family_room.dart';
 part 'family_medals.dart';
+part 'family_words.dart';
 part 'family_games.dart';
 
 /// Estado del hogar en memoria.
@@ -967,6 +969,7 @@ class FamilyStore extends ChangeNotifier {
         'unlocked': m.unlocked.toList(),
         'look': m.look.toJson(),
         'room': m.room,
+        'progress': m.progress,
       };
 
   static Map<String, dynamic> avatarToJson(AvatarConfig a) => {
@@ -992,6 +995,7 @@ class FamilyStore extends ChangeNotifier {
       unlocked: {...?(j['unlocked'] as List?)?.cast<String>()},
       look: MemberLook.fromJson(j['look']),
       room: (j['room'] as Map?)?.cast<String, dynamic>(),
+      progress: (j['progress'] as Map?)?.map((k, v) => MapEntry(k as String, (v as num).toInt())),
       avatar: AvatarConfig(
         skin: (a['skin'] as num?)?.toInt() ?? 1,
         hairStyle: (a['hairStyle'] as num?)?.toInt() ?? 0,

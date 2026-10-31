@@ -1,0 +1,17 @@
+{
+  "id": "fiestas",
+  "label": "Cumpleaños y fiestas",
+  "emoji": "🎂",
+  "level": "medio",
+  "order": 1,
+  "words": [
+    { "emoji": "🎂", "es": "torta", "en": "cake", "pt": "bolo", "ko": "케이크", "ko_r": "keikeu" },
+    { "emoji": "🎁", "es": "regalo", "en": "gift", "pt": "presente", "ko": "선물", "ko_r": "seonmul" },
+    { "emoji": "🕯️", "es": "vela", "en": "candle", "pt": "vela", "ko": "초", "ko_r": "cho" },
+    { "emoji": "🎉", "es": "fiesta", "en": "party", "pt": "festa", "ko": "파티", "ko_r": "pati" },
+    { "emoji": "🎵", "es": "música", "en": "music", "pt": "música", "ko": "음악", "ko_r": "eumak" },
+    { "emoji": "💃", "es": "baile", "en": "dance", "pt": "dança", "ko": "춤", "ko_r": "chum" },
+    { "emoji": "🎈", "es": "globo", "en": "balloon", "pt": "balão", "ko": "풍선", "ko_r": "pungseon" },
+    { "emoji": "🍬", "es": "caramelo", "en": "candy", "pt": "bala", "ko": "사탕", "ko_r": "satang" }
+  ]
+}

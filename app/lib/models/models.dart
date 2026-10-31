@@ -108,8 +108,10 @@ class Member {
     Set<String>? unlocked,
     this.look = const MemberLook(),
     Map<String, dynamic>? room,
+    Map<String, int>? progress,
   })  : unlocked = unlocked ?? {},
-        room = room ?? {};
+        room = room ?? {},
+        progress = progress ?? {};
 
   final String id;
 
@@ -130,6 +132,9 @@ class Member {
 
   /// Su cuarto y su mascota: qué eligió en cada lugar y el nombre de la mascota.
   final Map<String, dynamic> room;
+
+  /// Avance en Palabras (estrellas por tema, palabras para repasar) y récords.
+  final Map<String, int> progress;
 }
 
 /// Modo de color de la app.

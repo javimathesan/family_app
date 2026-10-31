@@ -140,7 +140,7 @@ void main() {
         expect(w.koRoman, isNotEmpty);
       }
       expect(topicsOf(WordLevel.basico).length, 7);
-      expect(topicsOf(WordLevel.medio).length, 6);
+      expect(topicsOf(WordLevel.medio).length, 10);
       expect(topicsOf(WordLevel.avanzado).length, 3);
     });
 

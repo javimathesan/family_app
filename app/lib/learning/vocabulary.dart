@@ -48,7 +48,10 @@ enum WordLevel {
 }
 
 class Topic {
-  const Topic(this.id, this.label, this.emoji, this.words, {this.level = WordLevel.basico});
+  const Topic(this.id, this.label, this.emoji, this.words, {this.level = WordLevel.basico, this.pack = false});
+
+  /// Viene de un paquete descargado (no está dentro de la app).
+  final bool pack;
   final String id;
   final String label;
   final String emoji;
@@ -58,8 +61,14 @@ class Topic {
 
 List<Topic> topicsOf(WordLevel level) => [for (final t in topics) if (t.level == level) t];
 
+/// Temas que llegan en paquetes desde el servidor (se suman sin actualizar la app).
+List<Topic> extraTopics = [];
+
+/// Todos los temas: los de la app y los de los paquetes.
+List<Topic> get topics => [...builtInTopics, for (final t in extraTopics) if (!builtInTopics.any((b) => b.id == t.id)) t];
+
 /// Vocabulario básico por temas.
-const topics = [
+const builtInTopics = [
   Topic('colores', 'Colores', '🎨', [
     Word('🔴', 'rojo', 'red', 'vermelho', '빨간색', 'ppalgansaek'),
     Word('🔵', 'azul', 'blue', 'azul', '파란색', 'paransaek'),
@@ -196,6 +205,46 @@ const topics = [
     Word('🎬', 'cine', 'cinema', 'cinema', '영화관', 'yeonghwagwan'),
     Word('🏙️', 'ciudad', 'city', 'cidade', '도시', 'dosi'),
   ]),
+  Topic('transporte', 'Transporte', '🚗', level: WordLevel.medio, [
+    Word('🚗', 'auto', 'car', 'carro', '자동차', 'jadongcha'),
+    Word('🚌', 'colectivo', 'bus', 'ônibus', '버스', 'beoseu'),
+    Word('🚲', 'bicicleta', 'bicycle', 'bicicleta', '자전거', 'jajeongeo'),
+    Word('✈️', 'avión', 'airplane', 'avião', '비행기', 'bihaenggi'),
+    Word('⛵', 'barco', 'boat', 'barco', '배', 'bae'),
+    Word('🚆', 'tren', 'train', 'trem', '기차', 'gicha'),
+    Word('🏍️', 'moto', 'motorcycle', 'moto', '오토바이', 'otobai'),
+    Word('🚁', 'helicóptero', 'helicopter', 'helicóptero', '헬리콥터', 'hellikopteo'),
+  ]),
+  Topic('juguetes', 'Juguetes', '🧸', level: WordLevel.medio, [
+    Word('⚽', 'pelota', 'ball', 'bola', '공', 'gong'),
+    Word('🪆', 'muñeca', 'doll', 'boneca', '인형', 'inhyeong'),
+    Word('🧩', 'rompecabezas', 'puzzle', 'quebra-cabeça', '퍼즐', 'peojeul'),
+    Word('🪁', 'barrilete', 'kite', 'pipa', '연', 'yeon'),
+    Word('🎈', 'globo', 'balloon', 'balão', '풍선', 'pungseon'),
+    Word('🎲', 'dado', 'dice', 'dado', '주사위', 'jusawi'),
+    Word('🪀', 'yoyó', 'yo-yo', 'ioiô', '요요', 'yoyo'),
+    Word('🤖', 'robot', 'robot', 'robô', '로봇', 'robot'),
+  ]),
+  Topic('deportes', 'Deportes', '🏅', level: WordLevel.medio, [
+    Word('⚽', 'fútbol', 'soccer', 'futebol', '축구', 'chukgu'),
+    Word('🏀', 'básquet', 'basketball', 'basquete', '농구', 'nonggu'),
+    Word('🎾', 'tenis', 'tennis', 'tênis', '테니스', 'teniseu'),
+    Word('🏊', 'natación', 'swimming', 'natação', '수영', 'suyeong'),
+    Word('🏐', 'vóley', 'volleyball', 'vôlei', '배구', 'baegu'),
+    Word('⛸️', 'patinaje', 'skating', 'patinação', '스케이트', 'seukeiteu'),
+    Word('🥋', 'karate', 'karate', 'caratê', '가라테', 'garate'),
+    Word('🏓', 'ping-pong', 'table tennis', 'pingue-pongue', '탁구', 'takgu'),
+  ]),
+  Topic('profesiones', 'Profesiones', '🧑‍🚒', level: WordLevel.medio, [
+    Word('🧑‍⚕️', 'médico', 'doctor', 'médico', '의사', 'uisa'),
+    Word('🧑‍🚒', 'bombero', 'firefighter', 'bombeiro', '소방관', 'sobanggwan'),
+    Word('👮', 'policía', 'police officer', 'policial', '경찰관', 'gyeongchalgwan'),
+    Word('🧑‍🍳', 'cocinero', 'cook', 'cozinheiro', '요리사', 'yorisa'),
+    Word('🧑‍🌾', 'granjero', 'farmer', 'fazendeiro', '농부', 'nongbu'),
+    Word('🧑‍🚀', 'astronauta', 'astronaut', 'astronauta', '우주비행사', 'ujubihaengsa'),
+    Word('🧑‍🎨', 'pintor', 'painter', 'pintor', '화가', 'hwaga'),
+    Word('🧑‍🏫', 'maestro', 'teacher', 'professor', '선생님', 'seonsaengnim'),
+  ]),
   // ---------------------------------------------------------- nivel avanzado
   Topic('frases', 'Frases útiles', '💬', level: WordLevel.avanzado, [
     Word('👋', 'hola', 'hello', 'olá', '안녕하세요', 'annyeonghaseyo'),
@@ -228,8 +277,28 @@ const topics = [
 
 Topic topicById(String id) => topics.firstWhere((t) => t.id == id, orElse: () => topics.first);
 
+/// Lee un tema de un paquete (JSON de Firestore o guardado en el teléfono).
+Topic? topicFromJson(Map<String, dynamic> j) {
+  final id = j['id'] as String?;
+  final words = j['words'];
+  if (id == null || words is! List || words.length < 4) return null;
+  return Topic(
+    id,
+    j['label'] as String? ?? id,
+    j['emoji'] as String? ?? '📦',
+    [
+      for (final w in words)
+        if (w is Map && w['es'] != null && w['en'] != null && w['pt'] != null && w['ko'] != null)
+          Word(w['emoji'] as String? ?? '⭐', w['es'] as String, w['en'] as String, w['pt'] as String, w['ko'] as String,
+              w['ko_r'] as String? ?? ''),
+    ],
+    level: WordLevel.values.asNameMap()[j['level']] ?? WordLevel.medio,
+    pack: true,
+  );
+}
+
 /// Palabras de los niveles libres, para la palabra del día.
-final allWords = [for (final t in topics) if (t.level != WordLevel.avanzado) ...t.words];
+List<Word> get allWords => [for (final t in builtInTopics) if (t.level != WordLevel.avanzado) ...t.words];
 
 /// Palabra del día: la misma para toda la familia en un mismo día.
 ({Word word, Lang lang}) wordOfTheDay(DateTime day, List<Lang> langs) {

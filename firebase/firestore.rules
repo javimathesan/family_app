@@ -42,6 +42,12 @@ service cloud.firestore {
       allow delete: if isAdmin(resource.data.homeId);
     }
 
+    // Paquetes de palabras: los lee cualquier teléfono; se cargan desde la
+    // consola o con tools/vocabulario.
+    match /vocab/{packId} {
+      allow read: if signedIn();
+    }
+
     match /homes/{homeId} {
       // Quien crea el hogar queda como único administrador y miembro.
       allow create: if signedIn()
@@ -75,7 +81,7 @@ service cloud.firestore {
           || (isMember(homeId)
             && resource.data.uid == request.auth.uid
             && request.resource.data.diff(resource.data).affectedKeys()
-                 .hasOnly(['nickname', 'avatar', 'accent', 'look', 'unlocked', 'balance', 'room'])
+                 .hasOnly(['nickname', 'avatar', 'accent', 'look', 'unlocked', 'balance', 'room', 'progress'])
             && (!('balance' in request.resource.data.diff(resource.data).affectedKeys())
                 || request.resource.data.balance - resource.data.balance <= 150))
           || (signedIn()

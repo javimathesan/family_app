@@ -399,6 +399,7 @@ class FamilyCloud implements FamilySync {
         'unlocked': member.unlocked.toList(),
         'look': member.look.toJson(),
         'room': member.room,
+        'progress': member.progress,
       }));
 
   @override

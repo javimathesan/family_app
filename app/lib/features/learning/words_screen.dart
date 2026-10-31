@@ -14,12 +14,26 @@ import '../../widgets/common.dart';
 List<Lang> homeLanguages(FamilyStore store) =>
     [for (final l in Lang.values) if (store.languages.contains(l.name)) l];
 
-/// Aprender palabras: idioma, tema y modo (tarjetas o quiz).
+/// Aprender palabras: idioma, nivel, temas en escalera y juegos con palabras.
 class WordsScreen extends StatefulWidget {
   const WordsScreen({super.key});
 
   @override
   State<WordsScreen> createState() => _WordsScreenState();
+}
+
+/// Modos de juego con las palabras de un tema.
+enum WordMode {
+  tarjetas('Tarjetas', 'Mirá y escuchá cada palabra', Icons.style_outlined),
+  quiz('Quiz de 5 preguntas', 'Da estrellas y abre el tema siguiente', Icons.quiz_outlined),
+  escuchar('Escuchar y elegir', 'Escuchá la palabra y tocá el dibujo', Icons.hearing),
+  memoria('Memoria', 'Encontrá las parejas: dibujo y palabra', Icons.grid_view),
+  letras('Ordenar letras', 'Armá la palabra con las letras', Icons.abc);
+
+  const WordMode(this.label, this.description, this.icon);
+  final String label;
+  final String description;
+  final IconData icon;
 }
 
 class _WordsScreenState extends State<WordsScreen> {
@@ -34,9 +48,12 @@ class _WordsScreenState extends State<WordsScreen> {
     final langs = homeLanguages(store);
     final lang = langs.contains(_lang) ? _lang! : (langs.isEmpty ? Lang.en : langs.first);
     final isAdmin = (me?.role.isAdult ?? false) && session.isAdmin;
-    // En la demostración se puede probar todo; en un hogar real, el avanzado es de Plus.
-    final advancedOpen = store.hasPlus || !session.isCloud;
-    final locked = _level == WordLevel.avanzado && !advancedOpen;
+    final plusOpen = session.plusOpen;
+    final plusLocked = _level == WordLevel.avanzado && !plusOpen;
+    final levelLocked = me != null && !store.levelUnlocked(me.id, lang, _level);
+    final review = me == null ? const <Word>[] : store.reviewWords(me.id, lang);
+    final levelTopics = topicsOf(_level);
+    final stars = me == null ? 0 : store.starsInLevel(me.id, lang, _level);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Aprender palabras', style: TextStyle(fontWeight: FontWeight.w800))),
@@ -44,8 +61,6 @@ class _WordsScreenState extends State<WordsScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text('Idioma', style: sectionTitle(context)),
-            const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -62,21 +77,34 @@ class _WordsScreenState extends State<WordsScreen> {
               const SizedBox(height: 8),
               Text(
                 store.wordQuizDoneToday(me.id)
-                    ? 'Ya ganaste los puntos del quiz de hoy. ¡Podés seguir practicando!'
-                    : 'Hacé un quiz y ganá 1 punto por cada respuesta correcta (una vez por día).',
+                    ? 'Ya ganaste los puntos del quiz de hoy. ¡Seguí juntando estrellas!'
+                    : 'Hacé un quiz y ganá 1 punto por respuesta correcta (una vez por día).',
                 style: mutedText(context),
               ),
             ],
+            if (review.length >= 4) ...[
+              const SizedBox(height: 12),
+              Card(
+                color: const Color(0xFFFFF3E0),
+                child: ListTile(
+                  leading: const Text('🔁', style: TextStyle(fontSize: 28)),
+                  title: Text('Repasar ${review.length} palabras', style: const TextStyle(fontWeight: FontWeight.w800)),
+                  subtitle: const Text('Las que te costaron. Cuando las aciertes, salen de la lista.'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).pushNamed('${Routes.words}/quiz?lang=${lang.name}&topic=$reviewTopicId'),
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
-            Text('Nivel', style: sectionTitle(context)),
-            const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
                 for (final l in WordLevel.values)
                   ChoiceChip(
-                    avatar: l == WordLevel.avanzado && !advancedOpen ? const Icon(Icons.lock_outline, size: 18) : null,
+                    avatar: (l == WordLevel.avanzado && !plusOpen) || (me != null && !store.levelUnlocked(me.id, lang, l))
+                        ? const Icon(Icons.lock_outline, size: 18)
+                        : null,
                     label: Text(l.label),
                     selected: l == _level,
                     onSelected: (_) => setState(() => _level = l),
@@ -84,31 +112,25 @@ class _WordsScreenState extends State<WordsScreen> {
               ],
             ),
             const SizedBox(height: 4),
-            Text(_level.description, style: mutedText(context)),
-            const SizedBox(height: 16),
-            if (locked)
+            Text('${_level.description} · ⭐ $stars de ${levelTopics.length * 3}', style: mutedText(context)),
+            const SizedBox(height: 12),
+            if (plusLocked)
               InfoCard(
                 color: const Color(0xFFF3E5F5),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.workspace_premium, color: Color(0xFF7B1FA2), size: 32),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: Text('Nivel avanzado: Family App Plus',
-                              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text('Incluye ${[for (final t in topicsOf(WordLevel.avanzado)) t.label.toLowerCase()].join(', ')}. '
-                        'Muy pronto se va a poder activar desde la app.'),
-                  ],
+                child: Text(
+                  '⭐ Nivel avanzado: Family App Plus. Incluye ${[for (final t in levelTopics) t.label.toLowerCase()].join(', ')}. '
+                  'Muy pronto se va a poder activar desde la app.',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              )
+            else if (levelLocked)
+              const InfoCard(
+                color: Color(0xFFE3F2FD),
+                child: Text(
+                  '🔒 El nivel medio se abre cuando tenés 2 estrellas (4 de 5 en el quiz) en 5 temas del básico.',
+                  style: TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
-            Text('Temas', style: sectionTitle(context)),
             const SizedBox(height: 8),
             GridView.count(
               crossAxisCount: 2,
@@ -116,35 +138,47 @@ class _WordsScreenState extends State<WordsScreen> {
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: 10,
               crossAxisSpacing: 10,
-              childAspectRatio: 1.35,
+              childAspectRatio: 1.25,
               children: [
-                for (final t in topicsOf(_level))
-                  Material(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(18),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(18),
-                      onTap: locked ? null : () => _chooseMode(context, lang, t),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                for (final t in levelTopics)
+                  Builder(builder: (context) {
+                    final open = !plusLocked && (me == null || store.topicUnlocked(me.id, lang, t));
+                    final s = me == null ? 0 : store.topicStars(me.id, lang, t.id);
+                    return Opacity(
+                      opacity: open ? 1 : .5,
+                      child: Material(
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(18),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(18),
+                          onTap: open
+                              ? () => _chooseMode(context, lang, t)
+                              : () => ScaffoldMessenger.of(context)
+                                ..hideCurrentSnackBar()
+                                ..showSnackBar(const SnackBar(content: Text('Sacá 4 de 5 en el tema anterior para abrir este.'))),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(t.emoji, style: const TextStyle(fontSize: 28)),
+                                Row(
+                                  children: [
+                                    Text(t.emoji, style: const TextStyle(fontSize: 28)),
+                                    const Spacer(),
+                                    if (!open) const Icon(Icons.lock_outline),
+                                    if (t.pack) const Text('🆕'),
+                                  ],
+                                ),
                                 const Spacer(),
-                                if (locked) const Icon(Icons.lock_outline),
+                                Text(t.label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                                Text('${'⭐' * s}${'☆' * (3 - s)} · ${t.words.length} palabras', style: mutedText(context)),
                               ],
                             ),
-                            const Spacer(),
-                            Text(t.label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
-                            Text('${t.words.length} palabras', style: mutedText(context)),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
-                  ),
+                    );
+                  }),
               ],
             ),
             if (isAdmin) ...[
@@ -179,31 +213,27 @@ class _WordsScreenState extends State<WordsScreen> {
   }
 
   Future<void> _chooseMode(BuildContext context, Lang lang, Topic topic) async {
-    final mode = await showModalBottomSheet<String>(
+    final mode = await showModalBottomSheet<WordMode>(
       context: context,
       showDragHandle: true,
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              leading: const Icon(Icons.style_outlined),
-              title: const Text('Tarjetas', style: TextStyle(fontWeight: FontWeight.w800)),
-              subtitle: Text('Mirá y escuchá las palabras de ${topic.label.toLowerCase()} en ${lang.label.toLowerCase()}'),
-              onTap: () => Navigator.pop(ctx, 'tarjetas'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.quiz_outlined),
-              title: const Text('Quiz de 5 preguntas', style: TextStyle(fontWeight: FontWeight.w800)),
-              subtitle: const Text('Elegí la palabra correcta'),
-              onTap: () => Navigator.pop(ctx, 'quiz'),
-            ),
+            Text('${topic.emoji} ${topic.label} · ${lang.flag}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+            for (final m in WordMode.values)
+              ListTile(
+                leading: Icon(m.icon),
+                title: Text(m.label, style: const TextStyle(fontWeight: FontWeight.w800)),
+                subtitle: Text(m.description),
+                onTap: () => Navigator.pop(ctx, m),
+              ),
           ],
         ),
       ),
     );
     if (mode == null || !context.mounted) return;
-    Navigator.of(context).pushNamed('${Routes.words}/$mode?lang=${lang.name}&topic=${topic.id}');
+    Navigator.of(context).pushNamed('${Routes.words}/${mode.name}?lang=${lang.name}&topic=${topic.id}');
   }
 }
 
@@ -329,30 +359,47 @@ class _WordQuizScreenState extends State<WordQuizScreen> {
   static const questions = 5;
   late final Random _random = widget.random ?? Random();
   late List<({Word word, List<Word> options})> _quiz;
+  late Topic _topic;
+  bool _ready = false;
   int _index = 0;
   int _correct = 0;
   Word? _picked;
   int? _awarded;
+  int _starsBefore = 0;
+  final List<Word> _right = [];
+  final List<Word> _wrong = [];
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_ready) return;
+    _ready = true;
+    final store = FamilyScope.of(context);
+    final me = store.currentMember;
+    _topic = widget.topic.id == reviewTopicId && me != null
+        ? Topic(reviewTopicId, 'Repaso', '🔁', store.reviewWords(me.id, widget.lang))
+        : widget.topic;
+    if (me != null) _starsBefore = store.topicStars(me.id, widget.lang, _topic.id);
     _build();
   }
 
   void _build() {
-    final words = [...widget.topic.words]..shuffle(_random);
+    final words = [..._topic.words]..shuffle(_random);
+    // Para las opciones incorrectas se usan palabras del mismo tema (o de todos, en el repaso).
+    final pool = _topic.words.length >= 4 ? _topic.words : allWords;
     _quiz = [
       for (final w in words.take(questions))
         (
           word: w,
-          options: ([w, ...([...widget.topic.words]..remove(w)..shuffle(_random)).take(3)]..shuffle(_random)),
+          options: ([w, ...([...pool]..remove(w)..shuffle(_random)).take(3)]..shuffle(_random)),
         ),
     ];
     _index = 0;
     _correct = 0;
     _picked = null;
     _awarded = null;
+    _right.clear();
+    _wrong.clear();
   }
 
   void _pick(Word w) {
@@ -360,7 +407,12 @@ class _WordQuizScreenState extends State<WordQuizScreen> {
     final q = _quiz[_index];
     setState(() {
       _picked = w;
-      if (w == q.word) _correct++;
+      if (w == q.word) {
+        _correct++;
+        _right.add(q.word);
+      } else {
+        _wrong.add(q.word);
+      }
     });
     Speech.instance.say(q.word.inLang(widget.lang), widget.lang.ttsLocale);
   }
@@ -376,6 +428,7 @@ class _WordQuizScreenState extends State<WordQuizScreen> {
     final store = FamilyScope.of(context);
     final me = store.currentMember;
     final points = me == null ? 0 : store.awardWordQuiz(me.id, _correct, widget.lang.label.toLowerCase());
+    if (me != null) store.recordQuiz(me.id, widget.lang, _topic.id, score: _correct, right: _right, wrong: _wrong);
     setState(() {
       _index = _quiz.length;
       _awarded = points;
@@ -386,7 +439,7 @@ class _WordQuizScreenState extends State<WordQuizScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('${widget.lang.flag} Quiz: ${widget.topic.label}', style: const TextStyle(fontWeight: FontWeight.w800))),
+      appBar: AppBar(title: Text('${widget.lang.flag} Quiz: ${_topic.label}', style: const TextStyle(fontWeight: FontWeight.w800))),
       body: SafeArea(child: _index >= _quiz.length ? _result(context) : _question(context)),
     );
   }
@@ -439,6 +492,11 @@ class _WordQuizScreenState extends State<WordQuizScreen> {
     );
   }
 
+  int get _starsNow {
+    final me = FamilyScope.of(context).currentMember;
+    return me == null ? 0 : FamilyScope.of(context).topicStars(me.id, widget.lang, _topic.id);
+  }
+
   Widget _result(BuildContext context) {
     final points = _awarded ?? 0;
     return Padding(
@@ -450,7 +508,12 @@ class _WordQuizScreenState extends State<WordQuizScreen> {
           Text('$_correct de ${_quiz.length}', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w900)),
           const SizedBox(height: 8),
           Text(
-            points > 0 ? '¡Ganaste $points puntos!' : 'Seguí practicando para aprender más palabras.',
+            [
+              if (points > 0) '¡Ganaste $points puntos!',
+              if (_topic.id != reviewTopicId && _starsNow > _starsBefore) '¡Nuevas estrellas! ${'⭐' * _starsNow}',
+              if (_topic.id != reviewTopicId && _starsNow >= 2 && _starsBefore < 2) '¡Se abrió el tema siguiente! 🔓',
+              if (points == 0 && _starsNow <= _starsBefore) 'Seguí practicando: con 4 de 5 se abre el tema siguiente.',
+            ].join('\n'),
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
           ),

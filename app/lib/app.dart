@@ -17,6 +17,7 @@ import 'features/agenda/agenda_screen.dart';
 import 'features/child/child_shell.dart';
 import 'features/games/game_screen.dart';
 import 'features/games/games_hub.dart';
+import 'features/learning/word_games.dart';
 import 'features/learning/words_screen.dart';
 import 'learning/vocabulary.dart';
 import 'models/models.dart';
@@ -54,6 +55,20 @@ abstract final class Routes {
   static String matchOf(String id) => '$match?id=$id';
 }
 
+/// Juegos de palabras: `/palabras/<modo>?lang=en&topic=animales`.
+Widget _wordGame(String mode, Uri uri) {
+  final lang = Lang.byCode(uri.queryParameters['lang'] ?? '') ?? Lang.en;
+  final id = uri.queryParameters['topic'] ?? '';
+  final topic = id == reviewTopicId ? const Topic(reviewTopicId, 'Repaso', '🔁', []) : topicById(id);
+  return switch (mode) {
+    'tarjetas' => FlashcardsScreen(lang: lang, topic: topic),
+    'escuchar' => ListenGameScreen(lang: lang, topic: topic),
+    'memoria' => MemoryGameScreen(lang: lang, topic: topic),
+    'letras' => LettersGameScreen(lang: lang, topic: topic),
+    _ => WordQuizScreen(lang: lang, topic: topic),
+  };
+}
+
 class FamilyApp extends StatefulWidget {
   const FamilyApp({super.key, required this.store, required this.session});
 
@@ -84,14 +99,7 @@ class FamilyApp extends StatefulWidget {
       Routes.tablet => const TabletModeScreen(),
       Routes.medals => MedalsScreen(memberId: uri.queryParameters['id']),
       Routes.room => const RoomScreen(),
-      '${Routes.words}/tarjetas' => FlashcardsScreen(
-          lang: Lang.byCode(uri.queryParameters['lang'] ?? '') ?? Lang.en,
-          topic: topicById(uri.queryParameters['topic'] ?? ''),
-        ),
-      '${Routes.words}/quiz' => WordQuizScreen(
-          lang: Lang.byCode(uri.queryParameters['lang'] ?? '') ?? Lang.en,
-          topic: topicById(uri.queryParameters['topic'] ?? ''),
-        ),
+      final p when p.startsWith('${Routes.words}/') => _wordGame(p.substring(Routes.words.length + 1), uri),
       Routes.match => GameScreen(matchId: uri.queryParameters['id'] ?? ''),
       _ => const WelcomeScreen(),
     };
