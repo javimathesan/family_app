@@ -4,7 +4,7 @@ App móvil familiar que convierte la rutina diaria de los hijos en hábitos sano
 
 ## Estado
 
-**Etapa actual: v0.11.** Family App (`com.javimathesan.familyapp`) corre en Android y sincroniza los teléfonos del hogar con Firebase: crear hogar, invitar por QR, aprobar altas y ver en vivo lo que hace cada hijo. El adulto edita la rutina y los premios, asigna tareas a cada hijo y registra su propio día. Novedades con campanita y avisos mientras la app está abierta; y un Área de juegos (tres en raya, 4 en línea, ludo y ajedrez) para jugar en familia o contra Robi. Faltan los avisos con la app cerrada (push). Ver el [registro de cambios](CHANGELOG.md).
+**Etapa actual: v0.12.** Family App (`com.javimathesan.familyapp`) corre en Android y sincroniza los teléfonos del hogar con Firebase: crear hogar, invitar por QR, aprobar altas y ver en vivo lo que hace cada hijo. El adulto edita la rutina y los premios, asigna tareas a cada hijo y registra su propio día. Novedades con campanita y avisos mientras la app está abierta; y un Área de juegos (tres en raya, 4 en línea, ludo y ajedrez) para jugar en familia o contra Robi. Faltan los avisos con la app cerrada (push). Ver el [registro de cambios](CHANGELOG.md).
 
 | Carpeta | Contenido |
 | --- | --- |
@@ -57,4 +57,6 @@ Flutter (Android e iOS) · NestJS + PostgreSQL · WebSocket + Redis · Firebase 
 - [x] Área de juegos en familia: tres en raya, 4 en línea, ludo y ajedrez.
 - [x] Ícono propio y Mi Barrio (juego de propiedades propio).
 - [x] Agenda con avisos y alarmas, palabras en inglés, portugués y coreano, y tiempo de juego por día.
+- [x] Niveles de palabras, resumen semanal, reto de la semana y pantalla de privacidad.
+- [ ] Cobro de Family App Plus con Google Play (requiere la cuenta de desarrollador).
 - [ ] Jugar con amigos de otras familias.

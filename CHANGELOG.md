@@ -2,6 +2,13 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.12.0 — 2026-10-30 · Niveles de palabras, resumen semanal y reto de la semana
+
+- **Palabras por niveles:** el básico tiene los 7 temas de antes; el medio suma ropa, el cuerpo, el cielo y el clima, frutas y verduras, acciones y lugares; el avanzado trae frases útiles, días de la semana y emociones. El avanzado queda para **Family App Plus** (contenido pago, todavía sin cobro) y en la demostración está abierto para probarlo.
+- **Resumen de la semana** (panel del adulto → "Semana" o menú): por hijo, barras de los últimos 7 días, % de rutina, puntos, días con 8 vasos, ánimo más frecuente, mejor día y avance del reto.
+- **Reto de la semana** (menú del adulto): rutina completa, 8 vasos de agua o juntar puntos, con meta y puntos extra. Los chicos ven el progreso en Hoy y lo cobran una vez por semana.
+- **Privacidad y datos:** pantalla que explica qué se guarda, dónde y qué no se pide (útil para la publicación en Play Store).
+
 ## 0.11.0 — 2026-10-30 · Agenda, palabras en idiomas y tiempo de juego
 
 - **Agenda familiar:** los adultos anotan turnos, cumpleaños o actos con lugar, día, hora, para quién y notas. Se puede elegir un aviso (a la hora, 10 o 30 minutos antes, 1 o 2 horas antes, 1 día antes) o que **suene como alarma** hasta tocarla. Los avisos los programa Android: llegan aunque la app esté cerrada y sin plan Blaze. Los chicos ven "Hoy en la agenda" en su pantalla Hoy y el adulto ve lo de hoy en su panel.
