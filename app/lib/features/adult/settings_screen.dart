@@ -63,9 +63,30 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ),
               ),
+            if (admin)
+              Builder(builder: (context) {
+                final steps = FirstStepsCard.stepsOf(context);
+                final missing = [for (final s in steps) if (!s.$2) s.$1];
+                return section('Primeros pasos', [
+                  tile(
+                    missing.isEmpty ? Icons.check_circle : Icons.flag_outlined,
+                    missing.isEmpty ? '¡Hogar configurado!' : 'Primeros pasos · ${steps.length - missing.length} de ${steps.length}',
+                    () => nav.push(MaterialPageRoute<void>(builder: (_) => const _FirstStepsScreen())),
+                    subtitle: missing.isEmpty ? 'Hiciste todos los pasos.' : 'Falta: ${missing.join(' · ')}',
+                  ),
+                ]);
+              }),
             section('Mi app', [
               tile(Icons.palette_outlined, 'Personalizar', () => showAccentPicker(context),
                   subtitle: 'Modo oscuro, color, fondo y tarjetas'),
+              tile(
+                Icons.workspace_premium_outlined,
+                'Family App Plus',
+                () => _plusInfo(context),
+                subtitle: store.hasPlus
+                    ? '⭐ Activo en este hogar'
+                    : (session.plusOpen ? 'Abierto para probar (demostración)' : 'No activo'),
+              ),
             ]),
             section('Este teléfono', [
               tile(Icons.notifications_outlined, 'Avisos', () => _pickNotifyMode(context), subtitle: session.notifyMode.label),
@@ -105,6 +126,21 @@ class SettingsScreen extends StatelessWidget {
             Center(child: Text('Family App · versión de prueba', style: mutedText(context))),
           ],
         ),
+      ),
+    );
+  }
+
+  Future<void> _plusInfo(BuildContext context) {
+    final store = FamilyScope.of(context);
+    return showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('⭐ Family App Plus'),
+        content: Text(store.hasPlus
+            ? 'Este hogar tiene todo abierto: nivel avanzado de palabras, disfraces, cuarto, mundos, colores, fondos, tarjetas y festejos extra.'
+            : 'Incluye el nivel avanzado de palabras, disfraces, cosas para el cuarto, mundos temáticos y más colores, fondos, tarjetas y festejos. '
+                'Muy pronto se va a poder activar desde la app.'),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Entendido'))],
       ),
     );
   }
@@ -186,6 +222,23 @@ class _AdultShellState extends State<AdultShell> {
           ),
           const NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: 'Ajustes'),
         ],
+      ),
+    );
+  }
+}
+
+class _FirstStepsScreen extends StatelessWidget {
+  const _FirstStepsScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Primeros pasos', style: TextStyle(fontWeight: FontWeight.w800))),
+      body: const SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(16),
+          child: FirstStepsCard(closable: false),
+        ),
       ),
     );
   }

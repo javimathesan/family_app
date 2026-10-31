@@ -98,7 +98,7 @@ class AdultHomeScreen extends StatelessWidget {
                 ),
               ],
             ),
-            if (session.isCloud && session.isAdmin && !session.flag('tour_hidden')) const _FirstSteps(),
+            if (session.isCloud && session.isAdmin && !session.flag('tour_hidden')) const FirstStepsCard(),
             if (session.isAdmin) ...[
               const SizedBox(height: 12),
               FilledButton.icon(
@@ -668,15 +668,18 @@ class _ApprovalCard extends StatelessWidget {
 }
 
 /// Primeros pasos para quien crea el hogar.
-class _FirstSteps extends StatelessWidget {
-  const _FirstSteps();
+class FirstStepsCard extends StatelessWidget {
+  const FirstStepsCard({super.key, this.closable = true});
 
-  @override
-  Widget build(BuildContext context) {
+  /// En el panel se puede cerrar; en Ajustes queda siempre a mano.
+  final bool closable;
+
+  /// Pasos con su estado y adónde lleva cada uno.
+  static List<(String, bool, VoidCallback)> stepsOf(BuildContext context) {
     final store = FamilyScope.of(context);
     final session = SessionScope.of(context);
     final nav = Navigator.of(context);
-    final steps = [
+    return [
       (
         'Armá tu avatar',
         session.flag('tour_avatar'),
@@ -703,6 +706,12 @@ class _FirstSteps extends StatelessWidget {
         () => nav.pushNamed(Routes.reliability),
       ),
     ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final session = SessionScope.of(context);
+    final steps = stepsOf(context);
     final done = steps.where((s) => s.$2).length;
     return Padding(
       padding: const EdgeInsets.only(top: 12),
@@ -716,11 +725,17 @@ class _FirstSteps extends StatelessWidget {
                 const Icon(Icons.flag_outlined),
                 const SizedBox(width: 8),
                 Expanded(child: Text('Primeros pasos · $done de ${steps.length}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900))),
-                IconButton(
-                  tooltip: 'Ocultar',
-                  icon: const Icon(Icons.close),
-                  onPressed: () => session.setFlag('tour_hidden'),
-                ),
+                if (closable)
+                  IconButton(
+                    tooltip: 'Ocultar',
+                    icon: const Icon(Icons.close),
+                    onPressed: () {
+                      session.setFlag('tour_hidden');
+                      ScaffoldMessenger.of(context)
+                        ..hideCurrentSnackBar()
+                        ..showSnackBar(const SnackBar(content: Text('Lo retomás cuando quieras en Ajustes → Primeros pasos.')));
+                    },
+                  ),
               ],
             ),
             LinearProgressIndicator(value: done / steps.length, borderRadius: BorderRadius.circular(4)),
@@ -735,7 +750,12 @@ class _FirstSteps extends StatelessWidget {
                 onTap: ok ? null : go,
               ),
             if (done == steps.length)
-              TextButton(onPressed: () => session.setFlag('tour_hidden'), child: const Text('¡Listo! Ocultar')),
+              const Padding(
+                padding: EdgeInsets.only(top: 4),
+                child: Text('¡Todo listo! Tu hogar está configurado. 🎉', style: TextStyle(fontWeight: FontWeight.w800)),
+              ),
+            if (done == steps.length && closable)
+              TextButton(onPressed: () => session.setFlag('tour_hidden'), child: const Text('Ocultar')),
           ],
         ),
       ),

@@ -124,6 +124,13 @@ void main() {
     await tester.tap(find.widgetWithText(NavigationDestination, 'Ajustes'));
     await tester.pumpAndSettle();
     expect(find.text('Personalizar'), findsOneWidget);
+    expect(find.textContaining('Primeros pasos'), findsOneWidget);
+    expect(find.text('Abierto para probar (demostración)'), findsOneWidget);
+    await tester.tap(find.textContaining('Primeros pasos'));
+    await tester.pumpAndSettle();
+    expect(find.text('Sumá a tus hijos'), findsOneWidget);
+    Navigator.of(tester.element(find.text('Sumá a tus hijos'))).pop();
+    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.text('Escudo de la familia'),
       200,
