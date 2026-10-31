@@ -8,6 +8,7 @@ import '../models/models.dart';
 import 'family_sync.dart';
 
 part 'family_agenda.dart';
+part 'family_challenge.dart';
 part 'family_games.dart';
 
 /// Estado del hogar en memoria.
@@ -71,6 +72,9 @@ class FamilyStore extends ChangeNotifier {
 
   /// El hogar tiene Family App Plus (contenido pago, como el nivel avanzado).
   bool _plus = false;
+
+  /// Reto de la semana (o `null` si no hay).
+  WeeklyChallenge? _challenge;
   bool get hasPlus => _plus;
 
   /// Segundos jugados hoy por cada miembro.
@@ -602,8 +606,11 @@ class FamilyStore extends ChangeNotifier {
     Map<String, int>? gameSeconds,
     List<AgendaEvent>? events,
     bool? plus,
+    WeeklyChallenge? challenge,
+    bool clearChallenge = false,
   }) {
     if (plus != null) _plus = plus;
+    if (challenge != null || clearChallenge) _challenge = challenge;
     if (events != null) {
       _events
         ..clear()
@@ -712,6 +719,7 @@ class FamilyStore extends ChangeNotifier {
       gameSeconds: const {},
       events: const [],
       plus: false,
+      clearChallenge: true,
     );
   }
 
@@ -737,6 +745,7 @@ class FamilyStore extends ChangeNotifier {
         'piggy': _piggy,
         'gamesRule': _gamesRule.name,
         'gamesMinutes': _gamesMinutes,
+        'challenge': _challenge?.toJson(),
         'languages': _languages,
         'gameSeconds': _gameSeconds,
         'matches': [for (final m in _matches) _matchToJson(m)],
@@ -797,6 +806,7 @@ class FamilyStore extends ChangeNotifier {
       ..addAll([for (final m in json['members'] as List) memberFromJson(m as Map<String, dynamic>)]);
     _gamesRule = GamesRule.values.asNameMap()[json['gamesRule']] ?? GamesRule.half;
     _gamesMinutes = json['gamesMinutes'] as int? ?? 0;
+    _challenge = WeeklyChallenge.fromJson(json['challenge']);
     _events
       ..clear()
       ..addAll([for (final e in (json['events'] as List?) ?? const []) _eventFromJson((e as Map).cast<String, dynamic>())]);

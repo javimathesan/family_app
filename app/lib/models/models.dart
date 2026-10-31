@@ -495,3 +495,40 @@ class AgendaEvent {
     1440: '1 día antes',
   };
 }
+
+// ------------------------------------------------------- reto de la semana
+
+enum ChallengeType {
+  rutina('Rutina completa', 'días con la rutina completa', Icons.task_alt, [3, 5, 7]),
+  agua('Tomar agua', 'días con 8 vasos de agua', Icons.local_drink_outlined, [3, 5, 7]),
+  puntos('Juntar puntos', 'puntos en la semana', Icons.star_outline, [200, 400, 600]);
+
+  const ChallengeType(this.label, this.unit, this.icon, this.targets);
+  final String label;
+  final String unit;
+  final IconData icon;
+
+  /// Metas sugeridas para elegir.
+  final List<int> targets;
+}
+
+/// Reto de la semana para todos los chicos, con puntos extra al cumplirlo.
+@immutable
+class WeeklyChallenge {
+  const WeeklyChallenge({required this.type, required this.target, required this.bonus});
+
+  final ChallengeType type;
+  final int target;
+  final int bonus;
+
+  String get title => '${type.label}: $target ${type.unit}';
+
+  Map<String, dynamic> toJson() => {'type': type.name, 'target': target, 'bonus': bonus};
+
+  static WeeklyChallenge? fromJson(Object? raw) {
+    if (raw is! Map) return null;
+    final type = ChallengeType.values.asNameMap()[raw['type']];
+    if (type == null) return null;
+    return WeeklyChallenge(type: type, target: (raw['target'] as num).toInt(), bonus: (raw['bonus'] as num).toInt());
+  }
+}

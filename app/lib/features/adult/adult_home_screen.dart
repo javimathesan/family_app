@@ -78,6 +78,7 @@ class AdultHomeScreen extends StatelessWidget {
                     const PopupMenuItem(value: 'switch', child: Text('Cambiar de usuario')),
                     PopupMenuItem(value: 'pin', child: Text(session.hasPin ? 'Cambiar o quitar el PIN' : 'Poner PIN al modo adulto')),
                     const PopupMenuItem(value: 'week', child: Text('Resumen de la semana')),
+                    if (session.isAdmin) const PopupMenuItem(value: 'challenge', child: Text('Reto de la semana')),
                     if (session.isCloud && session.isAdmin)
                       const PopupMenuItem(value: 'relink', child: Text('Teléfono nuevo de alguien')),
                     const PopupMenuItem(value: 'privacy', child: Text('Privacidad y datos')),
@@ -304,6 +305,90 @@ class AdultHomeScreen extends StatelessWidget {
     );
   }
 
+  /// El adulto elige el reto de la semana para los chicos.
+  Future<void> _editChallenge(BuildContext context) async {
+    final store = FamilyScope.of(context);
+    var type = store.challenge?.type ?? ChallengeType.rutina;
+    var target = store.challenge?.target ?? type.targets[1];
+    var bonus = store.challenge?.bonus ?? 50;
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheet) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Reto de la semana', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+                const Text('Es para todos los chicos, de lunes a domingo. Al cumplirlo cobran puntos extra.'),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final t in ChallengeType.values)
+                      ChoiceChip(
+                        avatar: Icon(t.icon, size: 18),
+                        label: Text(t.label),
+                        selected: type == t,
+                        onSelected: (_) => setSheet(() {
+                          type = t;
+                          target = t.targets[1];
+                        }),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text('Meta: $target ${type.unit}', style: const TextStyle(fontWeight: FontWeight.w800)),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    for (final v in type.targets)
+                      ChoiceChip(label: Text('$v'), selected: target == v, onSelected: (_) => setSheet(() => target = v)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                const Text('Puntos extra', style: TextStyle(fontWeight: FontWeight.w800)),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    for (final v in const [20, 50, 100])
+                      ChoiceChip(label: Text('+$v'), selected: bonus == v, onSelected: (_) => setSheet(() => bonus = v)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    if (store.challenge != null)
+                      TextButton(
+                        onPressed: () {
+                          store.setChallenge(null);
+                          Navigator.pop(ctx);
+                        },
+                        child: const Text('Sin reto'),
+                      ),
+                    const Spacer(),
+                    FilledButton(
+                      onPressed: () {
+                        store.setChallenge(WeeklyChallenge(type: type, target: target, bonus: bonus));
+                        Navigator.pop(ctx);
+                      },
+                      child: const Text('Guardar reto'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   /// Elige a quién se le cambió o borró el teléfono y muestra su QR.
   Future<void> _relinkPhone(BuildContext context) async {
     final store = FamilyScope.of(context);
@@ -342,6 +427,7 @@ class AdultHomeScreen extends StatelessWidget {
     }
     if (value == 'pin') return _managePin(context);
     if (value == 'relink') return _relinkPhone(context);
+    if (value == 'challenge') return _editChallenge(context);
     if (value == 'week' || value == 'privacy') {
       Navigator.of(context).pushNamed(value == 'week' ? Routes.week : Routes.privacy);
       return;

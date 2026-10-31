@@ -31,6 +31,7 @@ class TodayScreen extends StatelessWidget {
         if (n.memberId == me.id && n.kind == NoticeKind.approval && DateUtils.isSameDay(n.time, store.now)) n,
     ].take(3).toList();
     final agendaToday = store.eventsOn(store.now, me.id);
+    final challenge = store.challenge;
     final langs = homeLanguages(store);
     final wotd = wordOfTheDay(store.now, langs);
 
@@ -119,6 +120,46 @@ class TodayScreen extends StatelessWidget {
                       ],
                     ),
                   ),
+              ],
+            ),
+          ),
+        ],
+        if (challenge != null) ...[
+          const SizedBox(height: 16),
+          InfoCard(
+            color: const Color(0xFFF3E5F5),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(challenge.type.icon, color: const Color(0xFF7B1FA2)),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text('RETO DE LA SEMANA', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF7B1FA2))),
+                    ),
+                    Text('+${challenge.bonus} pts', style: const TextStyle(fontWeight: FontWeight.w900)),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(challenge.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 6),
+                LinearProgressIndicator(
+                  value: (store.challengeProgress(me.id) / challenge.target).clamp(0, 1).toDouble(),
+                  minHeight: 8,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                const SizedBox(height: 4),
+                if (store.challengeClaimed(me.id))
+                  const Text('¡Reto cumplido! 🏅 El lunes empieza otro.', style: TextStyle(fontWeight: FontWeight.w700))
+                else if (store.canClaimChallenge(me.id))
+                  FilledButton.icon(
+                    onPressed: () => store.claimChallenge(me.id),
+                    icon: const Icon(Icons.emoji_events),
+                    label: Text('¡Cobrar +${challenge.bonus} pts!'),
+                  )
+                else
+                  Text('Llevás ${store.challengeProgress(me.id)} de ${challenge.target}', style: mutedText(context)),
               ],
             ),
           ),

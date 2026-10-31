@@ -114,6 +114,13 @@ class _ChildWeek extends StatelessWidget {
                 Chip(avatar: const Icon(Icons.star_outline, size: 18), label: Text('$points pts en la semana')),
                 Chip(avatar: const Icon(Icons.local_drink_outlined, size: 18), label: Text('$waterDays días con 8 vasos')),
                 Chip(avatar: const Icon(Icons.savings_outlined, size: 18), label: Text('${store.balanceOf(member.id)} pts para canjear')),
+                if (store.challenge != null)
+                  Chip(
+                    avatar: const Icon(Icons.emoji_events_outlined, size: 18),
+                    label: Text(store.challengeClaimed(member.id)
+                        ? 'Reto cumplido 🏅'
+                        : 'Reto: ${store.challengeProgress(member.id)} de ${store.challenge!.target}'),
+                  ),
                 if (topMood != null) Chip(avatar: const Icon(Icons.mood, size: 18), label: Text('Ánimo: ${topMood.toLowerCase()}')),
               ],
             ),
