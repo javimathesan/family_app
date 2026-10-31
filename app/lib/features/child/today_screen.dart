@@ -617,7 +617,7 @@ class _KidSteps extends StatelessWidget {
                   }
                 },
                 icon: const Icon(Icons.card_giftcard),
-                label: Text('¡Cobrar mi regalo! +${FamilyMedals.welcomeBonus} pts'),
+                label: const Text('¡Cobrar mi regalo! +${FamilyMedals.welcomeBonus} pts'),
               ),
             )
           else
