@@ -1,62 +1,80 @@
-# family_app
+# Family App
 
-App móvil familiar que convierte la rutina diaria de los hijos en hábitos sanos y responsabilidades. Cada tarea cumplida suma puntos que se canjean por premios los fines de semana y a fin de mes, y el adulto sigue el progreso, la salud básica y el ánimo del día desde su propio panel.
+App móvil familiar que convierte la rutina diaria de los hijos en hábitos y responsabilidades. Cada tarea cumplida suma puntos que se canjean por premios, y los adultos siguen el progreso, la salud básica, la agenda y el ánimo del día desde su propio panel.
 
-## Estado
+- **Paquete:** `com.javimathesan.familyapp` (Android; iOS más adelante).
+- **Versión actual:** 0.13 (prueba). [Registro de cambios](CHANGELOG.md).
+- **Versión de prueba:** cada cambio en `main` publica el APK firmado en [la versión `prueba`](https://github.com/javimathesan/family_app/releases/tag/prueba).
 
-**Etapa actual: v0.13.** Family App (`com.javimathesan.familyapp`) corre en Android y sincroniza los teléfonos del hogar con Firebase: crear hogar, invitar por QR, aprobar altas y ver en vivo lo que hace cada hijo. El adulto edita la rutina y los premios, asigna tareas a cada hijo y registra su propio día. Novedades con campanita y avisos mientras la app está abierta; y un Área de juegos (tres en raya, 4 en línea, ludo y ajedrez) para jugar en familia o contra Robi. Faltan los avisos con la app cerrada (push). Ver el [registro de cambios](CHANGELOG.md).
+## Qué tiene hoy (v0.13)
+
+| Área | Qué hace |
+| --- | --- |
+| **Hogar y teléfonos** | Crear hogar, invitar por QR (código de un solo uso, vence en 15 min), aprobar altas, roles P1/P2/conviviente/hijo, hijo sin celular, PIN del modo adulto, **teléfono nuevo de alguien** (vuelve con su perfil) y desvincular. Sincronización en vivo con Firebase. |
+| **Rutina y puntos** | Tareas por momento del día, por hijo, con hora, puntos y validación (sola, foto o adulto). Puntos completos a tiempo, mitad fuera de horario. El adulto edita tareas y premios. |
+| **Premios** | Tienda con pedido y aprobación, puntos devueltos si se rechaza, alcancía mensual. |
+| **Salud y ánimo** | Agua (meta 8 vasos), popó/pipí con alerta a los 2 días, ánimo del día, calendario de caritas. |
+| **Panel del adulto** | Mi día (metas del adulto), Para aprobar, Novedades con campanita, **resumen de la semana**, **reto de la semana**. |
+| **Avisos** | Novedades agrupadas por día e hijo; avisos del sistema con la app abierta o minimizada; preferencia por teléfono (importante / todo / nada); avisos a los chicos cuando les aprueban algo. |
+| **Agenda** | Turnos, exámenes, cumpleaños con lugar, día, hora, para quién y notas. Aviso o **alarma** que suena aunque la app esté cerrada. Los chicos agendan lo suyo y los padres lo ven; los adultos pueden marcar "solo para mí". |
+| **Juegos** | Tres en raya, 4 en línea, ludo, ajedrez y **Mi Barrio** (juego propio de propiedades); contra la familia (cada uno en su celular o pasando el teléfono) o contra Robi. Regla "primero la rutina", minutos por día y borrar partidas terminadas. |
+| **Palabras** | Inglés, portugués y coreano en 3 niveles (básico, medio y avanzado de Plus), tarjetas con voz, quiz con puntos una vez por día y palabra del día. |
+| **Avatar y personalización** | Avatar estilo Funko con 19 disfraces (4 de Plus) y accesorios que se desbloquean con puntos. Modo claro/oscuro, colores, fondos y tarjetas por miembro (opciones extra de Plus). Ícono propio. |
+| **Privacidad** | Sin email, teléfono, ubicación ni fotos; solo apodos. Pantalla "Privacidad y datos" en la app. |
+
+## Qué falta, por prioridad
+
+### 1. Legal (antes de mostrarla fuera de la familia)
+
+Ver [docs/legal/](docs/legal/): borradores de **política de privacidad** y **términos y condiciones**, y la [lista de pasos legales](docs/legal/checklist-legal.md).
+
+- [ ] Completar los datos del responsable (nombre o razón social, domicilio y email de contacto) en los borradores.
+- [ ] Revisión por un abogado (datos de menores y de salud).
+- [ ] Publicar la política en una dirección web pública (la pide Play Store).
+- [ ] Inscribir la base de datos en el Registro Nacional de Bases de Datos (AAIP).
+- [ ] Consentimiento del adulto dentro de la app al crear el hogar (aceptar términos y política).
+- [ ] **Borrar mis datos / borrar el hogar** desde la app y por web (Play Store lo exige).
+
+### 2. Publicación en Google Play
+
+- [ ] Cuenta de desarrollador de Google Play.
+- [ ] Ficha: textos, capturas, ícono 512 px, gráfico destacado.
+- [ ] Formulario de **seguridad de los datos** y público objetivo (incluye menores: política de Familias).
+- [ ] Prueba cerrada con familias conocidas.
+- [ ] Revisar que ninguna librería use el identificador de publicidad.
+
+### 3. Producto
+
+- [ ] Cobro de **Family App Plus** con Google Play (nivel avanzado de palabras, disfraces y personalización extra). La app ya marca qué es de Plus.
+- [ ] Avisos con la app cerrada para novedades y turnos de juego (plan Blaze de Firebase + Cloud Functions).
+- [ ] Validación con foto real (Firebase Storage, también requiere Blaze).
+- [ ] Mascotas como tareas especiales y control de tiempo de pantallas.
+- [ ] Estadísticas de uso para el administrador sin rastrear a los chicos (ver [docs/admin/](docs/admin/usuarios-y-estadisticas.md)).
+- [ ] Más juegos (sopa de letras, memoria) y jugar con amigos de otras familias con doble autorización.
+- [ ] iOS.
+
+### 4. Técnico
+
+- [ ] Índices y reglas de Firestore revisados con el emulador.
+- [ ] Copias de seguridad de Firestore.
+- [ ] Limpieza de sesiones anónimas viejas (sin borrar las de hogares activos).
+
+## Carpetas
 
 | Carpeta | Contenido |
 | --- | --- |
-| [`app/`](app/) | App Flutter: [cómo correrla y probarla](app/README.md) |
-| [`docs/`](docs/) | [Borrador de la idea v1](docs/borrador-idea-v1.md): funcionalidades, roles, puntos, privacidad, arquitectura y hoja de ruta |
-| [`diseno/`](diseno/) | Maquetas de las 8 pantallas de la v1 en formato de lienzo de diseño (`.dc.html`) |
+| [`app/`](app/) | App Flutter: [cómo correrla, probarla y compilarla](app/README.md) |
+| [`firebase/`](firebase/) | Reglas de seguridad de Firestore (se pegan en la consola de Firebase) |
+| [`docs/`](docs/) | [Borrador de la idea](docs/borrador-idea-v1.md), [legal](docs/legal/) y [administración](docs/admin/) |
+| [`tools/`](tools/) | [Estadísticas de uso](tools/estadisticas/) para el administrador |
+| [`diseno/`](diseno/) | Maquetas originales de la v1 |
 
-## Pantallas diseñadas (v1)
+## Cómo se trabaja
 
-| Archivo | Pantalla | Para quién |
-| --- | --- | --- |
-| `Main.dc.html` | Hoy: puntos del día, próxima tarea, agua, popó y pipí | Hijo |
-| `Rutina.dc.html` | Rutina por bloques con tareas para marcar | Hijo |
-| `Calendario.dc.html` | Calendario mensual de caritas según cumplimiento | Hijo |
-| `Premios.dc.html` | Tienda de premios semanal, alcancía del mes y reto | Hijo |
-| `Adulto.dc.html` | Mi familia: miembros, aprobaciones y avisos | Adulto |
-| `Invitar.dc.html` | Invitar con QR: rol, modo por edad, código de un solo uso que vence en 15 min | Adulto |
-| `Unirse.dc.html` | Unirse al hogar en 3 pasos: escanear, elegir apodo, esperar confirmación | Nuevo miembro |
-| `Avatar.dc.html` | Editor de avatar estilo Funko: piel, pelo, ojos, anteojos, ropa y accesorios | Miembro |
+- Cada cambio se sube a `main`; GitHub Actions analiza, corre las pruebas, compila el APK firmado y lo publica en la versión `prueba`.
+- Los archivos secretos (`google-services.json`, `key.properties`, `upload-keystore.jks`, `secretos-github.txt`, claves de servicio) **nunca** se suben: el repositorio es público.
+- Las reglas de `firebase/firestore.rules` se publican a mano en la consola de Firebase cada vez que cambian.
 
-Los nombres y números de las maquetas son datos de ejemplo.
+## Stack
 
-## Hoja de ruta
-
-1. **v1 – Núcleo familiar:** hogar y alta por QR, roles P1/P2, rutina con puntos, notificaciones al adulto, tienda de premios, calendario de caritas, agua/popó/pipí, colores básicos y avatar simple.
-2. **v1.1 – Cuidado y salud:** mascotas, pantallas, retos, alcancía mensual, reportes.
-3. **v2 – Comunicación:** mensajes grupales, chats internos, notas y agenda.
-4. **v2.1 – Diversión y aprendizaje:** minijuegos y palabras en 4 idiomas, avatar estilo Funko.
-5. **v3 – Fuera del hogar:** contactos entre familias con doble autorización, temas descargables.
-
-## Stack previsto
-
-Flutter (Android e iOS) · NestJS + PostgreSQL · WebSocket + Redis · Firebase Cloud Messaging / APNs.
-
-## Próximos pasos
-
-- [x] Diseñar alta por QR y editor de avatar.
-- [ ] Resolver las preguntas abiertas del borrador.
-- [x] Crear el proyecto Flutter con la estructura base y los temas de color.
-- [x] Construir las 8 pantallas de la v1 con datos de ejemplo y pruebas.
-- [x] Escaneo real del QR con la cámara.
-- [x] Guardar los datos en el teléfono.
-- [x] Identificador definitivo para publicar en tiendas.
-- [x] Backend y cuentas para sincronizar los teléfonos del hogar (Firebase).
-- [x] Que el adulto edite tareas, horarios, puntos y premios.
-- [x] Tareas por hijo, Mi día del adulto y PIN del modo adulto.
-- [x] Novedades y avisos con la app abierta.
-- [ ] Avisos con la app cerrada (push, requiere plan Blaze).
-- [x] Volver a vincular un teléfono sin perder el perfil.
-- [x] Área de juegos en familia: tres en raya, 4 en línea, ludo y ajedrez.
-- [x] Ícono propio y Mi Barrio (juego de propiedades propio).
-- [x] Agenda con avisos y alarmas, palabras en inglés, portugués y coreano, y tiempo de juego por día.
-- [x] Niveles de palabras, resumen semanal, reto de la semana y pantalla de privacidad.
-- [ ] Cobro de Family App Plus con Google Play (requiere la cuenta de desarrollador).
-- [ ] Jugar con amigos de otras familias.
+Flutter (Material 3) · Firebase Authentication (anónima) · Cloud Firestore · avisos locales (flutter_local_notifications) · voz del teléfono (flutter_tts) · GitHub Actions.

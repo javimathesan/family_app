@@ -1,0 +1,12 @@
+{
+  "name": "family-app-estadisticas",
+  "private": true,
+  "type": "module",
+  "description": "Cuenta hogares, miembros y teléfonos activos de Family App sin mostrar datos personales.",
+  "scripts": {
+    "stats": "node estadisticas.mjs"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.0"
+  }
+}

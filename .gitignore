@@ -1,0 +1,7 @@
+# Claves y secretos: el repositorio es público.
+*service-account*.json
+*-admin.json
+secretos-github.txt
+
+# Herramientas
+tools/**/node_modules/
