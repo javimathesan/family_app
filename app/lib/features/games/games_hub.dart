@@ -235,7 +235,7 @@ class _QuickCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           onTap: onTap,
           child: SizedBox(
-            height: 140,
+            height: 160,
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
