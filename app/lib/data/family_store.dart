@@ -128,6 +128,15 @@ class FamilyStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Cambia el modo, el fondo o las tarjetas de un miembro.
+  void setLook(String memberId, MemberLook look) {
+    final m = memberById(memberId);
+    if (m == null || m.look == look) return;
+    m.look = look;
+    sync?.memberUpdated(m);
+    notifyListeners();
+  }
+
   bool hasUnlocked(String memberId, String itemId) =>
       memberById(memberId)?.unlocked.contains(itemId) ?? false;
 
@@ -929,6 +938,7 @@ class FamilyStore extends ChangeNotifier {
         'uid': m.uid,
         'avatar': avatarToJson(m.avatar),
         'unlocked': m.unlocked.toList(),
+        'look': m.look.toJson(),
       };
 
   static Map<String, dynamic> avatarToJson(AvatarConfig a) => {
@@ -952,6 +962,7 @@ class FamilyStore extends ChangeNotifier {
       accent: Color((j['accent'] as num?)?.toInt() ?? 0xFF2563EB),
       uid: j['uid'] as String?,
       unlocked: {...?(j['unlocked'] as List?)?.cast<String>()},
+      look: MemberLook.fromJson(j['look']),
       avatar: AvatarConfig(
         skin: (a['skin'] as num?)?.toInt() ?? 1,
         hairStyle: (a['hairStyle'] as num?)?.toInt() ?? 0,

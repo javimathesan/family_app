@@ -33,7 +33,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
   Widget build(BuildContext context) {
     final store = FamilyScope.of(context);
     final me = store.currentMember;
-    final canEdit = me?.role.isAdult ?? false;
+    final isAdult = me?.role.isAdult ?? false;
     final all = me == null ? store.events : store.eventsFor(me.id);
     final startOfToday = DateUtils.dateOnly(store.now);
     final upcoming = all.where((e) => !e.at.isBefore(startOfToday)).toList();
@@ -50,18 +50,18 @@ class _AgendaScreenState extends State<AgendaScreen> {
         ));
         lastDay = day;
       }
-      children.add(_EventTile(event: e, canEdit: canEdit));
+      children.add(_EventTile(event: e, canEdit: me != null && store.canEditEvent(e, me.id)));
     }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Agenda', style: TextStyle(fontWeight: FontWeight.w800))),
-      floatingActionButton: canEdit
-          ? FloatingActionButton.extended(
+      floatingActionButton: me == null
+          ? null
+          : FloatingActionButton.extended(
               onPressed: () => openEventForm(context),
               icon: const Icon(Icons.add),
               label: const Text('Agregar'),
-            )
-          : null,
+            ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
@@ -70,9 +70,9 @@ class _AgendaScreenState extends State<AgendaScreen> {
               Padding(
                 padding: const EdgeInsets.only(top: 24),
                 child: Text(
-                  canEdit
+                  isAdult
                       ? 'No hay nada agendado. Tocá "Agregar" para anotar un turno médico, un cumpleaños o un acto del colegio, con aviso o alarma.'
-                      : 'No hay nada agendado por ahora.',
+                      : 'No hay nada agendado. Tocá "Agregar" para anotar un examen, una tarea o un cumple, con aviso o alarma.',
                   style: mutedText(context).copyWith(fontSize: 15),
                 ),
               ),
@@ -85,7 +85,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                 label: Text('Pasados (${past.length})'),
               ),
               if (_showPast)
-                for (final e in past) _EventTile(event: e, canEdit: canEdit, past: true),
+                for (final e in past) _EventTile(event: e, canEdit: me != null && store.canEditEvent(e, me.id), past: true),
             ],
           ],
         ),
@@ -104,7 +104,11 @@ class _EventTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final store = FamilyScope.of(context);
-    final who = event.memberIds.isEmpty ? 'Toda la familia' : [for (final id in event.memberIds) store.playerName(id)].join(', ');
+    final who = event.private
+        ? 'Solo vos'
+        : event.memberIds.isEmpty
+            ? 'Toda la familia'
+            : [for (final id in event.memberIds) store.playerName(id)].join(', ');
     final tile = Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
@@ -115,7 +119,12 @@ class _EventTile extends StatelessWidget {
             if (past) Text('${event.at.day}/${event.at.month}', style: mutedText(context)),
           ],
         ),
-        title: Text(event.title, style: const TextStyle(fontWeight: FontWeight.w800)),
+        title: Row(
+          children: [
+            if (event.private) const Padding(padding: EdgeInsets.only(right: 4), child: Icon(Icons.lock_outline, size: 16)),
+            Expanded(child: Text(event.title, style: const TextStyle(fontWeight: FontWeight.w800))),
+          ],
+        ),
         subtitle: Text([
           if (event.place.isNotEmpty) '📍 ${event.place}',
           '👤 $who',
@@ -148,6 +157,8 @@ class _EventTile extends StatelessWidget {
   }
 }
 
+String _creatorOf(AgendaEvent? existing, Member? me) => existing?.createdBy ?? me?.id ?? '';
+
 /// Abre el formulario para crear o editar un evento.
 Future<void> openEventForm(BuildContext context, {AgendaEvent? event}) {
   return Navigator.of(context).push(MaterialPageRoute<void>(
@@ -173,6 +184,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
   late Set<String> _members = {...?widget.event?.memberIds};
   late int? _remind = widget.event == null ? 60 : widget.event!.remindMinutes;
   late bool _alarm = widget.event?.alarm ?? false;
+  late bool _private = widget.event?.private ?? false;
   bool _started = false;
 
   @override
@@ -213,13 +225,17 @@ class _EventFormScreenState extends State<EventFormScreen> {
 
   void _save() {
     final store = FamilyScope.of(context);
+    final me = store.currentMember;
+    final kid = !(me?.role.isAdult ?? true);
     final event = (widget.event?.copy() ??
-        AgendaEvent(id: store.newEventId(), title: '', at: _at, createdBy: store.currentMember?.id ?? ''))
+        AgendaEvent(id: store.newEventId(), title: '', at: _at, createdBy: me?.id ?? ''))
       ..title = _title.text.trim()
       ..place = _place.text.trim()
       ..notes = _notes.text.trim()
       ..at = _at
-      ..memberIds = {..._members}
+      // Los chicos agendan para ellos; lo privado es solo de quien lo crea.
+      ..memberIds = kid || _private ? {_creatorOf(widget.event, me)} : {..._members}
+      ..private = !kid && _private
       ..remindMinutes = _remind
       ..alarm = _remind != null && _alarm;
     store.saveEvent(event);
@@ -233,6 +249,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
     final session = SessionScope.of(context);
     final members = [for (final m in store.members) if (!store.isPendingMember(m.id)) m];
     final editing = widget.event != null;
+    final kid = !(store.currentMember?.role.isAdult ?? true);
     return Scaffold(
       appBar: AppBar(
         title: Text(editing ? 'Editar' : 'Nuevo en la agenda', style: const TextStyle(fontWeight: FontWeight.w800)),
@@ -255,7 +272,11 @@ class _EventFormScreenState extends State<EventFormScreen> {
             TextField(
               controller: _title,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(labelText: '¿Qué es?', hintText: 'Turno médico, cumpleaños de la abuela…', border: OutlineInputBorder()),
+              decoration: InputDecoration(
+                labelText: '¿Qué es?',
+                hintText: kid ? 'Examen de matemática, entregar la maqueta…' : 'Turno médico, cumpleaños de la abuela…',
+                border: const OutlineInputBorder(),
+              ),
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 12),
@@ -285,6 +306,24 @@ class _EventFormScreenState extends State<EventFormScreen> {
               ],
             ),
             const SizedBox(height: 16),
+            if (kid)
+              InfoCard(
+                color: const Color(0xFFE3F2FD),
+                child: Text(
+                  'Es para vos. Tus papás también lo ven en su agenda y les llega el aviso.',
+                  style: mutedText(context).copyWith(fontSize: 14),
+                ),
+              )
+            else ...[
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _private,
+              onChanged: (v) => setState(() => _private = v),
+              secondary: const Icon(Icons.lock_outline),
+              title: const Text('Solo para mí', style: TextStyle(fontWeight: FontWeight.w700)),
+              subtitle: const Text('Nadie más lo ve en la app ni recibe el aviso.'),
+            ),
+            if (!_private) ...[
             Text('¿Para quién?', style: sectionTitle(context)),
             const SizedBox(height: 8),
             Wrap(
@@ -304,6 +343,8 @@ class _EventFormScreenState extends State<EventFormScreen> {
                   ),
               ],
             ),
+            ],
+            ],
             const SizedBox(height: 16),
             Text('Aviso', style: sectionTitle(context)),
             const SizedBox(height: 8),
@@ -325,7 +366,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
             ),
             Text(
               session.isCloud
-                  ? 'Avisa en el teléfono de cada persona elegida (los adultos reciben todos), aunque la app esté cerrada.'
+                  ? 'Avisa en el teléfono de cada persona elegida (los adultos reciben todo lo que no es privado), aunque la app esté cerrada.'
                   : 'Avisa en este teléfono aunque la app esté cerrada.',
               style: mutedText(context),
             ),

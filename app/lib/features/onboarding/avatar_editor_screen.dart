@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../app.dart';
+import '../../data/app_session.dart';
 import '../../data/family_store.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
@@ -33,8 +34,10 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
   void _set(AvatarConfig c) => setState(() => _config = c);
 
   /// Los adultos tienen todo libre; los chicos desbloquean con puntos.
-  bool _owns(FamilyStore store, Member? me, AvatarItem item) =>
-      item.free || (me != null && (me.role.isAdult || store.hasUnlocked(me.id, item.id)));
+  bool _owns(FamilyStore store, Member? me, AvatarItem item) {
+    if (item.premium) return SessionScope.of(context).plusOpen;
+    return item.free || (me != null && (me.role.isAdult || store.hasUnlocked(me.id, item.id)));
+  }
 
   void _surprise(FamilyStore store, Member? me) {
     final outfits = [
@@ -64,6 +67,12 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
       return;
     }
     if (me == null) return;
+    if (item.premium) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text('⭐ ${item.label} es de Family App Plus. Muy pronto se va a poder activar.')));
+      return;
+    }
     final balance = store.balanceOf(me.id);
     if (balance < item.cost) {
       ScaffoldMessenger.of(context)
@@ -282,7 +291,9 @@ class _ItemGrid extends StatelessWidget {
           Semantics(
             button: true,
             selected: selected == i,
-            label: owns(items[i]) ? items[i].label : '${items[i].label}, bloqueado, ${items[i].cost} puntos',
+            label: owns(items[i])
+                ? items[i].label
+                : (items[i].premium ? '${items[i].label}, de Family App Plus' : '${items[i].label}, bloqueado, ${items[i].cost} puntos'),
             child: Material(
               color: owns(items[i]) ? Theme.of(context).colorScheme.surface : AppColors.soft,
               shape: RoundedRectangleBorder(
@@ -299,9 +310,21 @@ class _ItemGrid extends StatelessWidget {
                     children: [
                       Text(items[i].label,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppColors.ink)),
+                          style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                              color: owns(items[i]) ? Theme.of(context).colorScheme.onSurface : AppColors.ink)),
                       const SizedBox(height: 4),
-                      if (owns(items[i]))
+                      if (items[i].premium)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.star, size: 14, color: Color(0xFFF5B800)),
+                            const SizedBox(width: 2),
+                            Text('Plus', style: mutedText(context).copyWith(fontSize: 12, fontWeight: FontWeight.w700)),
+                          ],
+                        )
+                      else if (owns(items[i]))
                         Text(items[i].free ? 'Libre' : 'Tuyo', style: mutedText(context).copyWith(fontSize: 12))
                       else
                         Row(

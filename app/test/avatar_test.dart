@@ -68,4 +68,12 @@ void main() {
       expect(copia.hasUnlocked('tomi', 'outfit_ninja'), isTrue);
     });
   });
+
+  test('disfraces nuevos y de Plus', () {
+    expect(AvatarOptions.outfits.length, 19);
+    final plus = [for (final o in AvatarOptions.outfits) if (o.premium) o.label];
+    expect(plus, ['Sirena', 'Dragón', 'Hada', 'Caballero']);
+    expect(AvatarOptions.outfits.where((o) => o.premium).every((o) => !o.free), isTrue);
+    expect(AvatarOptions.accessories.last.premium, isTrue);
+  });
 }

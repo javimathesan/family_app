@@ -13,9 +13,16 @@ class InfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Material (no Container) para que ListTile e InkWell muestren su efecto al tocar.
+    final theme = Theme.of(context);
+    final surface = theme.colorScheme.surface;
+    // En modo oscuro los colores claros de las tarjetas se vuelven un tinte suave.
+    final bg = color == null
+        ? surface
+        : (theme.brightness == Brightness.dark ? Color.alphaBlend(color!.withValues(alpha: 0.16), surface) : color!);
+    final shape = theme.cardTheme.shape;
     return Material(
-      color: color ?? Theme.of(context).colorScheme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      color: bg,
+      shape: shape is RoundedRectangleBorder ? shape : RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       clipBehavior: Clip.antiAlias,
       child: Padding(padding: padding, child: child),
     );

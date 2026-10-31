@@ -59,7 +59,7 @@ class TodayScreen extends StatelessWidget {
               ),
             ),
             IconButton(
-              tooltip: 'Mi color',
+              tooltip: 'Personalizar',
               onPressed: () => showAccentPicker(context),
               icon: const Icon(Icons.palette_outlined),
             ),

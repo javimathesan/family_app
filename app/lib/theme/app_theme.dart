@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../models/models.dart';
+
 /// Paleta base. Simple por defecto; cada miembro puede cambiar su acento.
 abstract final class AppColors {
   static const ink = Color(0xFF1E2235);
@@ -23,18 +25,25 @@ abstract final class AppColors {
 }
 
 abstract final class AppTheme {
-  static ThemeData light(Color accent) => _build(accent, Brightness.light);
-  static ThemeData dark(Color accent) => _build(accent, Brightness.dark);
+  static ThemeData light(Color accent, [MemberLook look = const MemberLook()]) => _build(accent, Brightness.light, look);
+  static ThemeData dark(Color accent, [MemberLook look = const MemberLook()]) => _build(accent, Brightness.dark, look);
 
-  static ThemeData _build(Color accent, Brightness brightness) {
+  static ThemeData _build(Color accent, Brightness brightness, MemberLook look) {
     final isDark = brightness == Brightness.dark;
+    final bgOption = LookOptions.backgrounds[look.background.clamp(0, LookOptions.backgrounds.length - 1)].color;
+    // En oscuro, el fondo elegido apenas tiñe el gris noche.
+    final ground = isDark ? Color.lerp(const Color(0xFF12141D), bgOption, 0.06)! : bgOption;
+    final baseSurface = isDark ? const Color(0xFF1B1E2B) : AppColors.card;
+    final cardColor = look.cards == 1 ? Color.lerp(baseSurface, accent, isDark ? 0.14 : 0.07)! : baseSurface;
+    final cardRadius = look.cards == 3 ? 30.0 : 20.0;
+    final cardSide = look.cards == 2 ? BorderSide(color: accent.withValues(alpha: 0.55), width: 2) : BorderSide.none;
     final scheme = ColorScheme.fromSeed(
       seedColor: accent,
       brightness: brightness,
     ).copyWith(
       primary: accent,
       onPrimary: Colors.white,
-      surface: isDark ? const Color(0xFF1B1E2B) : AppColors.card,
+      surface: cardColor,
       onSurface: isDark ? const Color(0xFFF2F3F7) : AppColors.ink,
     );
 
@@ -42,7 +51,7 @@ abstract final class AppTheme {
       useMaterial3: true,
       colorScheme: scheme,
       brightness: brightness,
-      scaffoldBackgroundColor: isDark ? const Color(0xFF12141D) : AppColors.ground,
+      scaffoldBackgroundColor: ground,
       visualDensity: VisualDensity.standard,
     );
 
@@ -61,7 +70,7 @@ abstract final class AppTheme {
         color: scheme.surface,
         elevation: 0,
         margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardRadius), side: cardSide),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
@@ -74,7 +83,7 @@ abstract final class AppTheme {
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(44, 48),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          side: const BorderSide(color: AppColors.line, width: 2),
+          side: BorderSide(color: isDark ? const Color(0xFF3A3F55) : AppColors.line, width: 2),
           textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
         ),
       ),

@@ -72,6 +72,10 @@ class AppSession extends ChangeNotifier {
   bool pendingApproval = false;
 
   bool get cloudAvailable => cloud != null;
+
+  /// Contenido de Family App Plus disponible: si el hogar lo tiene o en la
+  /// demostración (para probarlo).
+  bool get plusOpen => store.hasPlus || !isCloud;
   bool get isDemo => mode == SessionMode.demo;
   bool get isCloud => mode == SessionMode.cloud;
 

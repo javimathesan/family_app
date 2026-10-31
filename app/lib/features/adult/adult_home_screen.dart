@@ -6,6 +6,7 @@ import '../../data/family_store.dart';
 import '../../domain/points.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/accent_picker.dart';
 import '../../widgets/avatar_view.dart';
 import '../../widgets/common.dart';
 import '../../widgets/mood_face.dart';
@@ -77,6 +78,7 @@ class AdultHomeScreen extends StatelessWidget {
                   itemBuilder: (_) => [
                     const PopupMenuItem(value: 'switch', child: Text('Cambiar de usuario')),
                     PopupMenuItem(value: 'pin', child: Text(session.hasPin ? 'Cambiar o quitar el PIN' : 'Poner PIN al modo adulto')),
+                    const PopupMenuItem(value: 'look', child: Text('Personalizar mi app')),
                     const PopupMenuItem(value: 'week', child: Text('Resumen de la semana')),
                     if (session.isAdmin) const PopupMenuItem(value: 'challenge', child: Text('Reto de la semana')),
                     if (session.isCloud && session.isAdmin)
@@ -428,6 +430,7 @@ class AdultHomeScreen extends StatelessWidget {
     if (value == 'pin') return _managePin(context);
     if (value == 'relink') return _relinkPhone(context);
     if (value == 'challenge') return _editChallenge(context);
+    if (value == 'look') return showAccentPicker(context);
     if (value == 'week' || value == 'privacy') {
       Navigator.of(context).pushNamed(value == 'week' ? Routes.week : Routes.privacy);
       return;

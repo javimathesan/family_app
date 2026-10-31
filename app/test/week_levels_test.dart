@@ -4,6 +4,7 @@ import 'package:family_app/data/family_storage.dart';
 import 'package:family_app/data/family_store.dart';
 import 'package:family_app/learning/vocabulary.dart';
 import 'package:family_app/models/models.dart';
+import 'package:family_app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -37,6 +38,20 @@ void main() {
     expect(copy.challengeClaimed('tomi'), isTrue);
     store.setChallenge(null);
     expect(store.challenge, isNull);
+  });
+
+  test('personalización por miembro: modo, fondo y tarjetas', () {
+    final store = FamilyStore.demo(clock: clock);
+    store.setLook('tomi', const MemberLook(mode: LookMode.dark, background: 2, cards: 1));
+    final copy = FamilyStore.empty(clock: clock)..restoreFrom(store.toJson());
+    expect(copy.memberById('tomi')!.look, const MemberLook(mode: LookMode.dark, background: 2, cards: 1));
+    for (var bg = 0; bg < LookOptions.backgrounds.length; bg++) {
+      for (var cards = 0; cards < LookOptions.cards.length; cards++) {
+        final look = MemberLook(background: bg, cards: cards);
+        expect(AppTheme.light(Colors.blue, look).scaffoldBackgroundColor, isNotNull);
+        expect(AppTheme.dark(Colors.blue, look).brightness, Brightness.dark);
+      }
+    }
   });
 
   Future<(FamilyStore, AppSession)> demo() async {
@@ -77,6 +92,10 @@ void main() {
     expect(find.text('Frases útiles'), findsOneWidget);
     expect(find.text('Nivel avanzado: Family App Plus'), findsNothing);
     expect(topicsOf(WordLevel.avanzado).length, 3);
+
+    store.setLook('adulto', const MemberLook(mode: LookMode.dark));
+    await tester.pumpAndSettle();
+    expect(Theme.of(tester.element(find.text('Frases útiles'))).brightness, Brightness.dark);
 
     nav.pushNamed(Routes.privacy);
     await tester.pumpAndSettle();

@@ -46,6 +46,35 @@ void main() {
       expect(store.events.length, 1);
     });
 
+    test('privado solo para quien lo crea; lo que agenda un chico lo ven los adultos', () {
+      final store = FamilyStore.demo(clock: clock)..signInAs('adulto');
+      store.saveEvent(AgendaEvent(
+        id: store.newEventId(),
+        title: 'Sorpresa de cumple',
+        at: DateTime(2026, 11, 2, 10),
+        memberIds: {'adulto'},
+        private: true,
+        createdBy: 'adulto',
+      ));
+      store.saveEvent(AgendaEvent(
+        id: store.newEventId(),
+        title: 'Examen de matemática',
+        at: DateTime(2026, 11, 4, 8),
+        memberIds: {'tomi'},
+        remindMinutes: 1440,
+        createdBy: 'tomi',
+      ));
+      expect(store.eventsFor('tomi').map((e) => e.title), ['Examen de matemática']);
+      expect(store.eventsFor('adulto').length, 2);
+      expect(store.eventsFor('luli'), isEmpty);
+      expect(store.notices.first.text, contains('Tomi agendó: Examen de matemática'));
+      final exam = store.events.last;
+      expect(store.canEditEvent(exam, 'tomi'), isTrue);
+      expect(store.canEditEvent(exam, 'adulto'), isTrue);
+      expect(store.canEditEvent(exam, 'luli'), isFalse);
+      expect(store.canEditEvent(store.events.first, 'tomi'), isFalse);
+    });
+
     test('se sincroniza entre teléfonos', () async {
       final db = FakeFirebaseFirestore();
       final cloudA = FamilyCloud(db: db, uid: 'tel-a', clock: clock);

@@ -14,6 +14,7 @@ import 'features/games/game_screen.dart';
 import 'features/games/games_hub.dart';
 import 'features/learning/words_screen.dart';
 import 'learning/vocabulary.dart';
+import 'models/models.dart';
 import 'features/onboarding/avatar_editor_screen.dart';
 import 'features/onboarding/create_home_screen.dart';
 import 'features/onboarding/invite_screen.dart';
@@ -92,11 +93,17 @@ class FamilyApp extends StatelessWidget {
           listenable: store,
           builder: (context, _) {
             final accent = store.currentMember?.accent ?? AppColors.defaultAccent;
+            final look = store.currentMember?.look ?? const MemberLook();
             return MaterialApp(
               title: 'Family App',
               debugShowCheckedModeBanner: false,
-              theme: AppTheme.light(accent),
-              darkTheme: AppTheme.dark(accent),
+              theme: AppTheme.light(accent, look),
+              darkTheme: AppTheme.dark(accent, look),
+              themeMode: switch (look.mode) {
+                LookMode.light => ThemeMode.light,
+                LookMode.dark => ThemeMode.dark,
+                LookMode.system => ThemeMode.system,
+              },
               locale: const Locale('es', 'AR'),
               supportedLocales: const [Locale('es', 'AR'), Locale('en')],
               localizationsDelegates: GlobalMaterialLocalizations.delegates,

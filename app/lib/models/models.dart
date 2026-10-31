@@ -105,6 +105,7 @@ class Member {
     this.accent = const Color(0xFF2563EB),
     this.uid,
     Set<String>? unlocked,
+    this.look = const MemberLook(),
   }) : unlocked = unlocked ?? {};
 
   final String id;
@@ -120,6 +121,85 @@ class Member {
 
   /// Disfraces y accesorios que desbloqueó con puntos.
   final Set<String> unlocked;
+
+  /// Cómo ve su app: modo claro u oscuro, fondo y tarjetas.
+  MemberLook look;
+}
+
+/// Modo de color de la app.
+enum LookMode {
+  system('Automático'),
+  light('Claro'),
+  dark('Oscuro');
+
+  const LookMode(this.label);
+  final String label;
+}
+
+/// Personalización de cada miembro. Algunas opciones son de Family App Plus.
+@immutable
+class MemberLook {
+  const MemberLook({this.mode = LookMode.system, this.background = 0, this.cards = 0});
+
+  final LookMode mode;
+
+  /// Índice de [LookOptions.backgrounds].
+  final int background;
+
+  /// Índice de [LookOptions.cards].
+  final int cards;
+
+  MemberLook copyWith({LookMode? mode, int? background, int? cards}) =>
+      MemberLook(mode: mode ?? this.mode, background: background ?? this.background, cards: cards ?? this.cards);
+
+  Map<String, dynamic> toJson() => {'mode': mode.name, 'bg': background, 'cards': cards};
+
+  static MemberLook fromJson(Object? raw) {
+    if (raw is! Map) return const MemberLook();
+    return MemberLook(
+      mode: LookMode.values.asNameMap()[raw['mode']] ?? LookMode.system,
+      background: (raw['bg'] as num?)?.toInt() ?? 0,
+      cards: (raw['cards'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is MemberLook && other.mode == mode && other.background == background && other.cards == cards;
+
+  @override
+  int get hashCode => Object.hash(mode, background, cards);
+}
+
+/// Opciones de personalización. Las marcadas `plus` son de Family App Plus.
+abstract final class LookOptions {
+  static const backgrounds = <({String name, Color color, bool plus})>[
+    (name: 'Gris claro', color: Color(0xFFF5F6FA), plus: false),
+    (name: 'Crema', color: Color(0xFFFFF8EC), plus: false),
+    (name: 'Celeste', color: Color(0xFFEAF4FF), plus: false),
+    (name: 'Lila', color: Color(0xFFF3EEFF), plus: false),
+    (name: 'Menta', color: Color(0xFFE6F7EE), plus: true),
+    (name: 'Rosa', color: Color(0xFFFFEDF4), plus: true),
+    (name: 'Durazno', color: Color(0xFFFFEBDD), plus: true),
+    (name: 'Cielo noche', color: Color(0xFFE3E7FF), plus: true),
+  ];
+
+  static const cards = <({String name, bool plus})>[
+    (name: 'Blancas', plus: false),
+    (name: 'De mi color', plus: true),
+    (name: 'Con borde', plus: true),
+    (name: 'Bien redondas', plus: true),
+  ];
+
+  /// Colores extra de Family App Plus (los 4 básicos están en AppColors.accents).
+  static const plusAccents = <(String, Color)>[
+    ('Rosa', Color(0xFFDB2777)),
+    ('Rojo', Color(0xFFDC2626)),
+    ('Verde', Color(0xFF15803D)),
+    ('Celeste', Color(0xFF0369A1)),
+    ('Marrón', Color(0xFF92400E)),
+    ('Noche', Color(0xFF1E2235)),
+  ];
 }
 
 /// Plantilla de una tarea de la rutina.
@@ -450,6 +530,7 @@ class AgendaEvent {
     Set<String>? memberIds,
     this.remindMinutes,
     this.alarm = false,
+    this.private = false,
   }) : memberIds = memberIds ?? {};
 
   final String id;
@@ -466,6 +547,9 @@ class AgendaEvent {
 
   /// Que suene como alarma (insistente) en vez de un aviso común.
   bool alarm;
+
+  /// Solo lo ve quien lo creó (los demás no lo ven en la app).
+  bool private;
   final String createdBy;
 
   bool isFor(String memberId) => memberIds.isEmpty || memberIds.contains(memberId);
@@ -482,6 +566,7 @@ class AgendaEvent {
         memberIds: {...memberIds},
         remindMinutes: remindMinutes,
         alarm: alarm,
+        private: private,
       );
 
   /// Opciones de aviso para elegir en el formulario.

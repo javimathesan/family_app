@@ -12,11 +12,20 @@ extension FamilyAgenda on FamilyStore {
     return null;
   }
 
-  /// Eventos que le importan a un miembro (los adultos ven todos).
+  /// Eventos que ve un miembro: los suyos, los de toda la familia y, si es
+  /// adulto, también los de los chicos. Los privados solo los ve quien los creó.
   List<AgendaEvent> eventsFor(String memberId) {
     final adult = memberById(memberId)?.role.isAdult ?? true;
-    return [for (final e in events) if (adult || e.isFor(memberId)) e];
+    return [
+      for (final e in events)
+        if (e.createdBy == memberId || (!e.private && (adult || e.isFor(memberId)))) e,
+    ];
   }
+
+  /// Quién puede editar o borrar un evento: quien lo creó y, si no es
+  /// privado, cualquier adulto.
+  bool canEditEvent(AgendaEvent e, String memberId) =>
+      e.createdBy == memberId || (!e.private && (memberById(memberId)?.role.isAdult ?? false));
 
   /// Eventos de un día para un miembro.
   List<AgendaEvent> eventsOn(DateTime day, String memberId) =>
@@ -34,9 +43,15 @@ extension FamilyAgenda on FamilyStore {
       _events[i] = event;
     }
     sync?.eventSaved(event);
-    if (isNew) {
+    if (isNew && !event.private) {
       final who = playerName(event.createdBy);
-      _addNotice('$who agregó a la agenda: ${event.title} (${_shortDate(event.at)})', kind: NoticeKind.info, memberId: event.createdBy);
+      final kid = !(memberById(event.createdBy)?.role.isAdult ?? true);
+      _addNotice(
+        '$who ${kid ? 'agendó' : 'agregó a la agenda'}: ${event.title} (${_shortDate(event.at)})',
+        // Lo que agenda un chico (un examen, por ejemplo) les llega a los adultos.
+        kind: kid ? NoticeKind.toApprove : NoticeKind.info,
+        memberId: event.createdBy,
+      );
     }
     _changed();
   }
@@ -62,6 +77,7 @@ Map<String, dynamic> _eventToJson(AgendaEvent e) => {
       'members': e.memberIds.toList(),
       'remind': e.remindMinutes,
       'alarm': e.alarm,
+      'private': e.private,
       'createdBy': e.createdBy,
     };
 
@@ -74,5 +90,6 @@ AgendaEvent _eventFromJson(Map<String, dynamic> j) => AgendaEvent(
       memberIds: ((j['members'] as List?) ?? const []).cast<String>().toSet(),
       remindMinutes: (j['remind'] as num?)?.toInt(),
       alarm: j['alarm'] as bool? ?? false,
+      private: j['private'] as bool? ?? false,
       createdBy: j['createdBy'] as String? ?? '',
     );

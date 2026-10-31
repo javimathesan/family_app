@@ -396,6 +396,7 @@ class FamilyCloud implements FamilySync {
         'accent': member.accent.toARGB32(),
         'avatar': FamilyStore.avatarToJson(member.avatar),
         'unlocked': member.unlocked.toList(),
+        'look': member.look.toJson(),
       }));
 
   @override
