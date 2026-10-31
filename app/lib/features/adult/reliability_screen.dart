@@ -27,7 +27,10 @@ class _ReliabilityScreenState extends State<ReliabilityScreen> with WidgetsBindi
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    SessionScope.of(context).setFlag('tour_battery');
+    final session = SessionScope.of(context);
+    if (!session.flag('tour_battery')) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => session.setFlag('tour_battery'));
+    }
   }
 
   @override
