@@ -2,6 +2,7 @@ import 'package:family_app/app.dart';
 import 'package:family_app/data/app_session.dart';
 import 'package:family_app/data/family_storage.dart';
 import 'package:family_app/data/family_store.dart';
+import 'package:family_app/features/adult/settings_screen.dart';
 import 'package:family_app/features/child/today_screen.dart';
 import 'package:family_app/models/models.dart';
 import 'package:flutter/material.dart';
@@ -123,6 +124,12 @@ void main() {
     await tester.tap(find.widgetWithText(NavigationDestination, 'Ajustes'));
     await tester.pumpAndSettle();
     expect(find.text('Personalizar'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Escudo de la familia'),
+      200,
+      scrollable: find.descendant(of: find.byType(SettingsScreen), matching: find.byType(Scrollable)).first,
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Escudo de la familia'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Estrella'));

@@ -2,6 +2,7 @@ import 'package:family_app/app.dart';
 import 'package:family_app/data/app_session.dart';
 import 'package:family_app/data/family_storage.dart';
 import 'package:family_app/data/family_store.dart';
+import 'package:family_app/features/adult/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -75,7 +76,12 @@ void main() {
     // Los chicos entran sin PIN.
     await tester.tap(find.widgetWithText(NavigationDestination, 'Ajustes'));
     await tester.pumpAndSettle();
-    await tester.dragUntilVisible(find.text('Cambiar de usuario'), find.byType(ListView).last, const Offset(0, -200));
+    await tester.scrollUntilVisible(
+      find.text('Cambiar de usuario'),
+      200,
+      scrollable: find.descendant(of: find.byType(SettingsScreen), matching: find.byType(Scrollable)).first,
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Cambiar de usuario'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Tomi'));
