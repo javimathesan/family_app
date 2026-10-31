@@ -2,6 +2,26 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.16.0 — 2026-10-31 · Palabras que no se terminan, Colorín, Tiro al blanco y familias amigas
+
+### Palabras
+- **Estrellas y escalera:** cada tema da hasta 3 ⭐ según el quiz (5/5, 4/5, 3/5). El tema siguiente se abre con 4 de 5; el nivel medio, con 2 ⭐ en 5 temas del básico. Cada idioma avanza por separado. Los adultos tienen todo abierto.
+- **Repaso:** las palabras que se equivocan quedan para repasar hasta que las aciertan.
+- **Modos nuevos:** escuchar y elegir el dibujo, memoria de parejas y ordenar letras.
+- **4 temas nuevos** en el nivel medio: transporte, juguetes, deportes y profesiones.
+- **Paquetes desde Firebase:** temas nuevos sin actualizar la app (colección `vocab`). Herramienta y ejemplo en `tools/vocabulario/`.
+
+### Juegos
+- **Colorín:** cartas de 4 colores con bloqueo, reversa, +2, comodín de color y +4, y el botón "¡Última!" (si te olvidás, robás 2). De 2 a 4 jugadores o contra Robi; en un solo teléfono cada uno ve sus cartas al tocar "ver mis cartas".
+- **Tiro al blanco:** 30 segundos de puntería, blancos dorados que valen el triple y récords de la familia.
+
+### Familias amigas
+- Un adulto genera un **código o QR de amistad** y un adulto de la otra familia lo acepta: doble aprobación.
+- Cada familia elige **quiénes pueden jugar**; solo se comparten apodo y avatar.
+- Partidas por turnos entre las dos familias (todos los juegos de mesa), con **reacciones fijas** en lugar de chat.
+- Recordatorio de seguridad la primera vez que un chico juega con otra familia, y "Terminar amistad" en cualquier momento.
+- **Reglas de Firestore nuevas** (`friendInvites`, `friendships`, `sharedGames`, `vocab` y el avance de palabras): hay que volver a publicarlas.
+
 ## 0.15.0 — 2026-10-31 · Mis primeros pasos y limpieza de Novedades
 
 - **Mis primeros pasos (chicos):** tarjeta en Hoy con 5 pasos: armar el avatar, elegir el color, adoptar la mascota, marcar la primera tarea y escuchar la palabra del día. Al terminarlos cobran +20 puntos y la medalla "¡Bienvenido!". En modo peques todo se ve más grande y cada paso se puede escuchar.

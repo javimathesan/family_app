@@ -3,10 +3,10 @@
 App móvil familiar que convierte la rutina diaria de los hijos en hábitos y responsabilidades. Cada tarea cumplida suma puntos que se canjean por premios, y los adultos siguen el progreso, la salud básica, la agenda y el ánimo del día desde su propio panel.
 
 - **Paquete:** `com.javimathesan.familyapp` (Android; iOS más adelante).
-- **Versión actual:** 0.15 (prueba). [Registro de cambios](CHANGELOG.md).
+- **Versión actual:** 0.16 (prueba). [Registro de cambios](CHANGELOG.md).
 - **Versión de prueba:** cada cambio en `main` publica el APK firmado en [la versión `prueba`](https://github.com/javimathesan/family_app/releases/tag/prueba).
 
-## Qué tiene hoy (v0.15)
+## Qué tiene hoy (v0.16)
 
 | Área | Qué hace |
 | --- | --- |
@@ -19,8 +19,8 @@ App móvil familiar que convierte la rutina diaria de los hijos en hábitos y re
 | **Tablet familiar** | Todos los chicos en una pantalla para la tablet de la casa; salida con PIN. |
 | **Avisos** | Novedades agrupadas por día e hijo; avisos del sistema con la app abierta o minimizada; preferencia por teléfono (importante / todo / nada); avisos a los chicos cuando les aprueban algo. |
 | **Agenda** | Turnos, exámenes, cumpleaños con lugar, día, hora, para quién y notas. Aviso o **alarma** que suena aunque la app esté cerrada. Los chicos agendan lo suyo y los padres lo ven; los adultos pueden marcar "solo para mí". |
-| **Juegos** | Tres en raya, 4 en línea, ludo, ajedrez y **Mi Barrio** (juego propio de propiedades); contra la familia (cada uno en su celular o pasando el teléfono) o contra Robi. Regla "primero la rutina", minutos por día y borrar partidas terminadas. |
-| **Palabras** | Inglés, portugués y coreano en 3 niveles (básico, medio y avanzado de Plus), tarjetas con voz, quiz con puntos una vez por día y palabra del día. |
+| **Juegos** | Tres en raya, 4 en línea, ludo, ajedrez, **Mi Barrio** (propiedades) y **Colorín** (cartas de colores), más **Tiro al blanco** con récords. Contra la familia, contra Robi o con **familias amigas** (doble aprobación, sin chat). Regla "primero la rutina", minutos por día y borrar partidas terminadas. |
+| **Palabras** | Inglés, portugués y coreano en 3 niveles (avanzado de Plus) con estrellas y temas que se abren en escalera, repaso de lo que costó, tarjetas, quiz, escuchar y elegir, memoria y ordenar letras. Temas nuevos por paquetes desde Firebase sin actualizar la app. |
 | **Avatar y personalización** | Avatar estilo Funko con 19 disfraces (4 de Plus) y accesorios que se desbloquean con puntos. Modo claro/oscuro, colores, fondos, tarjetas, festejo y **mundos temáticos** por miembro (opciones extra de Plus). Ícono propio. |
 | **Privacidad** | Sin email, teléfono, ubicación ni fotos; solo apodos. Pantalla "Privacidad y datos" en la app. |
 
@@ -54,7 +54,8 @@ Ver [docs/legal/](docs/legal/): borradores de **política de privacidad** y **t�
 - [ ] Probar la app con letra grande (accesibilidad) y en tablets reales.
 - [ ] Ordenar dos atajos internos: el reto cobrado y los días de quiz se guardan junto a lo desbloqueado.
 - [ ] Estadísticas de uso para el administrador sin rastrear a los chicos (ver [docs/admin/](docs/admin/usuarios-y-estadisticas.md)).
-- [ ] Más juegos (sopa de letras, memoria) y jugar con amigos de otras familias con doble autorización.
+- [ ] Más paquetes de palabras revisados por hablantes de cada idioma.
+- [ ] Sopa de letras y más juegos rápidos.
 - [ ] iOS.
 
 ### 4. Técnico
