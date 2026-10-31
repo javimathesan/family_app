@@ -137,14 +137,16 @@ void main() {
 
     await tester.tap(find.widgetWithText(NavigationDestination, 'Hoy'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Mi cuarto'));
+    await tester.tap(find.text('Adoptá tu mascota'));
     await tester.pumpAndSettle();
+    expect(find.text('Mi cuarto'), findsOneWidget);
     await tester.tap(find.text('Perrito'));
     await tester.pumpAndSettle();
     expect(store.hasPet('tomi'), isTrue);
-    Navigator.of(tester.element(find.text('Mi cuarto').first)).pop();
+    final nav = Navigator.of(tester.element(find.text('Mi cuarto').first));
+    nav.pop();
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Medallas'));
+    nav.pushNamed(Routes.medals);
     await tester.pumpAndSettle();
     expect(find.textContaining('de 14 medallas'), findsOneWidget);
   });
