@@ -32,7 +32,7 @@ class MedalsScreen extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: 10,
               crossAxisSpacing: 10,
-              childAspectRatio: .78,
+              childAspectRatio: .62,
               children: [
                 for (final m in medals)
                   Tooltip(
