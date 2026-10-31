@@ -35,7 +35,9 @@ jobs:
           flutter test --machine > test-results.jsonl
           code=$?
           # Un aviso por prueba fallida, con lo que imprimió (el detalle del error).
-          jq -cR 'fromjson? // empty' test-results.jsonl | jq -rs '
+          echo "::notice title=pruebas::$(wc -l < test-results.jsonl) líneas"
+          jq -cR 'fromjson? // empty' test-results.jsonl > events.jsonl 2> jq1.err
+          jq -rs 2> jq2.err '
             (map(select(.type=="testStart")) | map({key: (.test.id|tostring), value: .test.name}) | from_entries) as $names
             | (map(select(.type=="error")) | map(.testID) | unique) as $failed
             | . as $all
@@ -45,7 +47,8 @@ jobs:
                         | join("\n") | split("\n")
                         | map(select(test("package:flutter|dart:async|package:stack_trace|package:matcher|asynchronous suspension|^\\s*$") | not))
                         | join("\n") | .[0:1800] | gsub("%";"%25") | gsub("\r";"") | gsub("\n";"%0A"))
-          '
+          ' events.jsonl
+          for f in jq1.err jq2.err; do [ -s $f ] && echo "::error title=$f::$(head -c 600 $f | tr '\n' ' ')"; done
           exit $code
 
   compilar-android:
