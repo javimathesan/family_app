@@ -3,10 +3,10 @@
 App móvil familiar que convierte la rutina diaria de los hijos en hábitos y responsabilidades. Cada tarea cumplida suma puntos que se canjean por premios, y los adultos siguen el progreso, la salud básica, la agenda y el ánimo del día desde su propio panel.
 
 - **Paquete:** `com.javimathesan.familyapp` (Android; iOS más adelante).
-- **Versión actual:** 0.16.1 (prueba). [Registro de cambios](CHANGELOG.md).
+- **Versión actual:** 0.17 (prueba). [Registro de cambios](CHANGELOG.md).
 - **Versión de prueba:** cada cambio en `main` publica el APK firmado en [la versión `prueba`](https://github.com/javimathesan/family_app/releases/tag/prueba).
 
-## Qué tiene hoy (v0.16)
+## Qué tiene hoy (v0.17)
 
 | Área | Qué hace |
 | --- | --- |
@@ -32,10 +32,10 @@ Ver [docs/legal/](docs/legal/): borradores de **política de privacidad** y **t�
 
 - [ ] Completar los datos del responsable (nombre o razón social, domicilio y email de contacto) en los borradores.
 - [ ] Revisión por un abogado (datos de menores y de salud).
-- [ ] Publicar la política en una dirección web pública (la pide Play Store).
+- [ ] Publicar la política, los términos y la página de borrado en una dirección web (GitHub Pages sirve).
 - [ ] Inscribir la base de datos en el Registro Nacional de Bases de Datos (AAIP).
-- [ ] Consentimiento del adulto dentro de la app al crear el hogar (aceptar términos y política).
-- [ ] **Borrar mis datos / borrar el hogar** desde la app y por web (Play Store lo exige).
+- [x] Consentimiento del adulto dentro de la app al crear el hogar (aceptar términos y política).
+- [x] **Borrar el hogar** desde la app (Ajustes) y página para pedirlo por email ([borrar-datos](docs/legal/borrar-datos.md)); falta completar el email y publicarla en la web.
 
 ### 2. Publicación en Google Play
 

@@ -2,6 +2,14 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.17.0 — 2026-11-01 · Avatares con más detalle, hábitos reservados y listo lo legal de la app
+
+- **Avatar:** 6 peinados nuevos (trenzas, afro, mohicano, colita alta, ondas y melena corta), 4 ojos nuevos (pestañas, guiño, estrellas y corazones), cejas finas o gruesas, pecas, y más colores de pelo (canoso, violeta y verde) y de ropa (amarillo, celeste, negro y verde).
+- **Mis hábitos:** el agua, popó y pipí quedan en una tarjeta plegada que solo muestra los vasos de agua hasta que el chico la abre. Las alertas al adulto dicen "revisar sus hábitos" sin detalles.
+- **Aceptación de términos:** al crear un hogar (y al unirse como adulto) hay que confirmar ser mayor de 18 y aceptar los términos y la privacidad. Queda constancia en el hogar con la versión aceptada.
+- **Borrar el hogar y todos sus datos** (Ajustes → Sesión, solo administradores): borra todo en la nube, termina las amistades y desvincula los teléfonos. Página para pedirlo sin la app: `docs/legal/borrar-datos.md`.
+- **Términos y condiciones** en Ajustes → Información.
+
 ## 0.16.1 — 2026-10-31 · Arreglo en Juegos (modo oscuro)
 
 - Palabras y Tiro al blanco ahora son dos tarjetas lado a lado en "Para practicar", con el mismo estilo que los juegos. Antes estaban pegadas y, en modo oscuro, el título no se leía.
