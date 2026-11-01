@@ -69,4 +69,22 @@ void main() {
     await settle();
     expect(a.friendships, isEmpty);
   });
+
+  test('borrar el hogar borra sus datos y termina las amistades', () async {
+    final db = FakeFirebaseFirestore();
+    final cloud = FamilyCloud(db: db, uid: 'tel-a', clock: clock);
+    final store = FamilyStore.empty(clock: clock);
+    final home = await cloud.createHome(homeName: 'Casa', nickname: 'Papá');
+    expect((await db.collection('homes').doc(home.homeId).get()).data()!['terms']['version'], FamilyCloud.termsVersion);
+    cloud.attach(store, home.homeId);
+    await settle();
+    store.signInAs(home.memberId);
+    store.addMember(nickname: 'Tomi', role: MemberRole.child);
+    store.toggleAdultGoal(home.memberId, 'meta_ejercicio');
+    await settle();
+    await cloud.deleteHome(home.homeId);
+    expect((await db.collection('homes').doc(home.homeId).get()).exists, isFalse);
+    expect((await db.collection('homes').doc(home.homeId).collection('members').get()).docs, isEmpty);
+    expect((await db.collection('homes').doc(home.homeId).collection('days').get()).docs, isEmpty);
+  });
 }

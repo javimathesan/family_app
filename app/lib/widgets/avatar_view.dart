@@ -32,7 +32,10 @@ abstract final class AvatarOptions {
     ('Piel morena', Color(0xFF9C6440)),
     ('Piel oscura', Color(0xFF6B4128)),
   ];
-  static const hairStyles = ['Corto', 'Flequillo', 'Largo', 'Rulos', 'Rapado', 'Puntiagudo', 'Coletas', 'Rodete'];
+  static const hairStyles = [
+    'Corto', 'Flequillo', 'Largo', 'Rulos', 'Rapado', 'Puntiagudo', 'Coletas', 'Rodete',
+    'Trenzas', 'Afro', 'Mohicano', 'Colita alta', 'Ondas', 'Melena corta',
+  ];
   static const hairColors = <(String, Color)>[
     ('Negro', Color(0xFF1E1E1E)),
     ('Castaño oscuro', Color(0xFF4A3426)),
@@ -41,8 +44,12 @@ abstract final class AvatarOptions {
     ('Pelirrojo', Color(0xFFB4471F)),
     ('Azul fantasía', Color(0xFF3B6FD8)),
     ('Rosa fantasía', Color(0xFFE5579B)),
+    ('Canoso', Color(0xFFD1D5DB)),
+    ('Violeta fantasía', Color(0xFF8B5CF6)),
+    ('Verde fantasía', Color(0xFF10B981)),
   ];
-  static const eyes = ['Redondos', 'Felices', 'Dormilones', 'Brillantes'];
+  static const eyes = ['Redondos', 'Felices', 'Dormilones', 'Brillantes', 'Pestañas', 'Guiño', 'Estrellas', 'Corazones'];
+  static const brows = ['Sin cejas', 'Finas', 'Gruesas'];
 
   /// Color principal de la ropa o del disfraz.
   static const shirts = <(String, Color)>[
@@ -53,6 +60,10 @@ abstract final class AvatarOptions {
     ('Rosa', Color(0xFFDB2777)),
     ('Rojo', Color(0xFFDC2626)),
     ('Gris', Color(0xFF5B6178)),
+    ('Amarillo', Color(0xFFCA8A04)),
+    ('Celeste', Color(0xFF0284C7)),
+    ('Negro', Color(0xFF1F2937)),
+    ('Verde', Color(0xFF15803D)),
   ];
 
   /// Disfraces originales, inspirados en lo que les gusta a los chicos.
@@ -204,6 +215,7 @@ class _FunkoPainter extends CustomPainter {
     _head(canvas, skin);
     if (_outfit == _heroe) _heroMask(canvas, main);
     _eyes(canvas);
+    _face(canvas, hair, skin);
     _mouth(canvas);
     if (_outfit == _ninja) _ninjaMask(canvas);
     if (_hood) {
@@ -526,12 +538,65 @@ class _FunkoPainter extends CustomPainter {
           canvas.drawLine(Offset(x - 14, 98), Offset(x - 19, 92), _line(_ink, 3));
           canvas.drawLine(Offset(x + 14, 98), Offset(x + 19, 92), _line(_ink, 3));
         }
+      case 4: // pestañas
+        for (final x in [125.0, 175.0]) {
+          canvas.drawCircle(Offset(x, 112), 14, dark);
+          canvas.drawCircle(Offset(x + 5, 106), 4.5, glint);
+          for (final dx in [-10.0, 0.0, 10.0]) {
+            canvas.drawLine(Offset(x + dx * .9, 99), Offset(x + dx * 1.4, 90), _line(_ink, 3));
+          }
+        }
+      case 5: // guiño
+        canvas.drawCircle(const Offset(125, 112), 14, dark);
+        canvas.drawCircle(const Offset(130, 106), 4.5, glint);
+        canvas.drawPath(
+          Path()
+            ..moveTo(161, 114)
+            ..quadraticBezierTo(175, 102, 189, 114),
+          _line(_ink, 6),
+        );
+      case 6: // estrellas
+        for (final x in [125.0, 175.0]) {
+          _star(canvas, Offset(x, 112), 17, _ink);
+          canvas.drawCircle(Offset(x + 3, 108), 3, glint);
+        }
+      case 7: // corazones
+        for (final x in [125.0, 175.0]) {
+          final h = Path()
+            ..moveTo(x, 126)
+            ..cubicTo(x - 22, 112, x - 14, 94, x, 104)
+            ..cubicTo(x + 14, 94, x + 22, 112, x, 126)
+            ..close();
+          canvas.drawPath(h, _fill(const Color(0xFFE11D48)));
+          canvas.drawCircle(Offset(x - 6, 106), 3, glint);
+        }
       default:
         for (final x in [125.0, 175.0]) {
           canvas.drawCircle(Offset(x, 112), 14, dark);
           canvas.drawCircle(Offset(x + 5, 106), 4.5, glint);
           canvas.drawCircle(Offset(x - 4, 117), 2, glint);
         }
+    }
+  }
+
+  /// Cejas y pecas.
+  void _face(Canvas canvas, Color hair, Color skin) {
+    if (c.brows > 0) {
+      final brow = _line(_shade(hair, 0.15), c.brows == 2 ? 7 : 4);
+      for (final x in [125.0, 175.0]) {
+        canvas.drawPath(
+          Path()
+            ..moveTo(x - 15, 88)
+            ..quadraticBezierTo(x, 80, x + 15, 88),
+          brow,
+        );
+      }
+    }
+    if (c.freckles) {
+      final dot = _fill(_shade(skin, 0.35));
+      for (final o in const [Offset(100, 128), Offset(108, 134), Offset(96, 136), Offset(200, 128), Offset(192, 134), Offset(204, 136)]) {
+        canvas.drawCircle(o, 2.2, dot);
+      }
     }
   }
 
@@ -565,6 +630,47 @@ class _FunkoPainter extends CustomPainter {
         }
       case 7: // rodete
         _shape(canvas, Path()..addOval(Rect.fromCenter(center: const Offset(150, 26), width: 50, height: 44)), color);
+      case 8: // trenzas
+        for (final x in [70.0, 230.0]) {
+          for (var i = 0; i < 5; i++) {
+            _shape(canvas, Path()..addOval(Rect.fromCenter(center: Offset(x, 120 + i * 20.0), width: 26 - i * 1.5, height: 24)), color, outline: 2);
+          }
+          canvas.drawCircle(Offset(x, 218), 6, _fill(const Color(0xFF2563EB)));
+        }
+      case 9: // afro
+        _shape(canvas, Path()..addOval(Rect.fromCenter(center: const Offset(150, 92), width: 232, height: 196)), color);
+      case 11: // colita alta
+        _shape(
+          canvas,
+          Path()
+            ..moveTo(170, 30)
+            ..quadraticBezierTo(250, 10, 240, 110)
+            ..quadraticBezierTo(232, 60, 182, 52)
+            ..close(),
+          color,
+        );
+        canvas.drawCircle(const Offset(178, 36), 8, _fill(const Color(0xFFDB2777)));
+      case 12: // ondas
+        final w = Path()..moveTo(64, 190);
+        w.quadraticBezierTo(50, 28, 150, 24);
+        w.quadraticBezierTo(250, 28, 236, 190);
+        for (var i = 0; i < 6; i++) {
+          final x = 236 - i * 172 / 6;
+          w.quadraticBezierTo(x - 14, 206, x - 172 / 6, 190);
+        }
+        w.close();
+        _shape(canvas, w, color);
+      case 13: // melena corta
+        _shape(
+          canvas,
+          Path()
+            ..moveTo(66, 168)
+            ..quadraticBezierTo(52, 28, 150, 26)
+            ..quadraticBezierTo(248, 28, 234, 168)
+            ..lineTo(66, 168)
+            ..close(),
+          color,
+        );
     }
   }
 
@@ -626,7 +732,48 @@ class _FunkoPainter extends CustomPainter {
           ..lineTo(110, 82)
           ..quadraticBezierTo(80, 74, 68, 110)
           ..close();
-      default: // corto, y la parte de arriba de largo, coletas y rodete
+      case 9: // afro: frente con rulitos
+        p
+          ..moveTo(70, 104)
+          ..quadraticBezierTo(60, 50, 100, 40)
+          ..quadraticBezierTo(150, 20, 200, 40)
+          ..quadraticBezierTo(240, 50, 230, 104)
+          ..quadraticBezierTo(216, 70, 150, 68)
+          ..quadraticBezierTo(84, 70, 70, 104)
+          ..close();
+      case 10: // mohicano: costados rapados y cresta
+        _shape(
+          canvas,
+          Path()
+            ..moveTo(78, 92)
+            ..quadraticBezierTo(82, 40, 150, 38)
+            ..quadraticBezierTo(218, 40, 222, 92)
+            ..quadraticBezierTo(200, 64, 150, 62)
+            ..quadraticBezierTo(100, 64, 78, 92)
+            ..close(),
+          color.withValues(alpha: 0.45),
+          outline: 0,
+        );
+        p
+          ..moveTo(132, 64)
+          ..lineTo(126, 30)
+          ..lineTo(138, 34)
+          ..lineTo(140, 2)
+          ..lineTo(152, 26)
+          ..lineTo(162, 0)
+          ..lineTo(166, 34)
+          ..lineTo(176, 30)
+          ..lineTo(168, 64)
+          ..close();
+      case 12 || 13: // ondas y melena: flequillo de costado
+        p
+          ..moveTo(70, 112)
+          ..quadraticBezierTo(66, 26, 150, 26)
+          ..quadraticBezierTo(234, 26, 230, 112)
+          ..quadraticBezierTo(220, 70, 180, 64)
+          ..quadraticBezierTo(120, 92, 74, 100)
+          ..close();
+      default: // corto, y la parte de arriba de largo, coletas, rodete, trenzas y colita
         p
           ..moveTo(72, 104)
           ..quadraticBezierTo(70, 30, 150, 28)

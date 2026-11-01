@@ -59,7 +59,13 @@ class AvatarConfig {
     this.shirt = 0,
     this.accessory = 0,
     this.outfit = 0,
+    this.brows = 0,
+    this.freckles = false,
   });
+
+  /// Cejas: 0 sin, 1 finas, 2 gruesas.
+  final int brows;
+  final bool freckles;
 
   final int skin;
   final int hairStyle;
@@ -81,8 +87,12 @@ class AvatarConfig {
     int? shirt,
     int? accessory,
     int? outfit,
+    int? brows,
+    bool? freckles,
   }) {
     return AvatarConfig(
+      brows: brows ?? this.brows,
+      freckles: freckles ?? this.freckles,
       skin: skin ?? this.skin,
       hairStyle: hairStyle ?? this.hairStyle,
       hairColor: hairColor ?? this.hairColor,

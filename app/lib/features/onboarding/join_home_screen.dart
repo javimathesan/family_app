@@ -8,6 +8,7 @@ import '../../data/family_cloud.dart';
 import '../../data/family_store.dart';
 import '../../models/models.dart';
 import '../../widgets/common.dart';
+import 'terms_screen.dart';
 import 'qr_scan_screen.dart';
 
 /// Alta de un miembro nuevo en 3 pasos: código, apodo y aprobación del adulto.
@@ -25,6 +26,7 @@ class JoinHomeScreen extends StatefulWidget {
 
 class _JoinHomeScreenState extends State<JoinHomeScreen> {
   int _step = 0;
+  bool _accepted = false;
   final _code = TextEditingController();
   final _nick = TextEditingController();
   Invitation? _invite;
@@ -296,10 +298,11 @@ class _JoinHomeScreenState extends State<JoinHomeScreen> {
           ),
           onChanged: (_) => setState(() {}),
         ),
+        if (invite.role.isAdult) AcceptTermsTile(value: _accepted, onChanged: (v) => setState(() => _accepted = v)),
         _errorText(),
         const SizedBox(height: 12),
         FilledButton(
-          onPressed: nick.isEmpty || _busy ? null : _join,
+          onPressed: nick.isEmpty || _busy || (invite.role.isAdult && !_accepted) ? null : _join,
           child: _busy
               ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
               : Text(invite.isRelink ? 'Volver a entrar como ${invite.memberName}' : 'Unirme al hogar'),

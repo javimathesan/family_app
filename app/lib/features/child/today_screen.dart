@@ -27,7 +27,6 @@ class TodayScreen extends StatelessWidget {
     final done = store.doneToday(me.id);
     final total = store.templatesFor(me.id).length;
     final next = store.nextTask(me.id);
-    final health = store.healthOf(me.id);
     // Lo que los adultos aprobaron (o dejaron para otro momento) hoy.
     final forMe = [
       for (final n in store.notices)
@@ -279,82 +278,7 @@ class TodayScreen extends StatelessWidget {
           ),
         ),
       ],
-            'cuerpo' => [
-        const SizedBox(height: 20),
-        Text('Mi cuerpo hoy', style: sectionTitle(context)),
-        const SizedBox(height: 10),
-        InfoCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Vasos de agua', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                        Text('Meta: ${FamilyStore.waterGoal} vasos', style: mutedText(context)),
-                      ],
-                    ),
-                  ),
-                  FilledButton(
-                    onPressed: health.glasses >= FamilyStore.waterGoal ? null : () => store.addGlass(me.id),
-                    child: const Text('+1 vaso'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  for (var i = 0; i < FamilyStore.waterGoal; i++)
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 3),
-                        child: Icon(
-                          i < health.glasses ? Icons.local_drink : Icons.local_drink_outlined,
-                          color: i < health.glasses ? const Color(0xFF3B82F6) : const Color(0xFF9DB7F0),
-                          size: 30,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                health.glasses >= FamilyStore.waterGoal ? '¡Meta cumplida! +5 pts' : '${health.glasses} de ${FamilyStore.waterGoal} vasos',
-                style: mutedText(context).copyWith(fontWeight: FontWeight.w700),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _HealthTile(
-                icon: Icons.cloud_outlined,
-                iconColor: const Color(0xFF7C4A1E),
-                title: '¿Hiciste popó?',
-                value: health.poop ? 'Sí, ¡bien!' : 'Todavía no',
-                selected: health.poop,
-                onTap: () => store.togglePoop(me.id),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _HealthTile(
-                icon: Icons.water_drop_outlined,
-                iconColor: const Color(0xFFB7791F),
-                title: 'Pipí',
-                value: '${health.pee} veces · tocá para sumar',
-                selected: false,
-                onTap: () => store.addPee(me.id),
-              ),
-            ),
-          ],
-        ),
-      ],
+            'cuerpo' => [const SizedBox(height: 16), _HabitsCard(member: me)],
             _ => const <Widget>[],
           },
         const SizedBox(height: 12),
@@ -427,7 +351,7 @@ const todayCards = <String, String>{
   'reto': 'Reto de la semana',
   'agenda': 'Hoy en la agenda',
   'palabra': 'Palabra del día',
-  'cuerpo': 'Mi cuerpo hoy (agua, popó y pipí)',
+  'cuerpo': 'Mis hábitos (agua y baño)',
 };
 
 /// Orden de las tarjetas: el elegido y, al final, las que falten.
@@ -623,6 +547,125 @@ class _KidSteps extends StatelessWidget {
           else
             Text('Al terminar ganás ${FamilyMedals.welcomeBonus} puntos y la medalla "¡Bienvenido!".',
                 style: mutedText(context)),
+        ],
+      ),
+    );
+  }
+}
+
+/// Mis hábitos: agua y baño, plegado para que no quede a la vista.
+class _HabitsCard extends StatefulWidget {
+  const _HabitsCard({required this.member});
+
+  final Member member;
+
+  @override
+  State<_HabitsCard> createState() => _HabitsCardState();
+}
+
+class _HabitsCardState extends State<_HabitsCard> {
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final store = FamilyScope.of(context);
+    final me = widget.member;
+    final health = store.healthOf(me.id);
+    return InfoCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ListTile(
+            leading: const Text('🌱', style: TextStyle(fontSize: 28)),
+            title: const Text('Mis hábitos', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
+            subtitle: Text(_open
+                ? 'Solo lo ven vos y los adultos de tu casa.'
+                : '💧 ${health.glasses} de ${FamilyStore.waterGoal} vasos · tocá para abrir'),
+            trailing: Icon(_open ? Icons.expand_less : Icons.expand_more),
+            onTap: () => setState(() => _open = !_open),
+          ),
+          if (_open)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+
+                  InfoCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Vasos de agua', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                                  Text('Meta: ${FamilyStore.waterGoal} vasos', style: mutedText(context)),
+                                ],
+                              ),
+                            ),
+                            FilledButton(
+                              onPressed: health.glasses >= FamilyStore.waterGoal ? null : () => store.addGlass(me.id),
+                              child: const Text('+1 vaso'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            for (var i = 0; i < FamilyStore.waterGoal; i++)
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                                  child: Icon(
+                                    i < health.glasses ? Icons.local_drink : Icons.local_drink_outlined,
+                                    color: i < health.glasses ? const Color(0xFF3B82F6) : const Color(0xFF9DB7F0),
+                                    size: 30,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          health.glasses >= FamilyStore.waterGoal ? '¡Meta cumplida! +5 pts' : '${health.glasses} de ${FamilyStore.waterGoal} vasos',
+                          style: mutedText(context).copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _HealthTile(
+                          icon: Icons.cloud_outlined,
+                          iconColor: const Color(0xFF7C4A1E),
+                          title: '¿Hiciste popó?',
+                          value: health.poop ? 'Sí, ¡bien!' : 'Todavía no',
+                          selected: health.poop,
+                          onTap: () => store.togglePoop(me.id),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _HealthTile(
+                          icon: Icons.water_drop_outlined,
+                          iconColor: const Color(0xFFB7791F),
+                          title: 'Pipí',
+                          value: '${health.pee} veces · tocá para sumar',
+                          selected: false,
+                          onTap: () => store.addPee(me.id),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );

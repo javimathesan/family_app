@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../app.dart';
 import '../../data/app_session.dart';
 import '../../widgets/common.dart';
+import 'terms_screen.dart';
 
 /// El adulto crea el hogar compartido; queda como administrador.
 class CreateHomeScreen extends StatefulWidget {
@@ -16,6 +17,7 @@ class _CreateHomeScreenState extends State<CreateHomeScreen> {
   final _home = TextEditingController();
   final _nick = TextEditingController();
   bool _busy = false;
+  bool _accepted = false;
   String? _error;
 
   @override
@@ -25,7 +27,7 @@ class _CreateHomeScreenState extends State<CreateHomeScreen> {
     super.dispose();
   }
 
-  bool get _valid => _home.text.trim().isNotEmpty && _nick.text.trim().isNotEmpty;
+  bool get _valid => _home.text.trim().isNotEmpty && _nick.text.trim().isNotEmpty && _accepted;
 
   Future<void> _create() async {
     setState(() {
@@ -79,6 +81,7 @@ class _CreateHomeScreenState extends State<CreateHomeScreen> {
             ),
             onChanged: (_) => setState(() {}),
           ),
+          AcceptTermsTile(value: _accepted, onChanged: (v) => setState(() => _accepted = v)),
           if (_error != null) ...[
             const SizedBox(height: 8),
             Text(_error!, style: const TextStyle(color: Color(0xFFB42318), fontWeight: FontWeight.w700)),

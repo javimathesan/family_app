@@ -999,6 +999,8 @@ class FamilyStore extends ChangeNotifier {
         'shirt': a.shirt,
         'accessory': a.accessory,
         'outfit': a.outfit,
+        'brows': a.brows,
+        'freckles': a.freckles,
       };
 
   static Member memberFromJson(Map<String, dynamic> j) {
@@ -1023,6 +1025,8 @@ class FamilyStore extends ChangeNotifier {
         shirt: (a['shirt'] as num?)?.toInt() ?? 0,
         accessory: (a['accessory'] as num?)?.toInt() ?? 0,
         outfit: (a['outfit'] as num?)?.toInt() ?? 0,
+        brows: (a['brows'] as num?)?.toInt() ?? 0,
+        freckles: a['freckles'] as bool? ?? false,
       ),
     );
   }
@@ -1195,7 +1199,7 @@ class FamilyStore extends ChangeNotifier {
       notices: [
         FamilyNotice(time: today.subtract(const Duration(minutes: 40)), text: 'Tomi salió del colegio a horario', kind: NoticeKind.task, memberId: 'tomi'),
         FamilyNotice(time: today.subtract(const Duration(hours: 1)), text: 'Luli llegó a su meta de agua', kind: NoticeKind.health, memberId: 'luli'),
-        FamilyNotice(time: today.subtract(const Duration(hours: 2)), text: 'Mati lleva 2 días sin registrar popó', isAlert: true, kind: NoticeKind.alert, memberId: 'mati'),
+        FamilyNotice(time: today.subtract(const Duration(hours: 2)), text: 'Mati: revisar sus hábitos (2 días sin registro de baño)', isAlert: true, kind: NoticeKind.alert, memberId: 'mati'),
       ],
       clock: clock,
     );

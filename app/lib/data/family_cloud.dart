@@ -42,6 +42,12 @@ class FamilyCloud implements FamilySync {
   FamilyStore? _store;
   final List<StreamSubscription<dynamic>> _subs = [];
 
+  /// Versión de los términos que acepta quien crea el hogar.
+  static String termsVersion = '2026-11';
+
+  /// Se llama si el hogar se borró desde otro teléfono.
+  VoidCallback? onHomeDeleted;
+
   /// Días de historial que se cargan para el calendario.
   static const historyDays = 35;
 
@@ -106,6 +112,8 @@ class FamilyCloud implements FamilySync {
       'createdAt': FieldValue.serverTimestamp(),
       'adminUids': [uid],
       'memberUids': [uid],
+      // Constancia de que el adulto aceptó los términos y la privacidad.
+      'terms': {'version': termsVersion, 'by': uid, 'at': FieldValue.serverTimestamp()},
       'templates': [for (final t in FamilyStore.defaultTemplates) FamilyStore.templateToJson(t)],
       'rewards': [for (final r in FamilyStore.defaultRewards) FamilyStore.rewardToJson(r)],
     });
@@ -241,7 +249,10 @@ class FamilyCloud implements FamilySync {
 
     _subs.add(_homeRef(homeId).snapshots().listen((snap) {
       final data = snap.data();
-      if (data == null) return;
+      if (data == null) {
+        if (!snap.exists && !snap.metadata.isFromCache && store.homeName.isNotEmpty) onHomeDeleted?.call();
+        return;
+      }
       final templates = data['templates'];
       final rewards = data['rewards'];
       store.applyRemote(
@@ -668,4 +679,36 @@ class FamilyCloud implements FamilySync {
 
   @override
   void sharedMatchRemoved(String matchId) => _write((h) => _sharedGames.doc(matchId).delete());
+
+  // ------------------------------------------------------- borrar el hogar
+
+  /// Borra el hogar y todos sus datos (lo pide un adulto administrador).
+  Future<void> deleteHome(String homeId) async {
+    Future<void> wipe(Query<Map<String, dynamic>> q) async {
+      while (true) {
+        final snap = await q.limit(400).get();
+        if (snap.docs.isEmpty) return;
+        final batch = db.batch();
+        for (final d in snap.docs) {
+          batch.delete(d.reference);
+        }
+        await batch.commit();
+        if (snap.docs.length < 400) return;
+      }
+    }
+
+    for (final sub in ['days', 'redemptions', 'notices', 'games', 'events']) {
+      await wipe(_homeRef(homeId).collection(sub));
+    }
+    for (final side in ['A', 'B']) {
+      await wipe(_sharedGames.where('home$side', isEqualTo: homeId));
+      final friends = await _friendships.where('home$side', isEqualTo: homeId).get();
+      for (final f in friends.docs) {
+        await f.reference.update({'status': 'ended'});
+      }
+    }
+    await wipe(_members(homeId));
+    detach();
+    await _homeRef(homeId).delete();
+  }
 }

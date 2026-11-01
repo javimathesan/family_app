@@ -10,7 +10,7 @@ class PrivacyScreen extends StatelessWidget {
     (
       'Qué guardamos',
       'Apodos (no nombres completos), avatares, rutina y tareas hechas, puntos y premios, vasos de agua, '
-          'popó/pipí y ánimo del día, partidas de juegos, agenda y avisos del hogar.'
+          'hábitos (agua y baño) y ánimo del día, partidas de juegos, agenda y avisos del hogar.'
     ),
     (
       'Qué NO pedimos',

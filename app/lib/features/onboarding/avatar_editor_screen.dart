@@ -214,10 +214,21 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
                       selected: c.eyes,
                       onPick: (i) => _set(c.copyWith(eyes: i)),
                     ),
+                    _Chips(
+                      title: 'Cejas',
+                      options: AvatarOptions.brows,
+                      selected: c.brows,
+                      onPick: (i) => _set(c.copyWith(brows: i)),
+                    ),
                     SwitchListTile(
                       title: const Text('Anteojos', style: TextStyle(fontWeight: FontWeight.w800)),
                       value: c.glasses,
                       onChanged: (v) => _set(c.copyWith(glasses: v)),
+                    ),
+                    SwitchListTile(
+                      title: const Text('Pecas', style: TextStyle(fontWeight: FontWeight.w800)),
+                      value: c.freckles,
+                      onChanged: (v) => _set(c.copyWith(freckles: v)),
                     ),
                   ]),
                   _Pane(children: [

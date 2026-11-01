@@ -76,4 +76,18 @@ void main() {
     expect(AvatarOptions.outfits.where((o) => o.premium).every((o) => !o.free), isTrue);
     expect(AvatarOptions.accessories.last.premium, isTrue);
   });
+
+  testWidgets('cejas, pecas y ojos nuevos se dibujan', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Wrap(children: [
+        for (var e = 0; e < AvatarOptions.eyes.length; e++)
+          AvatarView.full(config: AvatarConfig(eyes: e, brows: e % 3, freckles: e.isEven, hairStyle: 8 + e % 6), size: 80),
+      ]),
+    ));
+    expect(find.byType(AvatarView), findsNWidgets(AvatarOptions.eyes.length));
+    final json = FamilyStore.avatarToJson(const AvatarConfig(brows: 2, freckles: true));
+    final back = FamilyStore.memberFromJson({'id': 'x', 'nickname': 'x', 'role': 'child', 'avatar': json}).avatar;
+    expect(back.brows, 2);
+    expect(back.freckles, isTrue);
+  });
 }

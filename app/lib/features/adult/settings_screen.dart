@@ -7,6 +7,7 @@ import '../../widgets/accent_picker.dart';
 import '../../widgets/avatar_view.dart';
 import '../../widgets/common.dart';
 import '../agenda/agenda_screen.dart';
+import '../onboarding/terms_screen.dart';
 import '../games/games_hub.dart';
 import 'adult_home_screen.dart';
 
@@ -117,19 +118,68 @@ class SettingsScreen extends StatelessWidget {
             section('Información', [
               tile(Icons.bar_chart, 'Resumen de la semana', () => nav.pushNamed(Routes.week)),
               tile(Icons.privacy_tip_outlined, 'Privacidad y datos', () => nav.pushNamed(Routes.privacy)),
+              tile(Icons.gavel_outlined, 'Términos y condiciones', () => nav.push(MaterialPageRoute<void>(builder: (_) => const TermsScreen()))),
             ]),
             section('Sesión', [
               if (session.isDemo) ...[
                 tile(Icons.restart_alt, 'Restablecer datos de ejemplo', () => AdultHomeScreen.sessionAction(context, 'reset')),
                 tile(Icons.logout, 'Salir de la demostración', () => AdultHomeScreen.sessionAction(context, 'leave')),
-              ] else
+              ] else ...[
                 tile(Icons.link_off, 'Desvincular este teléfono', () => AdultHomeScreen.sessionAction(context, 'leave')),
+                if (admin)
+                  tile(Icons.delete_forever_outlined, 'Borrar el hogar y todos sus datos', () => _deleteHome(context),
+                      subtitle: 'Para todos los teléfonos. No se puede deshacer.'),
+              ],
             ]),
             Center(child: Text('Family App · versión de prueba', style: mutedText(context))),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _deleteHome(BuildContext context) async {
+    final store = FamilyScope.of(context);
+    final session = SessionScope.of(context);
+    final controller = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setD) => AlertDialog(
+          title: const Text('¿Borrar el hogar?'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Se borran para siempre los miembros, la rutina, los puntos, los hábitos, la agenda, '
+                  'los juegos y las novedades, en todos los teléfonos. Las amistades con otras familias terminan.'),
+              const SizedBox(height: 12),
+              Text('Para confirmar, escribí el nombre del hogar: "${store.homeName}"'),
+              TextField(controller: controller, onChanged: (_) => setD(() {})),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: Colors.red.shade700),
+              onPressed: controller.text.trim().toLowerCase() == store.homeName.trim().toLowerCase() ? () => Navigator.pop(ctx, true) : null,
+              child: const Text('Borrar todo'),
+            ),
+          ],
+        ),
+      ),
+    );
+    controller.dispose();
+    if (ok != true || !context.mounted) return;
+    final nav = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await session.deleteHome();
+      nav.pushNamedAndRemoveUntil(Routes.welcome, (_) => false);
+      messenger.showSnackBar(const SnackBar(content: Text('El hogar y sus datos se borraron.')));
+    } catch (error) {
+      messenger.showSnackBar(const SnackBar(content: Text('No se pudo borrar. Revisá la conexión e intentá de nuevo.')));
+    }
   }
 
   Future<void> _plusInfo(BuildContext context) {

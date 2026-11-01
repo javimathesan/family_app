@@ -75,6 +75,9 @@ class AppSession extends ChangeNotifier {
 
   bool get cloudAvailable => cloud != null;
 
+  /// Si otro adulto borra el hogar, este teléfono queda desvinculado.
+  void _watchHomeDeleted() => cloud?.onHomeDeleted = () => leave();
+
   /// Contenido de Family App Plus disponible: si el hogar lo tiene o en la
   /// demostración (para probarlo).
   bool get plusOpen => store.hasPlus || !isCloud;
@@ -211,6 +214,7 @@ class AppSession extends ChangeNotifier {
 
   /// Recupera el modo guardado y conecta lo necesario.
   Future<void> restore() async {
+    _watchHomeDeleted();
     storage.listen(store);
     // Primera vez en este teléfono: lo anterior no cuenta como novedad.
     if (_prefs.getInt(_kNoticesSeen) == null) {
@@ -362,6 +366,15 @@ class AppSession extends ChangeNotifier {
     await _save();
     notifyListeners();
     onCloudLinked?.call();
+  }
+
+  /// Borra el hogar en la nube con todos sus datos y desvincula el teléfono.
+  Future<void> deleteHome() async {
+    final c = _requireCloud();
+    final id = homeId;
+    if (id == null) return;
+    await c.deleteHome(id);
+    await leave();
   }
 
   /// Desvincula este teléfono del hogar (los datos siguen en la nube).
