@@ -54,13 +54,13 @@ class _TasksTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final store = FamilyScope.of(context);
-    final total = store.templates.fold<int>(0, (sum, t) => sum + t.points);
+    int pts(int weekday) => store.templates.where((t) => t.days.isEmpty || t.days.contains(weekday)).fold<int>(0, (sum, t) => sum + t.points);
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 96),
       children: [
-        Text('${store.templates.length} tareas · hasta $total puntos por día', style: mutedText(context).copyWith(fontSize: 14)),
+        Text('${store.templates.length} tareas · hasta ${pts(DateTime.monday)} pts en semana y ${pts(DateTime.saturday)} el finde', style: mutedText(context).copyWith(fontSize: 14)),
         const SizedBox(height: 4),
-        Text('Tocá una tarea para cambiarla. Cada tarea puede ser para todos o solo para algunos hijos.', style: mutedText(context)),
+        Text('Tocá una tarea para cambiarla. Cada tarea puede ser para todos o solo para algunos hijos, y para todos los días o solo algunos (por ejemplo, el colegio de lunes a viernes).', style: mutedText(context)),
         for (final block in DayBlock.values) ...[
           const SizedBox(height: 18),
           Text(block.label, style: sectionTitle(context)),
@@ -73,7 +73,7 @@ class _TasksTab extends StatelessWidget {
               child: ListTile(
                 leading: Text(t.icon, style: const TextStyle(fontSize: 26)),
                 title: Text(t.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-                subtitle: Text('${hhmm(t.time)} · ${t.validation.label} · ${_whoLabel(store, t)}'),
+                subtitle: Text('${hhmm(t.time)} · ${t.validation.label} · ${_whoLabel(store, t)}${t.days.isEmpty ? '' : ' · ${t.daysLabel}'}'),
                 trailing: Text('+${t.points}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
                 onTap: () => editTask(context, t),
               ),
@@ -134,6 +134,7 @@ class _TaskFormState extends State<_TaskForm> {
   late Validation _validation = widget.task?.validation ?? Validation.self;
   late Set<String> _assigned = {...?widget.task?.assignedTo};
   late String? _emoji = widget.task?.emoji;
+  late Set<int> _days = {...?widget.task?.days};
 
   @override
   void dispose() {
@@ -195,6 +196,47 @@ class _TaskFormState extends State<_TaskForm> {
               children: [
                 for (final b in DayBlock.values)
                   ChoiceChip(label: Text(b.label), selected: _block == b, onSelected: (_) => setState(() => _block = b)),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text('¿Qué días?', style: sectionTitle(context)),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final (label, set) in [
+                  ('Todos los días', <int>{}),
+                  ('Lunes a viernes', TaskTemplate.weekdays),
+                  ('Fin de semana', TaskTemplate.weekend),
+                ])
+                  ChoiceChip(
+                    label: Text(label),
+                    selected: TaskTemplate.daysText(_days) == label,
+                    onSelected: (_) => setState(() => _days = {...set}),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 4,
+              children: [
+                for (final (i, d) in const ['L', 'M', 'M', 'J', 'V', 'S', 'D'].indexed)
+                  FilterChip(
+                    label: Text(d),
+                    tooltip: const ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'][i],
+                    showCheckmark: false,
+                    selected: _days.isEmpty || _days.contains(i + 1),
+                    onSelected: (on) => setState(() {
+                      final next = _days.isEmpty ? {1, 2, 3, 4, 5, 6, 7} : {..._days};
+                      if (on) {
+                        next.add(i + 1);
+                      } else if (next.length > 1) {
+                        next.remove(i + 1);
+                      }
+                      _days = next.length == 7 ? <int>{} : next;
+                    }),
+                  ),
               ],
             ),
             const SizedBox(height: 14),
@@ -324,6 +366,7 @@ class _TaskFormState extends State<_TaskForm> {
                                 windowMinutes: widget.task?.windowMinutes ?? 30,
                                 assignedTo: _assigned,
                                 emoji: _emoji,
+                                days: _days,
                               ),
                             ),
                           ),

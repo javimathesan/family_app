@@ -2,6 +2,13 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.18.0 — 2026-11-02 · Rutina por días, hábitos a elección y partidas sin repetir
+
+- **Rutina por días:** cada tarea puede ser para todos los días, de lunes a viernes, el fin de semana o días sueltos. Las tareas del colegio (útiles, entrada, salida, llegar a casa y estudiar) pasan solas a lunes a viernes, también en los hogares que ya existían. Los hogares nuevos traen dos tareas de fin de semana: ordenar el cuarto y actividad en familia.
+- En **Mi rutina** el chico ve solo lo que le toca hoy: el fin de semana no aparece la pestaña "Colegio" y el encabezado dice "fin de semana". El progreso, la mascota y el calendario cuentan solo las tareas de ese día.
+- **Mis hábitos a elección del adulto** (Ajustes → Hogar → Mis hábitos de los chicos): para cada hijo se prende o apaga el agua y el baño. De entrada, agua para todos y baño solo para peques. Si se apagan los dos, la tarjeta no aparece (tampoco en la tablet ni en el resumen).
+- **Una partida a la vez:** si ya hay una partida sin terminar del mismo juego con los mismos jugadores, la app avisa "Ya empezaste una con …" y deja seguirla o borrarla para empezar otra.
+
 ## 0.17.0 — 2026-11-01 · Avatares con más detalle, hábitos reservados y listo lo legal de la app
 
 - **Avatar:** 6 peinados nuevos (trenzas, afro, mohicano, colita alta, ondas y melena corta), 4 ojos nuevos (pestañas, guiño, estrellas y corazones), cejas finas o gruesas, pecas, y más colores de pelo (canoso, violeta y verde) y de ropa (amarillo, celeste, negro y verde).

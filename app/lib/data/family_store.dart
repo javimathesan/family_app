@@ -158,6 +158,16 @@ class FamilyStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Un adulto administrador prende o apaga "Mis hábitos" de un hijo.
+  void setHabits(String memberId, {bool? water, bool? bathroom}) {
+    final m = memberById(memberId);
+    if (m == null || m.role != MemberRole.child) return;
+    if (water != null) m.water = water;
+    if (bathroom != null) m.bathroom = bathroom;
+    sync?.memberUpdated(m);
+    notifyListeners();
+  }
+
   bool hasUnlocked(String memberId, String itemId) =>
       memberById(memberId)?.unlocked.contains(itemId) ?? false;
 
@@ -245,12 +255,23 @@ class FamilyStore extends ChangeNotifier {
 
   List<TaskTemplate> get templates => List.unmodifiable(_templates);
 
-  /// Tareas de un bloque; con [memberId], solo las que le tocan a ese hijo.
-  List<TaskTemplate> tasksFor(DayBlock block, {String? memberId}) =>
-      _templates.where((t) => t.block == block && (memberId == null || t.appliesTo(memberId))).toList();
+  /// Tareas de un bloque. Con [memberId] solo las de ese hijo y las que tocan hoy (o el día [on]);
+  /// sin él, todas (para el editor de la rutina).
+  List<TaskTemplate> tasksFor(DayBlock block, {String? memberId, DateTime? on}) {
+    final day = on ?? _clock();
+    return _templates
+        .where((t) => t.block == block && (memberId == null || (t.appliesTo(memberId) && t.onDay(day))))
+        .toList();
+  }
 
-  /// Tareas que le tocan a un hijo.
-  List<TaskTemplate> templatesFor(String memberId) => _templates.where((t) => t.appliesTo(memberId)).toList();
+  /// Tareas que le tocan a un hijo hoy (o el día [on]).
+  List<TaskTemplate> templatesFor(String memberId, {DateTime? on}) {
+    final day = on ?? _clock();
+    return _templates.where((t) => t.appliesTo(memberId) && t.onDay(day)).toList();
+  }
+
+  /// Si hoy (o [on]) es sábado o domingo.
+  bool isWeekend([DateTime? on]) => (on ?? _clock()).weekday >= DateTime.saturday;
 
   bool isDone(String memberId, String taskId) => _today[memberId]?.containsKey(taskId) ?? false;
 
@@ -606,7 +627,7 @@ class FamilyStore extends ChangeNotifier {
 
   /// Resumen de un día terminado para el calendario de caritas.
   DaySummary summarizeDay(DateTime date, Map<String, TaskCompletion> done, HealthLog? log, {String? memberId}) {
-    final ids = {for (final t in memberId == null ? _templates : templatesFor(memberId)) t.id};
+    final ids = {for (final t in memberId == null ? _templates.where((t) => t.onDay(date)) : templatesFor(memberId, on: date)) t.id};
     final total = ids.length;
     // Solo cuentan las tareas de la rutina (no las metas del adulto ni los juegos).
     final count = done.keys.where(ids.contains).length;
@@ -988,6 +1009,8 @@ class FamilyStore extends ChangeNotifier {
         'look': m.look.toJson(),
         'room': m.room,
         'progress': m.progress,
+        if (m.water != null) 'water': m.water,
+        if (m.bathroom != null) 'bathroom': m.bathroom,
       };
 
   static Map<String, dynamic> avatarToJson(AvatarConfig a) => {
@@ -1016,6 +1039,8 @@ class FamilyStore extends ChangeNotifier {
       look: MemberLook.fromJson(j['look']),
       room: (j['room'] as Map?)?.cast<String, dynamic>(),
       progress: (j['progress'] as Map?)?.map((k, v) => MapEntry(k as String, (v as num).toInt())),
+      water: j['water'] as bool?,
+      bathroom: j['bathroom'] as bool?,
       avatar: AvatarConfig(
         skin: (a['skin'] as num?)?.toInt() ?? 1,
         hairStyle: (a['hairStyle'] as num?)?.toInt() ?? 0,
@@ -1060,6 +1085,7 @@ class FamilyStore extends ChangeNotifier {
         'window': t.windowMinutes,
         'assigned': t.assignedTo.toList(),
         'emoji': t.emoji,
+        'days': (t.days.toList()..sort()),
       };
 
   static TaskTemplate templateFromJson(Map<String, dynamic> j) => TaskTemplate(
@@ -1072,7 +1098,13 @@ class FamilyStore extends ChangeNotifier {
         windowMinutes: (j['window'] as num?)?.toInt() ?? 30,
         assignedTo: {...?(j['assigned'] as List?)?.cast<String>()},
         emoji: j['emoji'] as String?,
+        days: j['days'] is List
+            ? {...(j['days'] as List).map((d) => (d as num).toInt())}
+            : (_schoolDayIds.contains(j['id']) ? TaskTemplate.weekdays : const <int>{}),
       );
+
+  /// Tareas de colegio de las rutinas viejas (sin días): pasan a lunes a viernes.
+  static const _schoolDayIds = {'utiles', 'entrada', 'salida', 'llegar', 'estudiar'};
 
   static Map<String, dynamic> rewardToJson(Reward r) => {
         'id': r.id,
@@ -1123,16 +1155,18 @@ class FamilyStore extends ChangeNotifier {
       TaskTemplate(id: 'mesa', name: 'Recoger la mesa', block: DayBlock.morning, time: t(7, 45), points: 3),
       TaskTemplate(id: 'vajilla', name: 'Lavar mi vajilla', block: DayBlock.morning, time: t(7, 50), points: 5, validation: Validation.adult),
       TaskTemplate(id: 'dientes_am', name: 'Cepillarme los dientes', block: DayBlock.morning, time: t(7, 55), points: 5),
-      TaskTemplate(id: 'utiles', name: 'Útiles del colegio listos', block: DayBlock.morning, time: t(8, 0), points: 5),
-      TaskTemplate(id: 'entrada', name: 'Entrar al colegio a horario', block: DayBlock.school, time: t(8, 15), points: 10),
-      TaskTemplate(id: 'salida', name: 'Salida del colegio', block: DayBlock.school, time: t(13, 0), points: 5),
+      TaskTemplate(id: 'utiles', name: 'Útiles del colegio listos', block: DayBlock.morning, time: t(8, 0), points: 5, days: TaskTemplate.weekdays),
+      TaskTemplate(id: 'entrada', name: 'Entrar al colegio a horario', block: DayBlock.school, time: t(8, 15), points: 10, days: TaskTemplate.weekdays),
+      TaskTemplate(id: 'salida', name: 'Salida del colegio', block: DayBlock.school, time: t(13, 0), points: 5, days: TaskTemplate.weekdays),
       TaskTemplate(id: 'deporte', name: 'Actividad extracurricular', block: DayBlock.afternoon, time: t(15, 0), points: 10, windowMinutes: 60),
-      TaskTemplate(id: 'llegar', name: 'Llegar a casa', block: DayBlock.afternoon, time: t(17, 0), points: 5),
+      TaskTemplate(id: 'llegar', name: 'Llegar a casa', block: DayBlock.afternoon, time: t(17, 0), points: 5, days: TaskTemplate.weekdays),
       TaskTemplate(id: 'banio', name: 'Bañarme', block: DayBlock.afternoon, time: t(17, 30), points: 5),
-      TaskTemplate(id: 'estudiar', name: 'Estudiar / repasar', block: DayBlock.night, time: t(18, 0), points: 10, windowMinutes: 120),
+      TaskTemplate(id: 'estudiar', name: 'Estudiar / repasar', block: DayBlock.night, time: t(18, 0), points: 10, windowMinutes: 120, days: TaskTemplate.weekdays),
       TaskTemplate(id: 'cena', name: 'Comer, recoger y lavar', block: DayBlock.night, time: t(20, 0), points: 8, windowMinutes: 60),
+      TaskTemplate(id: 'cuarto', name: 'Ordenar mi cuarto', block: DayBlock.morning, time: t(10, 0), points: 10, windowMinutes: 120, validation: Validation.photo, days: TaskTemplate.weekend, emoji: '🧸'),
+      TaskTemplate(id: 'familia', name: 'Actividad en familia', block: DayBlock.afternoon, time: t(16, 0), points: 10, windowMinutes: 180, days: TaskTemplate.weekend, emoji: '🎲'),
       TaskTemplate(id: 'dientes_pm', name: 'Cepillarme los dientes', block: DayBlock.night, time: t(21, 0), points: 5),
-    ];
+    ]..sort(_byTime);
   }
 
   /// Premios por defecto de un hogar nuevo.
@@ -1199,7 +1233,7 @@ class FamilyStore extends ChangeNotifier {
       notices: [
         FamilyNotice(time: today.subtract(const Duration(minutes: 40)), text: 'Tomi salió del colegio a horario', kind: NoticeKind.task, memberId: 'tomi'),
         FamilyNotice(time: today.subtract(const Duration(hours: 1)), text: 'Luli llegó a su meta de agua', kind: NoticeKind.health, memberId: 'luli'),
-        FamilyNotice(time: today.subtract(const Duration(hours: 2)), text: 'Mati: revisar sus hábitos (2 días sin registro de baño)', isAlert: true, kind: NoticeKind.alert, memberId: 'mati'),
+        FamilyNotice(time: today.subtract(const Duration(hours: 2)), text: 'Mati: 2 días sin tomar agua suficiente', isAlert: true, kind: NoticeKind.alert, memberId: 'mati'),
       ],
       clock: clock,
     );

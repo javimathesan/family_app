@@ -145,6 +145,7 @@ class _KidTasks extends StatelessWidget {
             AvatarView(config: member.avatar, size: 56, background: member.accent.withValues(alpha: .15)),
             const SizedBox(width: 12),
             Expanded(child: Text('Tareas de ${member.nickname}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900))),
+            if (member.waterOn)
             FilledButton.tonalIcon(
               onPressed: health.glasses >= FamilyStore.waterGoal ? null : () => store.addGlass(member.id),
               icon: const Icon(Icons.local_drink),

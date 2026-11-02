@@ -191,6 +191,36 @@ class GamesHub extends StatelessWidget {
       ),
     );
     if (result == null || !context.mounted) return;
+    // Una sola partida sin terminar por juego y por grupo de jugadores.
+    final players = [me.id, ...result.rivals];
+    final open = store.activeMatchWith(kind, players);
+    if (open != null) {
+      final rivals = [for (final id in open.players) if (id != me.id) store.playerName(id)];
+      final choice = await showDialog<String>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text('Ya tenés una partida de ${kind.label}'),
+          content: Text('Ya empezaste una con ${rivals.join(' y ')} y todavía no terminó. '
+              'Para empezar una nueva, primero terminá o borrá la anterior.'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, 'borrar'),
+              style: TextButton.styleFrom(foregroundColor: const Color(0xFFB42318)),
+              child: const Text('Borrar y empezar otra'),
+            ),
+            FilledButton(onPressed: () => Navigator.pop(ctx, 'ir'), child: const Text('Seguir esa partida')),
+          ],
+        ),
+      );
+      if (!context.mounted) return;
+      if (choice == 'ir') {
+        Navigator.of(context).pushNamed(Routes.matchOf(open.id));
+        return;
+      }
+      if (choice != 'borrar') return;
+      store.removeMatch(open.id);
+    }
     // La primera vez que un chico juega con otra familia, un recordatorio de seguridad.
     if (result.friendshipId != null && !me.role.isAdult && !session.flag('seguridad_${me.id}')) {
       await showDialog<void>(
@@ -209,7 +239,7 @@ class GamesHub extends StatelessWidget {
       await session.setFlag('seguridad_${me.id}');
       if (!context.mounted) return;
     }
-    final match = store.createMatch(kind, [me.id, ...result.rivals], sameDevice: result.sameDevice, friendshipId: result.friendshipId);
+    final match = store.createMatch(kind, players, sameDevice: result.sameDevice, friendshipId: result.friendshipId);
     Navigator.of(context).pushNamed(Routes.matchOf(match.id));
   }
 }

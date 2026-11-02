@@ -3,23 +3,23 @@
 App móvil familiar que convierte la rutina diaria de los hijos en hábitos y responsabilidades. Cada tarea cumplida suma puntos que se canjean por premios, y los adultos siguen el progreso, la salud básica, la agenda y el ánimo del día desde su propio panel.
 
 - **Paquete:** `com.javimathesan.familyapp` (Android; iOS más adelante).
-- **Versión actual:** 0.17 (prueba). [Registro de cambios](CHANGELOG.md).
+- **Versión actual:** 0.18 (prueba). [Registro de cambios](CHANGELOG.md).
 - **Versión de prueba:** cada cambio en `main` publica el APK firmado en [la versión `prueba`](https://github.com/javimathesan/family_app/releases/tag/prueba).
 
-## Qué tiene hoy (v0.17)
+## Qué tiene hoy (v0.18)
 
 | Área | Qué hace |
 | --- | --- |
 | **Hogar y teléfonos** | Crear hogar, invitar por QR (código de un solo uso, vence en 15 min), aprobar altas, roles P1/P2/conviviente/hijo, hijo sin celular, PIN del modo adulto, **teléfono nuevo de alguien** (vuelve con su perfil) y desvincular. Sincronización en vivo con Firebase. |
-| **Rutina y puntos** | Tareas por momento del día, por hijo, con hora, puntos y validación (sola, foto o adulto). Puntos completos a tiempo, mitad fuera de horario. El adulto edita tareas y premios. |
+| **Rutina y puntos** | Tareas por momento del día, por hijo y **por días** (colegio de lunes a viernes, tareas de fin de semana), con hora, puntos y validación (sola, foto o adulto). Puntos completos a tiempo, mitad fuera de horario. El adulto edita tareas y premios. |
 | **Premios** | Tienda con pedido y aprobación, puntos devueltos si se rechaza, alcancía mensual. |
-| **Salud y ánimo** | Agua (meta 8 vasos), popó/pipí con alerta a los 2 días, ánimo del día, calendario de caritas. |
+| **Salud y ánimo** | **Mis hábitos** que el adulto prende o apaga por hijo: agua (meta 8 vasos), popó/pipí con alerta a los 2 días, ánimo del día, calendario de caritas. |
 | **Panel del adulto** | Barra con Inicio, Agenda, Juegos y Ajustes. Primeros pasos, Mi día (metas del adulto), Para aprobar, Novedades con campanita, **resumen de la semana**, **reto de la semana**, **escudo de la familia** y guía para que los avisos lleguen siempre. |
 | **Para los chicos** | Hoy ordenable, festejos al completar, **Mi cuarto** decorable con **mascota** que crece con la rutina, **medallas**, tareas con dibujito y modo peques con voz. |
 | **Tablet familiar** | Todos los chicos en una pantalla para la tablet de la casa; salida con PIN. |
 | **Avisos** | Novedades agrupadas por día e hijo; avisos del sistema con la app abierta o minimizada; preferencia por teléfono (importante / todo / nada); avisos a los chicos cuando les aprueban algo. |
 | **Agenda** | Turnos, exámenes, cumpleaños con lugar, día, hora, para quién y notas. Aviso o **alarma** que suena aunque la app esté cerrada. Los chicos agendan lo suyo y los padres lo ven; los adultos pueden marcar "solo para mí". |
-| **Juegos** | Tres en raya, 4 en línea, ludo, ajedrez, **Mi Barrio** (propiedades) y **Colorín** (cartas de colores), más **Tiro al blanco** con récords. Contra la familia, contra Robi o con **familias amigas** (doble aprobación, sin chat). Regla "primero la rutina", minutos por día y borrar partidas terminadas. |
+| **Juegos** | Tres en raya, 4 en línea, ludo, ajedrez, **Mi Barrio** (propiedades) y **Colorín** (cartas de colores), más **Tiro al blanco** con récords. Contra la familia, contra Robi o con **familias amigas** (doble aprobación, sin chat). Regla "primero la rutina", minutos por día, una partida abierta por juego y rivales, y borrar partidas terminadas. |
 | **Palabras** | Inglés, portugués y coreano en 3 niveles (avanzado de Plus) con estrellas y temas que se abren en escalera, repaso de lo que costó, tarjetas, quiz, escuchar y elegir, memoria y ordenar letras. Temas nuevos por paquetes desde Firebase sin actualizar la app. |
 | **Avatar y personalización** | Avatar estilo Funko con 19 disfraces (4 de Plus) y accesorios que se desbloquean con puntos. Modo claro/oscuro, colores, fondos, tarjetas, festejo y **mundos temáticos** por miembro (opciones extra de Plus). Ícono propio. |
 | **Privacidad** | Sin email, teléfono, ubicación ni fotos; solo apodos. Pantalla "Privacidad y datos" en la app. |

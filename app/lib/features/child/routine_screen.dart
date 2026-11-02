@@ -23,7 +23,13 @@ class _RoutineScreenState extends State<RoutineScreen> {
     final store = FamilyScope.of(context);
     final me = store.currentMember!;
     final accent = Theme.of(context).colorScheme.primary;
-    final tasks = store.tasksFor(_block, memberId: me.id);
+    // Solo los momentos del día que hoy tienen tareas (el finde no hay colegio).
+    final blocks = [for (final b in DayBlock.values) if (store.tasksFor(b, memberId: me.id).isNotEmpty) b];
+    final block = blocks.contains(_block) || blocks.isEmpty ? _block : blocks.first;
+    final tasks = store.tasksFor(block, memberId: me.id);
+    final dayKind = store.tasksFor(DayBlock.school, memberId: me.id).isNotEmpty
+        ? 'día de colegio'
+        : (store.isWeekend() ? 'fin de semana' : 'día sin colegio');
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -35,7 +41,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${longDate(store.now)} · día de colegio', style: mutedText(context)),
+                  Text('${longDate(store.now)} · $dayKind', style: mutedText(context)),
                   Text('Mi rutina', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
                 ],
               ),
@@ -52,11 +58,12 @@ class _RoutineScreenState extends State<RoutineScreen> {
           ],
         ),
         const SizedBox(height: 16),
+        if (blocks.length > 1)
         SegmentedButton<DayBlock>(
           segments: [
-            for (final b in DayBlock.values) ButtonSegment(value: b, label: Text(b.label)),
+            for (final b in blocks) ButtonSegment(value: b, label: Text(b.label)),
           ],
-          selected: {_block},
+          selected: {block},
           showSelectedIcon: false,
           onSelectionChanged: (s) => setState(() => _block = s.first),
         ),
@@ -64,7 +71,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
         if (tasks.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Text('No tenés tareas en este momento del día.', style: mutedText(context).copyWith(fontSize: 15)),
+            child: Text(blocks.isEmpty ? 'Hoy no tenés tareas. ¡A disfrutar!' : 'No tenés tareas en este momento del día.', style: mutedText(context).copyWith(fontSize: 15)),
           ),
         for (final task in tasks) ...[
           _TaskTile(task: task, memberId: me.id),

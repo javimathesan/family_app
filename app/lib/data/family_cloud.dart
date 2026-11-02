@@ -413,6 +413,9 @@ class FamilyCloud implements FamilySync {
         'look': member.look.toJson(),
         'room': member.room,
         'progress': member.progress,
+        // Solo los manda si un adulto los tocó (si no, la regla del hijo lo rechaza).
+        if (member.water != null) 'water': member.water,
+        if (member.bathroom != null) 'bathroom': member.bathroom,
       }));
 
   @override

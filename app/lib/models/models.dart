@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show listEquals;
+import 'package:flutter/foundation.dart' show listEquals, setEquals;
 
 /// Rol de un miembro dentro del hogar.
 enum MemberRole {
@@ -119,6 +119,8 @@ class Member {
     this.look = const MemberLook(),
     Map<String, dynamic>? room,
     Map<String, int>? progress,
+    this.water,
+    this.bathroom,
   })  : unlocked = unlocked ?? {},
         room = room ?? {},
         progress = progress ?? {};
@@ -145,6 +147,20 @@ class Member {
 
   /// Avance en Palabras (estrellas por tema, palabras para repasar) y récords.
   final Map<String, int> progress;
+
+  /// "Mis hábitos": si registra el agua y el baño. Lo decide un adulto
+  /// administrador. `null` = lo de siempre según la edad (ver [waterOn]).
+  bool? water;
+  bool? bathroom;
+
+  /// Agua: activada para todos los hijos salvo que un adulto la apague.
+  bool get waterOn => role == MemberRole.child && (water ?? true);
+
+  /// Baño (pipí y popó): de entrada solo para los más chicos.
+  bool get bathroomOn => role == MemberRole.child && (bathroom ?? mode == AgeMode.peques);
+
+  /// Si tiene la tarjeta "Mis hábitos".
+  bool get habitsOn => waterOn || bathroomOn;
 }
 
 /// Modo de color de la app.
@@ -308,11 +324,31 @@ class TaskTemplate {
     this.windowMinutes = 30,
     this.assignedTo = const {},
     this.emoji,
+    this.days = const {},
   });
 
   final String id;
   final String name;
   final DayBlock block;
+
+  /// Días de la semana en que toca (1 = lunes … 7 = domingo). Vacío = todos.
+  final Set<int> days;
+
+  bool onDay(DateTime date) => days.isEmpty || days.contains(date.weekday);
+
+  static const weekdays = {1, 2, 3, 4, 5};
+  static const weekend = {6, 7};
+
+  /// "Todos los días", "Lunes a viernes", "Fin de semana" o "Lun, Mié…".
+  String get daysLabel => daysText(days);
+
+  static String daysText(Set<int> days) {
+    if (days.isEmpty || days.length == 7) return 'Todos los días';
+    if (setEquals(days, weekdays)) return 'Lunes a viernes';
+    if (setEquals(days, weekend)) return 'Fin de semana';
+    const names = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    return [for (final d in days.toList()..sort()) names[d - 1]].join(', ');
+  }
 
   /// Dibujito de la tarea (lo puede elegir la familia).
   final String? emoji;
@@ -342,10 +378,12 @@ class TaskTemplate {
     int? windowMinutes,
     Set<String>? assignedTo,
     String? emoji,
+    Set<int>? days,
   }) =>
       TaskTemplate(
         id: id,
         emoji: emoji ?? this.emoji,
+        days: days ?? this.days,
         name: name ?? this.name,
         block: block ?? this.block,
         time: time ?? this.time,

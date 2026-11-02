@@ -610,7 +610,7 @@ class _ChildCard extends StatelessWidget {
               children: [
                 Text('${member.nickname} · ${member.mode?.label ?? ''}',
                     style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
-                Text('${store.doneToday(member.id)} tareas · ${health.glasses} vasos de agua', style: mutedText(context)),
+                Text('${store.doneToday(member.id)} tareas${member.waterOn ? ' · ${health.glasses} vasos de agua' : ''}', style: mutedText(context)),
                 const SizedBox(height: 6),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),

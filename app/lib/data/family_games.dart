@@ -141,6 +141,16 @@ extension FamilyGames on FamilyStore {
   }
 
   /// Arranca una partida. [players] en orden de turno: el primero empieza.
+  /// Partida sin terminar del mismo juego y con los mismos jugadores (para no
+  /// abrir una nueva cada vez: primero hay que terminar o borrar la anterior).
+  GameMatch? activeMatchWith(GameKind kind, List<String> players) {
+    final wanted = players.toSet();
+    for (final m in matches) {
+      if (m.kind == kind && !m.finished && m.players.length == wanted.length && m.players.toSet().containsAll(wanted)) return m;
+    }
+    return null;
+  }
+
   GameMatch createMatch(GameKind kind, List<String> players, {bool sameDevice = false, String? friendshipId}) {
     if (players.length < kind.minPlayers || players.length > kind.maxPlayers) {
       throw ArgumentError('${kind.label} es para ${kind.minPlayers} a ${kind.maxPlayers} jugadores');

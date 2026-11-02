@@ -278,7 +278,7 @@ class TodayScreen extends StatelessWidget {
           ),
         ),
       ],
-            'cuerpo' => [const SizedBox(height: 16), _HabitsCard(member: me)],
+            'cuerpo' => me.habitsOn ? [const SizedBox(height: 16), _HabitsCard(member: me)] : const <Widget>[],
             _ => const <Widget>[],
           },
         const SizedBox(height: 12),
@@ -399,10 +399,13 @@ Future<void> showTodayOrder(BuildContext context) {
                     for (final id in order)
                       SwitchListTile(
                         key: ValueKey(id),
-                        value: !me.look.hidden.contains(id),
+                        value: !me.look.hidden.contains(id) && (id != 'cuerpo' || me.habitsOn),
                         title: Text(todayCards[id]!, style: const TextStyle(fontWeight: FontWeight.w700)),
+                        subtitle: id == 'cuerpo' && !me.habitsOn ? const Text('Lo apagó un adulto de tu casa') : null,
                         secondary: const Icon(Icons.drag_handle),
-                        onChanged: (on) => store.setLook(
+                        onChanged: id == 'cuerpo' && !me.habitsOn
+                            ? null
+                            : (on) => store.setLook(
                           me.id,
                           me.look.copyWith(hidden: on ? ([...me.look.hidden]..remove(id)) : [...me.look.hidden, id]),
                         ),
@@ -581,7 +584,9 @@ class _HabitsCardState extends State<_HabitsCard> {
             title: const Text('Mis hábitos', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
             subtitle: Text(_open
                 ? 'Solo lo ven vos y los adultos de tu casa.'
-                : '💧 ${health.glasses} de ${FamilyStore.waterGoal} vasos · tocá para abrir'),
+                : me.waterOn
+                    ? '💧 ${health.glasses} de ${FamilyStore.waterGoal} vasos · tocá para abrir'
+                    : '🚽 Baño · tocá para abrir'),
             trailing: Icon(_open ? Icons.expand_less : Icons.expand_more),
             onTap: () => setState(() => _open = !_open),
           ),
@@ -591,7 +596,7 @@ class _HabitsCardState extends State<_HabitsCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
+                  if (me.waterOn) ...[
                   InfoCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -637,7 +642,9 @@ class _HabitsCardState extends State<_HabitsCard> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  ],
+                  if (me.waterOn && me.bathroomOn) const SizedBox(height: 12),
+                  if (me.bathroomOn)
                   Row(
                     children: [
                       Expanded(

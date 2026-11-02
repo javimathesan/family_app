@@ -112,7 +112,7 @@ class _ChildWeek extends StatelessWidget {
               runSpacing: 8,
               children: [
                 Chip(avatar: const Icon(Icons.star_outline, size: 18), label: Text('$points pts en la semana')),
-                Chip(avatar: const Icon(Icons.local_drink_outlined, size: 18), label: Text('$waterDays días con 8 vasos')),
+                if (member.waterOn) Chip(avatar: const Icon(Icons.local_drink_outlined, size: 18), label: Text('$waterDays días con 8 vasos')),
                 Chip(avatar: const Icon(Icons.savings_outlined, size: 18), label: Text('${store.balanceOf(member.id)} pts para canjear')),
                 if (store.challenge != null)
                   Chip(

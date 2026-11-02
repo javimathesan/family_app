@@ -104,6 +104,8 @@ class SettingsScreen extends StatelessWidget {
                 tile(Icons.checklist, 'Rutina y premios', () => nav.pushNamed(Routes.routine)),
                 tile(Icons.rule, 'Reglas de juego de los chicos', () => showGameRules(context),
                     subtitle: '${store.gamesRule.label} · ${store.gamesMinutes == 0 ? 'sin límite' : '${store.gamesMinutes} min por día'}'),
+                tile(Icons.spa_outlined, 'Mis hábitos de los chicos', () => showHabitsSettings(context),
+                    subtitle: _habitsSummary(store)),
                 tile(Icons.emoji_events_outlined, 'Reto de la semana', () => AdultHomeScreen.editChallenge(context),
                     subtitle: store.challenge?.title ?? 'Sin reto'),
                 tile(Icons.translate, 'Idiomas de Palabras', () => nav.pushNamed(Routes.words),
@@ -294,4 +296,75 @@ class _FirstStepsScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+
+String _habitsSummary(FamilyStore store) {
+  final kids = store.children.where((c) => !store.isPendingMember(c.id)).toList();
+  if (kids.isEmpty) return 'Agua y baño de cada hijo';
+  final on = kids.where((c) => c.habitsOn).map((c) => c.nickname).toList();
+  if (on.isEmpty) return 'Apagado para todos';
+  if (on.length == kids.length) return 'Activado para todos';
+  return 'Activado para ${on.join(', ')}';
+}
+
+/// El adulto administrador elige, para cada hijo, si registra el agua y el baño
+/// en "Mis hábitos". Si apaga los dos, la tarjeta no aparece.
+Future<void> showHabitsSettings(BuildContext context) {
+  final store = FamilyScope.of(context);
+  return showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (ctx) => ListenableBuilder(
+      listenable: store,
+      builder: (ctx, _) {
+        final kids = store.children.where((c) => !store.isPendingMember(c.id)).toList();
+        return SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Mis hábitos', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+                const SizedBox(height: 4),
+                Text('Elegí qué registra cada hijo en su pantalla Hoy. Solo lo ven el chico y los adultos de la casa. '
+                    'Si apagás todo, la tarjeta no aparece.', style: mutedText(ctx)),
+                if (kids.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Text('Todavía no hay hijos en el hogar.', style: mutedText(ctx)),
+                  ),
+                for (final c in kids) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      AvatarView(config: c.avatar, size: 36, background: c.accent.withValues(alpha: .15)),
+                      const SizedBox(width: 10),
+                      Text('${c.nickname} · ${c.mode?.label ?? ''}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                    ],
+                  ),
+                  SwitchListTile(
+                    key: ValueKey('agua_${c.id}'),
+                    contentPadding: const EdgeInsets.only(left: 46),
+                    title: const Text('💧 Vasos de agua'),
+                    value: c.waterOn,
+                    onChanged: (v) => store.setHabits(c.id, water: v),
+                  ),
+                  SwitchListTile(
+                    key: ValueKey('banio_${c.id}'),
+                    contentPadding: const EdgeInsets.only(left: 46),
+                    title: const Text('🚽 Baño (pipí y popó)'),
+                    subtitle: const Text('Pensado para los más chicos'),
+                    value: c.bathroomOn,
+                    onChanged: (v) => store.setHabits(c.id, bathroom: v),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    ),
+  );
 }
