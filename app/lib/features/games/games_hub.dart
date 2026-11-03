@@ -111,7 +111,7 @@ class GamesHub extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 10,
           crossAxisSpacing: 10,
-          childAspectRatio: 1.25,
+          childAspectRatio: 1.15,
           children: [
             for (final kind in store.gamesFor(me.id))
               _GameCard(
@@ -339,11 +339,11 @@ class _GameCard extends StatelessWidget {
                       key: ValueKey('fav_${kind.name}'),
                       visualDensity: VisualDensity.compact,
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                      constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
                       tooltip: favorite ? 'Quitar de favoritos' : 'Marcar como favorito',
                       onPressed: onFavorite,
                       icon: Icon(favorite ? Icons.star_rounded : Icons.star_border_rounded,
-                          color: favorite ? const Color(0xFFF59E0B) : Colors.black45, size: 28),
+                          color: favorite ? const Color(0xFFF59E0B) : Colors.black45, size: 26),
                     ),
                   ],
                 ),
