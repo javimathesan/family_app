@@ -21,6 +21,14 @@ class FriendsScreen extends StatefulWidget {
 }
 
 class _FriendsScreenState extends State<FriendsScreen> {
+  final _search = TextEditingController();
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
   bool _handledInitial = false;
 
   @override
@@ -134,6 +142,80 @@ class _FriendsScreenState extends State<FriendsScreen> {
     }
   }
 
+  /// Tarjeta de una familia amiga, plegable para que muchas entren en pantalla.
+  Widget _friendCard(Friendship f, {required bool expanded}) {
+    final store = FamilyScope.of(context);
+    final session = SessionScope.of(context);
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        key: ValueKey('amistad_${f.id}_$expanded'),
+        initiallyExpanded: expanded,
+        shape: const Border(),
+        collapsedShape: const Border(),
+        expandedCrossAxisAlignment: CrossAxisAlignment.start,
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        title: Text('🤝 ${f.otherHome}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+        subtitle: Text('${f.theirs.length} de su familia · ${f.mine.length} de la tuya'),
+        children: [
+          Text('Pueden jugar de su familia:', style: mutedText(context)),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              for (final k in f.theirs) Chip(avatar: AvatarView(config: k.avatar, size: 24), label: Text(k.nickname)),
+              if (f.theirs.isEmpty) const Text('nadie todavía'),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text('Pueden jugar de tu familia:', style: mutedText(context)),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              for (final m in store.members)
+                if (!store.isPendingMember(m.id))
+                  FilterChip(
+                    label: Text(m.nickname),
+                    selected: f.mine.any((k) => k.id == m.id),
+                    onSelected: !session.isAdmin
+                        ? null
+                        : (on) {
+                            final ids = {for (final k in f.mine) k.id};
+                            on ? ids.add(m.id) : ids.remove(m.id);
+                            session.setFriendKids(f.id, [for (final x in store.members) if (ids.contains(x.id)) x]);
+                          },
+                  ),
+            ],
+          ),
+          if (session.isAdmin)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () async {
+                  final ok = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: Text('¿Terminar la amistad con ${f.otherHome}?'),
+                      content: const Text('Ya no van a poder jugar juntos. Para volver hace falta un código nuevo.'),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+                        FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Terminar')),
+                      ],
+                    ),
+                  );
+                  if (ok == true) await session.endFriendship(f.id);
+                },
+                icon: const Icon(Icons.link_off),
+                label: const Text('Terminar amistad'),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   void _snack(String text) => ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(content: Text(text)));
@@ -142,7 +224,15 @@ class _FriendsScreenState extends State<FriendsScreen> {
   Widget build(BuildContext context) {
     final store = FamilyScope.of(context);
     final session = SessionScope.of(context);
-    final friends = store.friendships;
+    final friends = [...store.friendships]..sort((a, b) => a.otherHome.toLowerCase().compareTo(b.otherHome.toLowerCase()));
+    final query = _search.text.trim().toLowerCase();
+    final shown = [
+      for (final f in friends)
+        if (query.isEmpty ||
+            f.otherHome.toLowerCase().contains(query) ||
+            f.theirs.any((k) => k.nickname.toLowerCase().contains(query)))
+          f,
+    ];
     return Scaffold(
       appBar: AppBar(title: const Text('Familias amigas', style: TextStyle(fontWeight: FontWeight.w800))),
       body: SafeArea(
@@ -169,74 +259,36 @@ class _FriendsScreenState extends State<FriendsScreen> {
               OutlinedButton.icon(onPressed: _acceptCode, icon: const Icon(Icons.keyboard), label: const Text('Tengo un código')),
             ],
             const SizedBox(height: 20),
-            Text('Amistades', style: sectionTitle(context)),
+            Text(friends.isEmpty ? 'Amistades' : 'Amistades (${friends.length})', style: sectionTitle(context)),
             const SizedBox(height: 8),
             if (friends.isEmpty) Text('Todavía no tienen familias amigas.', style: mutedText(context)),
-            for (final f in friends)
-              Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('🤝 ${f.otherHome}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
-                      const SizedBox(height: 6),
-                      Text('Pueden jugar de su familia:', style: mutedText(context)),
-                      Wrap(
-                        spacing: 8,
-                        children: [
-                          for (final k in f.theirs)
-                            Chip(avatar: AvatarView(config: k.avatar, size: 24), label: Text(k.nickname)),
-                          if (f.theirs.isEmpty) const Text('nadie todavía'),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text('Pueden jugar de tu familia:', style: mutedText(context)),
-                      Wrap(
-                        spacing: 8,
-                        children: [
-                          for (final m in store.members)
-                            if (!store.isPendingMember(m.id))
-                              FilterChip(
-                                label: Text(m.nickname),
-                                selected: f.mine.any((k) => k.id == m.id),
-                                onSelected: !session.isAdmin
-                                    ? null
-                                    : (on) {
-                                        final ids = {for (final k in f.mine) k.id};
-                                        on ? ids.add(m.id) : ids.remove(m.id);
-                                        session.setFriendKids(f.id, [for (final x in store.members) if (ids.contains(x.id)) x]);
-                                      },
-                              ),
-                        ],
-                      ),
-                      if (session.isAdmin)
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton.icon(
-                            onPressed: () async {
-                              final ok = await showDialog<bool>(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: Text('¿Terminar la amistad con ${f.otherHome}?'),
-                                  content: const Text('Ya no van a poder jugar juntos. Para volver hace falta un código nuevo.'),
-                                  actions: [
-                                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-                                    FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Terminar')),
-                                  ],
-                                ),
-                              );
-                              if (ok == true) await session.endFriendship(f.id);
-                            },
-                            icon: const Icon(Icons.link_off),
-                            label: const Text('Terminar amistad'),
-                          ),
-                        ),
-                    ],
-                  ),
+            if (friends.length > 3) ...[
+              TextField(
+                controller: _search,
+                onChanged: (_) => setState(() {}),
+                decoration: const InputDecoration(
+                  isDense: true,
+                  prefixIcon: Icon(Icons.search),
+                  hintText: 'Buscar familia o apodo',
+                  border: OutlineInputBorder(),
                 ),
               ),
+              const SizedBox(height: 10),
+            ],
+            if (friends.isNotEmpty && shown.isEmpty) Text('Ninguna familia coincide con la búsqueda.', style: mutedText(context)),
+            // Teléfono: una debajo de otra; tablet: dos columnas.
+            LayoutBuilder(
+              builder: (context, box) {
+                final columns = box.maxWidth >= 700 ? 2 : 1;
+                final width = (box.maxWidth - 12 * (columns - 1)) / columns;
+                return Wrap(
+                  spacing: 12,
+                  children: [
+                    for (final f in shown) SizedBox(width: width, child: _friendCard(f, expanded: friends.length <= 3 || query.isNotEmpty)),
+                  ],
+                );
+              },
+            ),
           ],
         ),
       ),

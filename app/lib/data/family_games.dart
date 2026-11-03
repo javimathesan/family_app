@@ -60,6 +60,31 @@ extension FamilyGames on FamilyStore {
             for (final k in f.theirs) (friendship: f, kid: k),
       ];
 
+  // ------------------------------------------------------------ favoritos
+
+  /// Si [memberId] marcó con ⭐ a un jugador (de la familia o de una familia amiga).
+  bool isFavoritePlayer(String memberId, String playerId) => hasUnlocked(memberId, 'fav:$playerId');
+
+  /// Si [memberId] marcó con ⭐ un juego.
+  bool isFavoriteGame(String memberId, GameKind kind) => hasUnlocked(memberId, 'fav:juego:${kind.name}');
+
+  void toggleFavoritePlayer(String memberId, String playerId) => _toggleFav(memberId, 'fav:$playerId');
+  void toggleFavoriteGame(String memberId, GameKind kind) => _toggleFav(memberId, 'fav:juego:${kind.name}');
+
+  void _toggleFav(String memberId, String key) {
+    final m = memberById(memberId);
+    if (m == null) return;
+    if (!m.unlocked.remove(key)) m.unlocked.add(key);
+    sync?.memberUpdated(m);
+    _changed();
+  }
+
+  /// Juegos con los favoritos primero (el resto en su orden de siempre).
+  List<GameKind> gamesFor(String memberId) => [
+        for (final k in GameKind.values) if (isFavoriteGame(memberId, k)) k,
+        for (final k in GameKind.values) if (!isFavoriteGame(memberId, k)) k,
+      ];
+
   /// Manda una reacción fija a la partida (sin chat libre).
   void react(String matchId, String by, String text) {
     final m = matchById(matchId);

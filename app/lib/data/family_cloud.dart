@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui' show PlatformDispatcher;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 
 import '../models/models.dart';
@@ -60,6 +63,7 @@ class FamilyCloud implements FamilySync {
   static Future<FamilyCloud?> connect() async {
     try {
       await Firebase.initializeApp();
+      await _protect();
       final auth = FirebaseAuth.instance;
       final user = auth.currentUser ??
           (await auth.signInAnonymously().timeout(const Duration(seconds: 15))).user;
@@ -68,6 +72,35 @@ class FamilyCloud implements FamilySync {
     } catch (error) {
       debugPrint('Family App sin conexión con la nube: $error');
       return null;
+    }
+  }
+
+  /// Informes de fallos (Crashlytics) y verificación de que quien habla con la
+  /// base es la app original (App Check). Si algo falla, la app sigue igual.
+  static Future<void> _protect() async {
+    try {
+      // Solo en la app instalada: en pruebas y depuración no se mandan informes.
+      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(kReleaseMode);
+      final previous = FlutterError.onError;
+      FlutterError.onError = (details) {
+        FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+        previous?.call(details);
+      };
+      PlatformDispatcher.instance.onError = (error, stack) {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+        return true;
+      };
+    } catch (error) {
+      debugPrint('Crashlytics no disponible: $error');
+    }
+    try {
+      // Play Integrity: Google confirma que la app vino de Play y no fue modificada.
+      // Mientras no se active la exigencia en la consola, solo se mide.
+      await FirebaseAppCheck.instance.activate(
+        providerAndroid: kReleaseMode ? const AndroidPlayIntegrityProvider() : const AndroidDebugProvider(),
+      );
+    } catch (error) {
+      debugPrint('App Check no disponible: $error');
     }
   }
 

@@ -28,6 +28,11 @@ class PrivacyScreen extends StatelessWidget {
           'Los chicos no pueden hablar con personas de fuera del hogar.'
     ),
     (
+      'Informes de fallos',
+      'Si la app se cierra por un error, se manda un informe técnico (pantalla, modelo de teléfono y versión) '
+          'para arreglarlo. No incluye apodos, rutinas ni hábitos.'
+    ),
+    (
       'Avisos y alarmas',
       'Los avisos de la agenda los programa el propio teléfono. No se usan para publicidad.'
     ),

@@ -2,6 +2,17 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.19.0 — 2026-11-03 · Muchas familias amigas, favoritos e informes de fallos
+
+- **Sin límite de amigos:** las listas siguen siendo cómodas aunque haya muchas familias amigas.
+  - Al armar una partida, los rivales se agrupan por familia en secciones que se pliegan (con más de 3 familias empiezan cerradas, salvo la elegida). Con 7 o más amigos aparece un buscador por apodo o familia. La hoja ahora se desplaza y el botón "¡A jugar!" queda siempre a mano.
+  - En Ajustes → Familias amigas: buscador desde 4 familias, tarjetas plegables con el resumen "N de su familia · N de la tuya" y, en tablet, dos columnas.
+- **Favoritos:** cada uno marca con ⭐ a sus rivales preferidos (de la familia o de familias amigas), que aparecen primero en "⭐ Favoritos", y sus juegos favoritos, que pasan al principio de la grilla.
+- **Tablet:** la grilla de juegos muestra 3 o 4 por fila según el ancho.
+- **Crashlytics:** si la app se cierra por un error, llega un informe técnico a la consola de Firebase (sin apodos ni datos de la familia). Solo en la app instalada, no en pruebas.
+- **App Check (Play Integrity):** la app se identifica ante Firebase. Por ahora solo mide; la exigencia se activa en la consola cuando la app esté en Google Play.
+- Política de privacidad y pantalla "Privacidad y datos" actualizadas con los informes de fallos.
+
 ## 0.18.1 — 2026-11-02 · Peones blancos en el ajedrez
 
 - Los peones blancos se veían negros en algunos teléfonos (Android los mostraba como emoji). Ahora se dibujan a mano: blancos con borde oscuro y negros con borde claro, igual que el resto de las piezas.

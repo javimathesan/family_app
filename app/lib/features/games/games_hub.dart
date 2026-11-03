@@ -105,16 +105,27 @@ class GamesHub extends StatelessWidget {
         Text('Nuevo juego', style: sectionTitle(context)),
         const SizedBox(height: 8),
         GridView.count(
-          crossAxisCount: 2,
+          // Teléfono: 2 por fila; tablet: 3 o 4.
+          crossAxisCount: switch (MediaQuery.sizeOf(context).width) { >= 900 => 4, >= 600 => 3, _ => 2 },
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 10,
           crossAxisSpacing: 10,
           childAspectRatio: 1.25,
           children: [
-            for (final kind in GameKind.values)
-              _GameCard(kind: kind, enabled: !locked, onTap: () => _newGame(context, kind)),
+            for (final kind in store.gamesFor(me.id))
+              _GameCard(
+                kind: kind,
+                enabled: !locked,
+                favorite: store.isFavoriteGame(me.id, kind),
+                onFavorite: () => store.toggleFavoriteGame(me.id, kind),
+                onTap: () => _newGame(context, kind),
+              ),
           ],
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Text('Tocá la ⭐ para poner tus juegos favoritos primero.', style: mutedText(context)),
         ),
         const SizedBox(height: 20),
         Text('Partidas', style: sectionTitle(context)),
@@ -185,6 +196,7 @@ class GamesHub extends StatelessWidget {
       showDragHandle: true,
       builder: (ctx) => _NewGameSheet(
         kind: kind,
+        me: me.id,
         candidates: candidates,
         friends: store.friendRivalsOf(me.id),
         isDemo: !session.isCloud,
@@ -286,11 +298,13 @@ class _QuickCard extends StatelessWidget {
 }
 
 class _GameCard extends StatelessWidget {
-  const _GameCard({required this.kind, required this.enabled, required this.onTap});
+  const _GameCard({required this.kind, required this.enabled, required this.onTap, required this.favorite, required this.onFavorite});
 
   final GameKind kind;
   final bool enabled;
   final VoidCallback onTap;
+  final bool favorite;
+  final VoidCallback onFavorite;
 
   static const _colors = {
     GameKind.tateti: Color(0xFFFFE0B2),
@@ -316,7 +330,23 @@ class _GameCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(kind.icon, size: 30, color: Colors.black87),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(kind.icon, size: 30, color: Colors.black87),
+                    const Spacer(),
+                    IconButton(
+                      key: ValueKey('fav_${kind.name}'),
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                      tooltip: favorite ? 'Quitar de favoritos' : 'Marcar como favorito',
+                      onPressed: onFavorite,
+                      icon: Icon(favorite ? Icons.star_rounded : Icons.star_border_rounded,
+                          color: favorite ? const Color(0xFFF59E0B) : Colors.black45, size: 28),
+                    ),
+                  ],
+                ),
                 const Spacer(),
                 Text(kind.label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.black87)),
                 Text(kind.description, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: Colors.black54)),
@@ -421,12 +451,15 @@ class _RuleCard extends StatelessWidget {
 }
 
 class _NewGameSheet extends StatefulWidget {
-  const _NewGameSheet({required this.kind, required this.candidates, required this.friends, required this.isDemo});
+  const _NewGameSheet({required this.kind, required this.me, required this.candidates, required this.friends, required this.isDemo});
 
   /// Chicos de familias amigas con los que puede jugar.
   final List<({Friendship friendship, FriendKid kid})> friends;
 
   final GameKind kind;
+
+  /// Quién arma la partida (para sus favoritos).
+  final String me;
   final List<Member> candidates;
   final bool isDemo;
 
@@ -437,9 +470,19 @@ class _NewGameSheet extends StatefulWidget {
 class _NewGameSheetState extends State<_NewGameSheet> {
   final List<String> _rivals = [];
   bool? _sameDevice;
+  final _search = TextEditingController();
 
   /// Si eligió amigos de otra familia, la amistad (no se mezcla con Robi ni con otras).
   String? _friendshipId;
+
+  /// Desde cuántos amigos aparece el buscador.
+  static const searchFrom = 7;
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
 
   int get _maxRivals => widget.kind.maxPlayers - 1;
 
@@ -485,80 +528,191 @@ class _NewGameSheetState extends State<_NewGameSheet> {
       widget.isDemo ||
       _rivals.any((id) => id != botPlayerId && widget.candidates.firstWhere((m) => m.id == id).uid == null);
 
+  Widget _chip({
+    required String label,
+    Widget? avatar,
+    required bool selected,
+    required VoidCallback onTap,
+    bool? favorite,
+    VoidCallback? onFavorite,
+    Key? key,
+  }) =>
+      InputChip(
+        key: key,
+        avatar: avatar,
+        label: Text(label),
+        selected: selected,
+        onSelected: (_) => onTap(),
+        onDeleted: onFavorite,
+        deleteIcon: favorite == null
+            ? null
+            : Icon(favorite ? Icons.star_rounded : Icons.star_border_rounded,
+                color: favorite ? const Color(0xFFF59E0B) : null, size: 22),
+        deleteButtonTooltipMessage: favorite == true ? 'Quitar de favoritos' : 'Marcar como favorito',
+      );
+
+  Widget _memberChip(FamilyStore store, Member m) => _chip(
+        key: ValueKey('rival_${m.id}'),
+        avatar: AvatarView(config: m.avatar, size: 22),
+        label: m.nickname,
+        selected: _rivals.contains(m.id),
+        onTap: () => _toggle(m.id),
+        favorite: store.isFavoritePlayer(widget.me, m.id),
+        onFavorite: () => store.toggleFavoritePlayer(widget.me, m.id),
+      );
+
+  Widget _friendChip(FamilyStore store, ({Friendship friendship, FriendKid kid}) f, {bool showHome = false}) => _chip(
+        key: ValueKey('rival_${f.friendship.id}_${f.kid.id}'),
+        avatar: AvatarView(config: f.kid.avatar, size: 22),
+        label: showHome ? '${f.kid.nickname} · ${f.friendship.otherHome}' : f.kid.nickname,
+        selected: _friendshipId == f.friendship.id && _rivals.contains(f.kid.id),
+        onTap: () => _toggleFriend(f.friendship, f.kid.id),
+        favorite: store.isFavoritePlayer(widget.me, f.kid.id),
+        onFavorite: () => store.toggleFavoritePlayer(widget.me, f.kid.id),
+      );
+
+  static Widget _wrap(List<Widget> children) => Wrap(spacing: 8, runSpacing: 8, children: children);
+
   @override
   Widget build(BuildContext context) {
+    final store = FamilyScope.of(context);
     final withBot = _rivals.contains(botPlayerId);
     final withFriends = _friendshipId != null;
     final sameDevice = !withFriends && (withBot || (_sameDevice ?? _defaultSameDevice));
     final ready = _rivals.length >= widget.kind.minPlayers - 1;
+
+    bool fav(String id) => store.isFavoritePlayer(widget.me, id);
+    final favMembers = [for (final m in widget.candidates) if (fav(m.id)) m];
+    final favFriends = [for (final f in widget.friends) if (fav(f.kid.id)) f];
+
+    // Amigos agrupados por familia: primero las que tienen favoritos, después por nombre.
+    final query = _search.text.trim().toLowerCase();
+    final groups = <String, List<({Friendship friendship, FriendKid kid})>>{};
+    for (final f in widget.friends) {
+      if (query.isNotEmpty &&
+          !f.kid.nickname.toLowerCase().contains(query) &&
+          !f.friendship.otherHome.toLowerCase().contains(query)) {
+        continue;
+      }
+      groups.putIfAbsent(f.friendship.id, () => []).add(f);
+    }
+    final families = groups.values.toList()
+      ..sort((a, b) {
+        final fa = a.any((f) => fav(f.kid.id)) ? 0 : 1;
+        final fb = b.any((f) => fav(f.kid.id)) ? 0 : 1;
+        if (fa != fb) return fa.compareTo(fb);
+        return a.first.friendship.otherHome.toLowerCase().compareTo(b.first.friendship.otherHome.toLowerCase());
+      });
+    final manyFamilies = families.length > 3 && query.isEmpty;
+
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(widget.kind.label, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
-            const SizedBox(height: 4),
-            Text(_maxRivals == 1 ? '¿Contra quién?' : '¿Con quiénes? (hasta $_maxRivals)', style: mutedText(context)),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                FilterChip(
-                  avatar: const Icon(Icons.smart_toy_outlined, size: 18),
-                  label: const Text('Robi (la compu)'),
-                  selected: withBot,
-                  onSelected: (_) => _toggle(botPlayerId),
-                ),
-                for (final m in widget.candidates)
-                  FilterChip(
-                    label: Text(m.nickname),
-                    selected: _rivals.contains(m.id),
-                    onSelected: (_) => _toggle(m.id),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * .85),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + MediaQuery.viewInsetsOf(context).bottom),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(widget.kind.label, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+              const SizedBox(height: 4),
+              Text(
+                '${_maxRivals == 1 ? '¿Contra quién?' : '¿Con quiénes? (hasta $_maxRivals)'}'
+                '${_rivals.isEmpty ? '' : ' · elegiste ${_rivals.map(store.playerName).join(', ')}'}',
+                style: mutedText(context),
+              ),
+              const SizedBox(height: 8),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (favMembers.isNotEmpty || favFriends.isNotEmpty) ...[
+                        Text('⭐ Favoritos', style: mutedText(context).copyWith(fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 6),
+                        _wrap([
+                          for (final m in favMembers) _memberChip(store, m),
+                          for (final f in favFriends) _friendChip(store, f, showHome: true),
+                        ]),
+                        const SizedBox(height: 12),
+                      ],
+                      Text('Tu familia', style: mutedText(context).copyWith(fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 6),
+                      _wrap([
+                        _chip(
+                          avatar: const Icon(Icons.smart_toy_outlined, size: 18),
+                          label: 'Robi (la compu)',
+                          selected: withBot,
+                          onTap: () => _toggle(botPlayerId),
+                        ),
+                        for (final m in widget.candidates) if (!fav(m.id)) _memberChip(store, m),
+                      ]),
+                      if (widget.friends.isNotEmpty) ...[
+                        const SizedBox(height: 14),
+                        Text('Familias amigas (${{for (final f in widget.friends) f.friendship.id}.length})',
+                            style: mutedText(context).copyWith(fontWeight: FontWeight.w800)),
+                        if (widget.friends.length >= searchFrom) ...[
+                          const SizedBox(height: 6),
+                          TextField(
+                            controller: _search,
+                            onChanged: (_) => setState(() {}),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              prefixIcon: const Icon(Icons.search),
+                              hintText: 'Buscar por apodo o familia',
+                              border: const OutlineInputBorder(),
+                              suffixIcon: query.isEmpty
+                                  ? null
+                                  : IconButton(
+                                      tooltip: 'Borrar',
+                                      icon: const Icon(Icons.close),
+                                      onPressed: () => setState(_search.clear),
+                                    ),
+                            ),
+                          ),
+                        ],
+                        if (families.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text('No hay nadie con ese nombre.', style: mutedText(context)),
+                          ),
+                        for (final group in families)
+                          ExpansionTile(
+                            key: ValueKey('familia_${group.first.friendship.id}_$query'),
+                            tilePadding: EdgeInsets.zero,
+                            childrenPadding: const EdgeInsets.only(bottom: 8),
+                            expandedAlignment: Alignment.centerLeft,
+                            initiallyExpanded: !manyFamilies || group.any((f) => _rivals.contains(f.kid.id)),
+                            title: Text('🤝 ${group.first.friendship.otherHome}', style: const TextStyle(fontWeight: FontWeight.w800)),
+                            subtitle: Text(group.length == 1 ? '1 chico' : '${group.length} chicos'),
+                            children: [_wrap([for (final f in group) _friendChip(store, f)])],
+                          ),
+                      ],
+                    ],
                   ),
-              ],
-            ),
-            if (widget.friends.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Text('Familias amigas', style: mutedText(context).copyWith(fontWeight: FontWeight.w800)),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final f in widget.friends)
-                    FilterChip(
-                      avatar: AvatarView(config: f.kid.avatar, size: 22),
-                      label: Text('${f.kid.nickname} · ${f.friendship.otherHome}'),
-                      selected: _friendshipId == f.friendship.id && _rivals.contains(f.kid.id),
-                      onSelected: (_) => _toggleFriend(f.friendship, f.kid.id),
-                    ),
-                ],
+                ),
+              ),
+              if (!withFriends)
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: sameDevice,
+                  onChanged: withBot ? null : (v) => setState(() => _sameDevice = v),
+                  title: const Text('Jugar en este teléfono', style: TextStyle(fontWeight: FontWeight.w700)),
+                  subtitle: Text(sameDevice
+                      ? 'Se pasan el teléfono en cada turno.'
+                      : 'Cada uno juega desde su celular; le aparece "Te toca" en Juegos.'),
+                ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: ready ? () => Navigator.pop(context, (rivals: [..._rivals], sameDevice: sameDevice, friendshipId: _friendshipId)) : null,
+                  icon: const Icon(Icons.play_arrow),
+                  label: const Text('¡A jugar!'),
+                ),
               ),
             ],
-            const SizedBox(height: 8),
-            if (!withFriends)
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              value: sameDevice,
-              onChanged: withBot ? null : (v) => setState(() => _sameDevice = v),
-              title: const Text('Jugar en este teléfono', style: TextStyle(fontWeight: FontWeight.w700)),
-              subtitle: Text(sameDevice
-                  ? 'Se pasan el teléfono en cada turno.'
-                  : 'Cada uno juega desde su celular; le aparece "Te toca" en Juegos.'),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: ready ? () => Navigator.pop(context, (rivals: [..._rivals], sameDevice: sameDevice, friendshipId: _friendshipId)) : null,
-                icon: const Icon(Icons.play_arrow),
-                label: const Text('¡A jugar!'),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

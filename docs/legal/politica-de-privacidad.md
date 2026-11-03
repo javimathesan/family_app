@@ -28,6 +28,8 @@ Pedimos lo mínimo. **No pedimos** nombre completo, email, número de teléfono,
 | **Juegos y palabras**: partidas, tiempo de juego y resultados del quiz | Juegos por turnos, límite diario y puntos |
 | **Identificador anónimo** de cada teléfono (Firebase Authentication) | Saber qué teléfonos pertenecen a qué hogar, sin cuenta ni email |
 | **Avisos** del hogar (por ejemplo, "Tomi completó Aseo personal") | Mantener informados a los adultos |
+| **Informes de fallos** (Firebase Crashlytics): qué pantalla falló, modelo de teléfono, versión de Android y de la app, y un identificador de instalación | Encontrar y arreglar errores. No incluyen apodos, rutinas ni datos de salud |
+| **Verificación de la app** (Firebase App Check con Play Integrity de Google) | Confirmar que quien accede a los datos es la app original y no una copia modificada |
 
 **Datos de salud.** El registro de agua, popó, pipí y ánimo puede considerarse un **dato sensible** según la Ley 25.326. Solo se carga si la familia lo usa, lo ven únicamente los miembros aprobados del hogar y nunca se usa para otra finalidad. El adulto puede no usar esas funciones.
 
@@ -45,6 +47,7 @@ Los datos de los chicos los carga o habilita el **adulto responsable**, que pres
 
 - **Modo demostración:** los datos quedan solo en tu teléfono.
 - **Hogar compartido:** los datos se guardan en **Google Firebase (Cloud Firestore)**, un servicio de Google LLC. Los servidores pueden estar **fuera de Argentina**. Al aceptar esta política, el adulto responsable consiente esa transferencia internacional, necesaria para que los teléfonos del hogar se sincronicen.
+- Los **informes de fallos** se envían a Firebase Crashlytics (Google LLC) y se conservan hasta 90 días.
 - Los **recordatorios de la agenda** los programa el propio teléfono.
 - La **voz** que lee palabras usa el servicio de texto a voz instalado en el teléfono.
 

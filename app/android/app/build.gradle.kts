@@ -20,6 +20,10 @@ if (hasUploadKey) {
 // está en esta carpeta se aplica el plugin; si no, la app funciona sin conexión.
 if (file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
+    // Crashlytics: informes de fallos. El símbolo de Dart no necesita subir
+    // archivos, así que se apaga la subida del mapeo de R8 (no hace falta red).
+    apply(plugin = "com.google.firebase.crashlytics")
+    tasks.matching { it.name.startsWith("uploadCrashlyticsMappingFile") }.configureEach { enabled = false }
 }
 
 android {
