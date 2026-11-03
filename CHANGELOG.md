@@ -2,6 +2,10 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.18.1 — 2026-11-02 · Peones blancos en el ajedrez
+
+- Los peones blancos se veían negros en algunos teléfonos (Android los mostraba como emoji). Ahora se dibujan a mano: blancos con borde oscuro y negros con borde claro, igual que el resto de las piezas.
+
 ## 0.18.0 — 2026-11-02 · Rutina por días, hábitos a elección y partidas sin repetir
 
 - **Rutina por días:** cada tarea puede ser para todos los días, de lunes a viernes, el fin de semana o días sueltos. Las tareas del colegio (útiles, entrada, salida, llegar a casa y estudiar) pasan solas a lunes a viernes, también en los hogares que ya existían. Los hogares nuevos traen dos tareas de fin de semana: ordenar el cuarto y actividad en familia.

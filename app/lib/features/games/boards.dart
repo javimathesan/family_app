@@ -399,6 +399,11 @@ class ChessPiece extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final white = Chess.isWhite(piece);
+    // El peón (♟) Android lo muestra como emoji negro aunque se pida texto:
+    // lo dibujamos a mano para que el blanco sea blanco.
+    if (piece.toLowerCase() == 'p') {
+      return SizedBox.square(dimension: size, child: CustomPaint(painter: _PawnPainter(white)));
+    }
     // ︎ pide el símbolo de texto y no el emoji.
     final glyph = '${_glyphs[piece.toLowerCase()]}︎';
     return Stack(
@@ -419,6 +424,44 @@ class ChessPiece extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Peón dibujado: cabeza, cuello, cuerpo y base, con borde del color contrario.
+class _PawnPainter extends CustomPainter {
+  const _PawnPainter(this.white);
+
+  final bool white;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final body = Path()
+      // Base
+      ..addRRect(RRect.fromRectAndRadius(Rect.fromLTRB(w * .2, h * .78, w * .8, h * .92), Radius.circular(w * .05)))
+      // Cuerpo
+      ..moveTo(w * .3, h * .79)
+      ..quadraticBezierTo(w * .36, h * .58, w * .42, h * .46)
+      ..lineTo(w * .58, h * .46)
+      ..quadraticBezierTo(w * .64, h * .58, w * .7, h * .79)
+      ..close()
+      // Cuello
+      ..addRRect(RRect.fromRectAndRadius(Rect.fromLTRB(w * .34, h * .4, w * .66, h * .48), Radius.circular(w * .04)))
+      // Cabeza
+      ..addOval(Rect.fromCircle(center: Offset(w * .5, h * .28), radius: w * .14));
+    canvas.drawPath(body, Paint()..color = white ? Colors.white : Colors.black87);
+    canvas.drawPath(
+      body,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = w * .05
+        ..strokeJoin = StrokeJoin.round
+        ..color = white ? Colors.black87 : Colors.white70,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_PawnPainter old) => old.white != white;
 }
 
 class ChessBoardView extends StatefulWidget {
