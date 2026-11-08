@@ -365,7 +365,7 @@ class _LettersGameScreenState extends State<LettersGameScreen> {
                     child: Text(
                       _right == false ? 'Era: ${_words[_i].inLang(widget.lang)}' : [for (final u in _used) _letters[u]].join(),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 2),
+                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 2, color: _right == null ? null : Colors.black87),
                     ),
                   ),
                   const SizedBox(height: 16),

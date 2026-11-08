@@ -6,6 +6,7 @@ import '../../games/barrio.dart';
 import '../../games/chess.dart';
 import '../../games/cuatro.dart';
 import '../../games/ludo.dart';
+import '../../widgets/common.dart';
 
 /// Colores de las fichas de cada jugador en tres en raya y 4 en línea.
 const twoPlayerColors = [Color(0xFFE53935), Color(0xFFF9A825)];
@@ -623,7 +624,8 @@ class BarrioBoard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
+    return LightZone(
+      child: AspectRatio(
       aspectRatio: 1,
       child: LayoutBuilder(builder: (context, box) {
         final cell = box.maxWidth / 6;
@@ -706,6 +708,7 @@ class BarrioBoard extends StatelessWidget {
           ],
         );
       }),
+      ),
     );
   }
 }

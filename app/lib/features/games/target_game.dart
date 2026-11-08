@@ -176,7 +176,7 @@ class _TargetGameScreenState extends State<TargetGameScreen> with SingleTickerPr
                   borderRadius: BorderRadius.circular(20),
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: LayoutBuilder(builder: (context, box) {
+                child: LightZone(child: LayoutBuilder(builder: (context, box) {
                   _area = box.biggest;
                   if (!_playing) {
                     return Center(
@@ -228,7 +228,7 @@ class _TargetGameScreenState extends State<TargetGameScreen> with SingleTickerPr
                     onTapDown: (d) => _shoot(d.localPosition),
                     child: CustomPaint(painter: _TargetsPainter(_targets, _pops, _now), size: Size.infinite),
                   );
-                }),
+                })),
               ),
             ),
           ],

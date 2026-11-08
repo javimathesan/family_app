@@ -2,6 +2,28 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 
+/// Zona con fondo claro fijo (tableros, cielo de Tiro al blanco): adentro se
+/// usa siempre el tema claro, para que en modo oscuro el texto no quede
+/// blanco sobre celeste.
+class LightZone extends StatelessWidget {
+  const LightZone({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    if (theme.brightness == Brightness.light) return child;
+    return Theme(
+      data: AppTheme.light(theme.colorScheme.primary),
+      child: DefaultTextStyle.merge(
+        style: const TextStyle(color: AppColors.ink),
+        child: IconTheme.merge(data: const IconThemeData(color: AppColors.ink), child: child),
+      ),
+    );
+  }
+}
+
 /// Tarjeta blanca redondeada, base de casi todas las pantallas.
 class InfoCard extends StatelessWidget {
   const InfoCard({super.key, required this.child, this.padding = const EdgeInsets.all(16), this.color});

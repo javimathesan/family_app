@@ -2,6 +2,10 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.21.1 — 2026-11-08 · Se lee bien en modo oscuro
+
+- Tiro al blanco, el tablero de Mi Barrio, los recuadros del calendario y el resultado de "Ordenar letras" tienen fondo claro fijo: en modo oscuro el texto quedaba blanco sobre celeste y no se leía. Ahora adentro de esas zonas el texto es siempre oscuro.
+
 ## 0.21.0 — 2026-11-08 · Temas, colores por tarjeta y vista previa
 
 - **Temas listos de un toque** en Personalizar: combinan color, fondo, mundo y estilo de tarjeta. Gratis: Clásico, Cielo, Lavanda y Atardecer. Con Plus: Océano, Espacio, Selva, Dinosaurios, Dulce y Castillo.

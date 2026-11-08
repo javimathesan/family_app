@@ -214,11 +214,12 @@ class _Stat extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(color: const Color(0xFFF0F4FF), borderRadius: BorderRadius.circular(14)),
+        // Fondo claro fijo: texto oscuro también en modo oscuro.
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: mutedText(context).copyWith(fontSize: 12, fontWeight: FontWeight.w700)),
-            Text(value, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+            Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.muted)),
+            Text(value, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.ink)),
           ],
         ),
       ),
