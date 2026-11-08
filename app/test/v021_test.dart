@@ -35,6 +35,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('vista_previa')), findsOneWidget);
 
+    await tester.ensureVisible(find.byKey(const ValueKey('tema_Océano')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('tema_Océano')));
     await tester.pumpAndSettle();
     final tomi = store.memberById('tomi')!;
@@ -43,10 +45,14 @@ void main() {
 
     final swatch = find.byKey(const ValueKey('tinte_mascota_1'));
     await tester.scrollUntilVisible(swatch, 200, scrollable: find.byType(Scrollable).last);
+    await tester.ensureVisible(swatch);
+    await tester.pumpAndSettle();
     await tester.tap(swatch);
     await tester.pumpAndSettle();
     expect(store.memberById('tomi')!.look.tints['mascota'], 1);
 
+    await tester.ensureVisible(find.text('Como estaba'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Como estaba'));
     await tester.pumpAndSettle();
     expect(store.memberById('tomi')!.look.world, 0);
