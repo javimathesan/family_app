@@ -17,7 +17,10 @@ void _plusSoon(BuildContext context) {
 /// Hoja inferior para personalizar la app de cada miembro: modo, color,
 /// fondo y tarjetas. Lo marcado con ⭐ es de Family App Plus.
 Future<void> showAccentPicker(BuildContext context) {
-  final start = FamilyScope.of(context).currentMember;
+  // Se toman ahora: al cambiar de mundo la pantalla de atrás se rearma.
+  final store = FamilyScope.of(context);
+  final session = SessionScope.of(context);
+  final start = store.currentMember;
   // Para "Volver a como estaba".
   final startLook = start?.look;
   final startAccent = start?.accent;
@@ -26,10 +29,9 @@ Future<void> showAccentPicker(BuildContext context) {
     showDragHandle: true,
     isScrollControlled: true,
     builder: (sheetContext) => ListenableBuilder(
-      listenable: FamilyScope.of(context),
+      listenable: store,
       builder: (sheetContext, _) {
-        final store = FamilyScope.of(context);
-        final plus = SessionScope.of(context).plusOpen;
+        final plus = session.plusOpen;
         final me = store.currentMember;
         if (me == null) return const SizedBox.shrink();
         final look = me.look;
