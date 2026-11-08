@@ -258,17 +258,100 @@ class FamilyStore extends ChangeNotifier {
   /// Tareas de un bloque. Con [memberId] solo las de ese hijo y las que tocan hoy (o el día [on]);
   /// sin él, todas (para el editor de la rutina).
   List<TaskTemplate> tasksFor(DayBlock block, {String? memberId, DateTime? on}) {
-    final day = on ?? _clock();
-    return _templates
-        .where((t) => t.block == block && (memberId == null || (t.appliesTo(memberId) && t.onDay(day))))
-        .toList();
+    if (memberId == null) return _templates.where((t) => t.block == block).toList();
+    return templatesFor(memberId, on: on).where((t) => t.block == block).toList();
   }
 
   /// Tareas que le tocan a un hijo hoy (o el día [on]).
   List<TaskTemplate> templatesFor(String memberId, {DateTime? on}) {
     final day = on ?? _clock();
-    return _templates.where((t) => t.appliesTo(memberId) && t.onDay(day)).toList();
+    return [
+      for (final t in _templates)
+        if (t.appliesTo(memberId)) t.resolvedFor(memberId, day),
+    ].where((t) => t.onDay(day)).toList()
+      ..sort(_byTime);
   }
+
+  /// Todas las tareas de un hijo, cualquier día (para el editor), con su horario.
+  List<TaskTemplate> routineOf(String memberId) => [
+        for (final t in _templates)
+          if (t.appliesTo(memberId)) t,
+      ];
+
+  /// Si a cada hijo (ya aprobado) le armaron al menos una tarea, o los que faltan.
+  List<Member> childrenWithoutTasks() =>
+      [for (final c in children) if (!isPendingMember(c.id) && routineOf(c.id).isEmpty) c];
+
+  /// Hijos aprobados sin ningún premio para pedir.
+  List<Member> childrenWithoutRewards() =>
+      [for (final c in children) if (!isPendingMember(c.id) && rewardsFor(c.id).isEmpty) c];
+
+  /// Suma [memberId] a la tarea (con su propio horario si se da [slot]).
+  void assignTask(TaskTemplate task, String memberId, {TaskSlot? slot}) {
+    final current = _templateById(task.id) ?? task;
+    final assigned = current.assignedTo.isEmpty ? <String>{} : {...current.assignedTo, memberId};
+    final custom = {...current.custom};
+    if (slot != null) custom[memberId] = slot;
+    saveTemplate(current.copyWith(assignedTo: assigned, custom: custom));
+  }
+
+  /// Saca a [memberId] de la tarea. Si no queda nadie, la tarea se borra.
+  void unassignTask(String taskId, String memberId) {
+    final t = _templateById(taskId);
+    if (t == null) return;
+    final assigned = t.assignedTo.isEmpty
+        ? {for (final c in children) if (!isPendingMember(c.id) && c.id != memberId) c.id}
+        : ({...t.assignedTo}..remove(memberId));
+    if (assigned.isEmpty) {
+      removeTemplate(taskId);
+      return;
+    }
+    saveTemplate(t.copyWith(assignedTo: assigned, custom: {...t.custom}..remove(memberId)));
+  }
+
+  /// Guarda el horario de [memberId] para una tarea. Con [forAll], ese horario
+  /// pasa a ser el de todos los que la tienen.
+  void setTaskSlot(String taskId, String memberId, TaskSlot slot, {bool forAll = false}) {
+    final t = _templateById(taskId);
+    if (t == null) return;
+    if (forAll) {
+      saveTemplate(TaskTemplate(
+        id: t.id,
+        name: t.name,
+        block: t.block,
+        time: slot.time,
+        weekendTime: slot.weekendTime,
+        days: slot.days,
+        points: slot.points,
+        validation: t.validation,
+        windowMinutes: t.windowMinutes,
+        assignedTo: t.assignedTo,
+        emoji: t.emoji,
+      ));
+    } else {
+      saveTemplate(t.copyWith(custom: {...t.custom, memberId: slot}));
+    }
+  }
+
+  /// Copia la rutina de [fromId] (con sus horarios) a [toIds].
+  void copyRoutine(String fromId, Iterable<String> toIds) {
+    for (final t in routineOf(fromId)) {
+      final slot = t.slotFor(fromId);
+      var next = t;
+      for (final to in toIds) {
+        if (to == fromId) continue;
+        next = next.copyWith(
+          assignedTo: next.assignedTo.isEmpty ? const <String>{} : {...next.assignedTo, to},
+          custom: {...next.custom, to: slot},
+        );
+      }
+      saveTemplate(next);
+    }
+  }
+
+  /// Premios que puede pedir [memberId], con su costo.
+  List<Reward> rewardsFor(String memberId) =>
+      [for (final r in _rewards) if (r.appliesTo(memberId)) r.resolvedFor(memberId)]..sort((a, b) => a.cost.compareTo(b.cost));
 
   /// Si hoy (o [on]) es sábado o domingo.
   bool isWeekend([DateTime? on]) => (on ?? _clock()).weekday >= DateTime.saturday;
@@ -287,8 +370,8 @@ class FamilyStore extends ChangeNotifier {
       notifyListeners();
       return 0;
     }
-    final task = _templates.firstWhere((t) => t.id == taskId);
     final now = _clock();
+    final task = _templates.firstWhere((t) => t.id == taskId).resolvedFor(memberId, now);
     final points = PointsRules.pointsFor(task, now);
     final needsAdult = task.validation != Validation.self;
     final completion = TaskCompletion(
@@ -535,7 +618,7 @@ class FamilyStore extends ChangeNotifier {
 
   /// El hijo pide un premio: se descuentan los puntos y queda pendiente.
   bool requestReward(String memberId, String rewardId) {
-    final reward = rewardById(rewardId);
+    final reward = rewardById(rewardId)?.resolvedFor(memberId);
     if (reward == null || !PointsRules.canRedeem(balance: balanceOf(memberId), reward: reward)) return false;
     _addBalance(memberId, -reward.cost);
     final redemption = Redemption(
@@ -573,7 +656,7 @@ class FamilyStore extends ChangeNotifier {
     if (r == null || r.status != RedemptionStatus.pending) return;
     r.status = RedemptionStatus.rejected;
     sync?.redemptionSaved(r);
-    final reward = rewardById(r.rewardId);
+    final reward = rewardById(r.rewardId)?.resolvedFor(r.memberId);
     if (reward != null) _addBalance(r.memberId, reward.cost);
     _addNotice(
       '$_approverName dejó para otro momento "${reward?.name ?? 'el premio'}" de ${memberById(r.memberId)?.nickname ?? 'tu hijo'} (se devolvieron los puntos)',
@@ -1086,6 +1169,9 @@ class FamilyStore extends ChangeNotifier {
         'assigned': t.assignedTo.toList(),
         'emoji': t.emoji,
         'days': (t.days.toList()..sort()),
+        if (t.weekendTime != null) 'wHour': t.weekendTime!.hour,
+        if (t.weekendTime != null) 'wMinute': t.weekendTime!.minute,
+        if (t.custom.isNotEmpty) 'custom': {for (final e in t.custom.entries) e.key: e.value.toJson()},
       };
 
   static TaskTemplate templateFromJson(Map<String, dynamic> j) => TaskTemplate(
@@ -1101,6 +1187,13 @@ class FamilyStore extends ChangeNotifier {
         days: j['days'] is List
             ? {...(j['days'] as List).map((d) => (d as num).toInt())}
             : (_schoolDayIds.contains(j['id']) ? TaskTemplate.weekdays : const <int>{}),
+        weekendTime: j['wHour'] is num
+            ? TimeOfDay(hour: (j['wHour'] as num).toInt(), minute: ((j['wMinute'] as num?) ?? 0).toInt())
+            : null,
+        custom: {
+          for (final e in ((j['custom'] as Map?) ?? const {}).entries)
+            e.key as String: TaskSlot.fromJson((e.value as Map).cast<String, dynamic>()),
+        },
       );
 
   /// Tareas de colegio de las rutinas viejas (sin días): pasan a lunes a viernes.
@@ -1112,6 +1205,8 @@ class FamilyStore extends ChangeNotifier {
         'cost': r.cost,
         'icon': r.iconKey,
         'monthly': r.monthly,
+        if (r.assignedTo.isNotEmpty) 'assigned': r.assignedTo.toList(),
+        if (r.costs.isNotEmpty) 'costs': r.costs,
       };
 
   static Reward rewardFromJson(Map<String, dynamic> j) => Reward(
@@ -1120,6 +1215,8 @@ class FamilyStore extends ChangeNotifier {
         cost: (j['cost'] as num).toInt(),
         iconKey: j['icon'] as String? ?? 'regalo',
         monthly: j['monthly'] as bool? ?? false,
+        assignedTo: {...?(j['assigned'] as List?)?.cast<String>()},
+        costs: {for (final e in ((j['costs'] as Map?) ?? const {}).entries) e.key as String: (e.value as num).toInt()},
       );
 
   static Map<String, dynamic> _summaryToJson(DaySummary s) => {
@@ -1148,13 +1245,13 @@ class FamilyStore extends ChangeNotifier {
   static List<TaskTemplate> _buildDefaultTemplates() {
     TimeOfDay t(int h, int m) => TimeOfDay(hour: h, minute: m);
     return [
-      TaskTemplate(id: 'levantarse', name: 'Levantarme', block: DayBlock.morning, time: t(7, 0), points: 5),
-      TaskTemplate(id: 'aseo', name: 'Aseo personal', block: DayBlock.morning, time: t(7, 10), points: 5),
-      TaskTemplate(id: 'cama', name: 'Tender la cama', block: DayBlock.morning, time: t(7, 20), points: 5, validation: Validation.photo),
-      TaskTemplate(id: 'desayuno', name: 'Desayunar', block: DayBlock.morning, time: t(7, 30), points: 5),
+      TaskTemplate(id: 'levantarse', name: 'Levantarme', block: DayBlock.morning, time: t(7, 0), points: 5, weekendTime: t(9, 0)),
+      TaskTemplate(id: 'aseo', name: 'Aseo personal', block: DayBlock.morning, time: t(7, 10), points: 5, weekendTime: t(9, 10)),
+      TaskTemplate(id: 'cama', name: 'Tender la cama', block: DayBlock.morning, time: t(7, 20), points: 5, validation: Validation.photo, weekendTime: t(9, 20)),
+      TaskTemplate(id: 'desayuno', name: 'Desayunar', block: DayBlock.morning, time: t(7, 30), points: 5, weekendTime: t(9, 30)),
       TaskTemplate(id: 'mesa', name: 'Recoger la mesa', block: DayBlock.morning, time: t(7, 45), points: 3),
       TaskTemplate(id: 'vajilla', name: 'Lavar mi vajilla', block: DayBlock.morning, time: t(7, 50), points: 5, validation: Validation.adult),
-      TaskTemplate(id: 'dientes_am', name: 'Cepillarme los dientes', block: DayBlock.morning, time: t(7, 55), points: 5),
+      TaskTemplate(id: 'dientes_am', name: 'Cepillarme los dientes', block: DayBlock.morning, time: t(7, 55), points: 5, weekendTime: t(9, 50)),
       TaskTemplate(id: 'utiles', name: 'Útiles del colegio listos', block: DayBlock.morning, time: t(8, 0), points: 5, days: TaskTemplate.weekdays),
       TaskTemplate(id: 'entrada', name: 'Entrar al colegio a horario', block: DayBlock.school, time: t(8, 15), points: 10, days: TaskTemplate.weekdays),
       TaskTemplate(id: 'salida', name: 'Salida del colegio', block: DayBlock.school, time: t(13, 0), points: 5, days: TaskTemplate.weekdays),
@@ -1169,7 +1266,69 @@ class FamilyStore extends ChangeNotifier {
     ]..sort(_byTime);
   }
 
-  /// Premios por defecto de un hogar nuevo.
+  /// Lista sugerida para armar la rutina de un hijo, con las edades a las que
+  /// apunta cada tarea. Un hogar nuevo arranca vacío y el adulto elige de acá.
+  static final List<({TaskTemplate task, Set<AgeMode> ages})> suggestedTasks = () {
+    TimeOfDay t(int h, int m) => TimeOfDay(hour: h, minute: m);
+    const all = {AgeMode.peques, AgeMode.junior, AgeMode.teen};
+    const big = {AgeMode.junior, AgeMode.teen};
+    const small = {AgeMode.peques, AgeMode.junior};
+    const ages = <String, Set<AgeMode>>{
+      'vajilla': big,
+      'estudiar': big,
+      'llegar': big,
+      'salida': big,
+      'cena': big,
+    };
+    return [
+      for (final d in defaultTemplates) (task: d, ages: ages[d.id] ?? all),
+      (task: TaskTemplate(id: 'juguetes', name: 'Guardar los juguetes', block: DayBlock.afternoon, time: t(18, 30), points: 5, emoji: '🧸'), ages: {AgeMode.peques}),
+      (task: TaskTemplate(id: 'ropa', name: 'Elegir la ropa de mañana', block: DayBlock.night, time: t(20, 30), points: 5, days: TaskTemplate.weekdays, emoji: '👕'), ages: small),
+      (task: TaskTemplate(id: 'leer', name: 'Leer un rato', block: DayBlock.night, time: t(20, 45), points: 10, windowMinutes: 60, emoji: '📚'), ages: all),
+      (task: TaskTemplate(id: 'mochila', name: 'Preparar la mochila para mañana', block: DayBlock.night, time: t(20, 50), points: 5, days: TaskTemplate.weekdays, emoji: '🎒'), ages: big),
+      (task: TaskTemplate(id: 'mascota', name: 'Darle de comer a la mascota', block: DayBlock.morning, time: t(8, 0), points: 5, emoji: '🐶'), ages: big),
+      (task: TaskTemplate(id: 'musica', name: 'Practicar música o deporte', block: DayBlock.afternoon, time: t(16, 30), points: 10, windowMinutes: 90, emoji: '🎸'), ages: big),
+      (task: TaskTemplate(id: 'basura', name: 'Sacar la basura', block: DayBlock.night, time: t(21, 0), points: 5, emoji: '🗑️'), ages: {AgeMode.teen}),
+    ]..sort((a, b) => _byTime(a.task, b.task));
+  }();
+
+  /// Premios sugeridos para un hogar nuevo.
+  static const List<({Reward reward, Set<AgeMode> ages})> suggestedRewards = [
+    (reward: Reward(id: 'cuento', name: 'Un cuento extra antes de dormir', cost: 30, iconKey: 'regalo'), ages: {AgeMode.peques}),
+    (reward: Reward(id: 'helado', name: 'Helado', cost: 50, iconKey: 'helado'), ages: {AgeMode.peques, AgeMode.junior, AgeMode.teen}),
+    (reward: Reward(id: 'peli', name: 'Elijo la película del sábado', cost: 60, iconKey: 'pelicula'), ages: {AgeMode.peques, AgeMode.junior, AgeMode.teen}),
+    (reward: Reward(id: 'cena_elijo', name: 'Elijo la cena', cost: 70, iconKey: 'regalo'), ages: {AgeMode.peques, AgeMode.junior, AgeMode.teen}),
+    (reward: Reward(id: 'pantalla', name: '1 hora extra de pantalla', cost: 80, iconKey: 'pantalla'), ages: {AgeMode.junior, AgeMode.teen}),
+    (reward: Reward(id: 'amigo', name: 'Invitar a un amigo a casa', cost: 120, iconKey: 'paseo'), ages: {AgeMode.peques, AgeMode.junior, AgeMode.teen}),
+    (reward: Reward(id: 'salida', name: 'Salida especial', cost: 150, iconKey: 'paseo'), ages: {AgeMode.peques, AgeMode.junior, AgeMode.teen}),
+    (reward: Reward(id: 'libre', name: 'Pase libre: finde sin tareas', cost: 300, iconKey: 'libre'), ages: {AgeMode.junior, AgeMode.teen}),
+  ];
+
+  /// Agrega a [memberId] las tareas sugeridas elegidas (si ya existen, lo suma).
+  void addSuggestedTasks(String memberId, Iterable<TaskTemplate> tasks) {
+    for (final t in tasks) {
+      final existing = _templateById(t.id);
+      if (existing != null) {
+        if (!existing.appliesTo(memberId)) assignTask(existing, memberId);
+      } else {
+        saveTemplate(t.copyWith(assignedTo: {memberId}));
+      }
+    }
+  }
+
+  /// Agrega a [memberId] los premios sugeridos elegidos.
+  void addSuggestedRewards(String memberId, Iterable<Reward> rewards) {
+    for (final r in rewards) {
+      final existing = rewardById(r.id);
+      if (existing == null) {
+        saveReward(r.copyWith(assignedTo: {memberId}));
+      } else if (!existing.appliesTo(memberId)) {
+        saveReward(existing.copyWith(assignedTo: {...existing.assignedTo, memberId}));
+      }
+    }
+  }
+
+  /// Premios por defecto de la demostración.
   static const List<Reward> defaultRewards = [
     Reward(id: 'helado', name: 'Helado', cost: 50, iconKey: 'helado'),
     Reward(id: 'peli', name: 'Elijo la película del sábado', cost: 60, iconKey: 'pelicula'),

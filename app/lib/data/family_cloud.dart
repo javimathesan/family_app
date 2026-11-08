@@ -146,8 +146,9 @@ class FamilyCloud implements FamilySync {
       'memberUids': [uid],
       // Constancia de que el adulto aceptó los términos y la privacidad.
       'terms': {'version': termsVersion, 'by': uid, 'at': FieldValue.serverTimestamp()},
-      'templates': [for (final t in FamilyStore.defaultTemplates) FamilyStore.templateToJson(t)],
-      'rewards': [for (final r in FamilyStore.defaultRewards) FamilyStore.rewardToJson(r)],
+      // Arranca sin tareas ni premios: el adulto los arma para cada hijo.
+      'templates': const <Object>[],
+      'rewards': const <Object>[],
     });
     final memberId = _newMemberId();
     final admin = Member(id: memberId, nickname: nickname, role: MemberRole.admin, uid: uid);

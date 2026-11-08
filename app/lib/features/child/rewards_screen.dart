@@ -91,7 +91,12 @@ class RewardsScreen extends StatelessWidget {
         const SizedBox(height: 20),
         Text('Elegí tu premio', style: sectionTitle(context)),
         const SizedBox(height: 10),
-        for (final reward in store.rewards) ...[
+        if (store.rewardsFor(me.id).isEmpty)
+          InfoCard(
+            child: Text('Todavía no hay premios para vos. Un adulto de tu casa los está preparando 🎁',
+                style: mutedText(context).copyWith(fontSize: 15)),
+          ),
+        for (final reward in store.rewardsFor(me.id)) ...[
           _RewardTile(reward: reward, memberId: me.id, storeOpen: open),
           const SizedBox(height: 10),
         ],

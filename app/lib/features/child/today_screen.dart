@@ -96,7 +96,9 @@ class TodayScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-                Text('$done de $total tareas hechas'),
+                Text(store.routineOf(me.id).isEmpty && !me.role.isAdult
+                    ? 'Todavía no tenés tareas. Un adulto de tu casa las está preparando 🙂'
+                    : '$done de $total tareas hechas'),
               ],
             ),
           ),

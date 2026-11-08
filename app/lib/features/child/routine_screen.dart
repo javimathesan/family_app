@@ -71,7 +71,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
         if (tasks.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Text(blocks.isEmpty ? 'Hoy no tenés tareas. ¡A disfrutar!' : 'No tenés tareas en este momento del día.', style: mutedText(context).copyWith(fontSize: 15)),
+            child: Text(blocks.isEmpty ? (store.routineOf(me.id).isEmpty ? 'Todavía no tenés tareas. Un adulto de tu casa las está preparando 🙂' : 'Hoy no tenés tareas. ¡A disfrutar!') : 'No tenés tareas en este momento del día.', style: mutedText(context).copyWith(fontSize: 15)),
           ),
         for (final task in tasks) ...[
           _TaskTile(task: task, memberId: me.id),

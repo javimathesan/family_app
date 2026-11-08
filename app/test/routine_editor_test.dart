@@ -93,6 +93,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Agregar'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Crear una tarea'));
+    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Pasear al perro');
     await tester.pump();
     await tester.ensureVisible(find.text('Guardar'));
@@ -100,6 +102,7 @@ void main() {
     await tester.tap(find.text('Guardar'));
     await tester.pumpAndSettle();
 
-    expect(store.templates.any((t) => t.name == 'Pasear al perro'), isTrue);
+    final nueva = store.templates.firstWhere((t) => t.name == 'Pasear al perro');
+    expect(nueva.assignedTo.length, 1, reason: 'solo para el hijo elegido');
   });
 }

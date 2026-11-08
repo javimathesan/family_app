@@ -325,11 +325,42 @@ class TaskTemplate {
     this.assignedTo = const {},
     this.emoji,
     this.days = const {},
+    this.weekendTime,
+    this.custom = const {},
   });
 
   final String id;
   final String name;
   final DayBlock block;
+
+  /// Hora del sábado y domingo, si es distinta (por ejemplo, levantarse más tarde).
+  final TimeOfDay? weekendTime;
+
+  /// Horario propio de algunos hijos (hora, días y puntos). El resto usa el de la tarea.
+  final Map<String, TaskSlot> custom;
+
+  /// El horario que usa [memberId] (el propio o el general).
+  TaskSlot slotFor(String memberId) =>
+      custom[memberId] ?? TaskSlot(time: time, weekendTime: weekendTime, days: days, points: points);
+
+  /// La tarea como la ve [memberId] el día [date]: con su hora, sus días y sus puntos.
+  TaskTemplate resolvedFor(String memberId, DateTime date) {
+    final slot = slotFor(memberId);
+    return TaskTemplate(
+      id: id,
+      name: name,
+      block: block,
+      time: slot.timeOn(date),
+      points: slot.points,
+      validation: validation,
+      windowMinutes: windowMinutes,
+      assignedTo: assignedTo,
+      emoji: emoji,
+      days: slot.days,
+      weekendTime: slot.weekendTime,
+      custom: custom,
+    );
+  }
 
   /// Días de la semana en que toca (1 = lunes … 7 = domingo). Vacío = todos.
   final Set<int> days;
@@ -379,11 +410,15 @@ class TaskTemplate {
     Set<String>? assignedTo,
     String? emoji,
     Set<int>? days,
+    Map<String, TaskSlot>? custom,
+    TimeOfDay? Function()? weekendTime,
   }) =>
       TaskTemplate(
         id: id,
         emoji: emoji ?? this.emoji,
         days: days ?? this.days,
+        custom: custom ?? this.custom,
+        weekendTime: weekendTime == null ? this.weekendTime : weekendTime(),
         name: name ?? this.name,
         block: block ?? this.block,
         time: time ?? this.time,
@@ -391,6 +426,44 @@ class TaskTemplate {
         validation: validation ?? this.validation,
         windowMinutes: windowMinutes ?? this.windowMinutes,
         assignedTo: assignedTo ?? this.assignedTo,
+      );
+}
+
+/// Cuándo hace una tarea un hijo: hora (y otra para el finde), días y puntos.
+@immutable
+class TaskSlot {
+  const TaskSlot({required this.time, this.weekendTime, this.days = const {}, required this.points});
+
+  final TimeOfDay time;
+  final TimeOfDay? weekendTime;
+  final Set<int> days;
+  final int points;
+
+  TimeOfDay timeOn(DateTime date) => date.weekday >= DateTime.saturday && weekendTime != null ? weekendTime! : time;
+
+  /// "7:00 · finde 9:30 · L-V" para mostrar en listas.
+  String label(String Function(TimeOfDay) hhmm) => [
+        hhmm(time),
+        if (weekendTime != null && weekendTime != time) 'finde ${hhmm(weekendTime!)}',
+        if (days.isNotEmpty) TaskTemplate.daysText(days),
+      ].join(' · ');
+
+  Map<String, dynamic> toJson() => {
+        'hour': time.hour,
+        'minute': time.minute,
+        if (weekendTime != null) 'wHour': weekendTime!.hour,
+        if (weekendTime != null) 'wMinute': weekendTime!.minute,
+        'days': days.toList()..sort(),
+        'points': points,
+      };
+
+  static TaskSlot fromJson(Map<String, dynamic> j) => TaskSlot(
+        time: TimeOfDay(hour: (j['hour'] as num).toInt(), minute: (j['minute'] as num).toInt()),
+        weekendTime: j['wHour'] is num
+            ? TimeOfDay(hour: (j['wHour'] as num).toInt(), minute: ((j['wMinute'] as num?) ?? 0).toInt())
+            : null,
+        days: {...((j['days'] as List?) ?? const []).map((d) => (d as num).toInt())},
+        points: (j['points'] as num).toInt(),
       );
 }
 
@@ -454,11 +527,23 @@ class Reward {
     required this.cost,
     this.iconKey = 'regalo',
     this.monthly = false,
+    this.assignedTo = const {},
+    this.costs = const {},
   });
 
   final String id;
   final String name;
   final int cost;
+
+  /// Hijos que lo pueden pedir. Vacío = todos.
+  final Set<String> assignedTo;
+
+  /// Costo distinto para algunos hijos (si no, [cost]).
+  final Map<String, int> costs;
+
+  bool appliesTo(String memberId) => assignedTo.isEmpty || assignedTo.contains(memberId);
+
+  int costFor(String memberId) => costs[memberId] ?? cost;
 
   /// Clave del ícono en [rewardIcons] (se guarda como texto en la nube).
   final String iconKey;
@@ -466,13 +551,18 @@ class Reward {
 
   IconData get icon => rewardIcons[iconKey] ?? Icons.card_giftcard_outlined;
 
-  Reward copyWith({String? name, int? cost, String? iconKey}) => Reward(
+  Reward copyWith({String? name, int? cost, String? iconKey, Set<String>? assignedTo, Map<String, int>? costs}) => Reward(
         id: id,
         name: name ?? this.name,
         cost: cost ?? this.cost,
         iconKey: iconKey ?? this.iconKey,
         monthly: monthly,
+        assignedTo: assignedTo ?? this.assignedTo,
+        costs: costs ?? this.costs,
       );
+
+  /// El premio como lo ve [memberId] (con su costo).
+  Reward resolvedFor(String memberId) => copyWith(cost: costFor(memberId));
 }
 
 /// Íconos que el adulto puede elegir para un premio.

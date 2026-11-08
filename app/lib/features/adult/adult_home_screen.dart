@@ -696,8 +696,19 @@ class FirstStepsCard extends StatelessWidget {
         () => nav.pushNamed(Routes.invite),
       ),
       (
-        'Revisá la rutina y los premios',
-        session.flag('tour_routine'),
+        switch (store.childrenWithoutTasks()) {
+          [] => 'Armá la rutina de cada hijo',
+          final missing => 'Armá la rutina de cada hijo (falta ${missing.map((m) => m.nickname).join(', ')})',
+        },
+        store.children.isNotEmpty && store.childrenWithoutTasks().isEmpty,
+        () => nav.pushNamed(Routes.routine),
+      ),
+      (
+        switch (store.childrenWithoutRewards()) {
+          [] => 'Elegí los premios',
+          final missing => 'Elegí los premios (falta ${missing.map((m) => m.nickname).join(', ')})',
+        },
+        store.children.isNotEmpty && store.childrenWithoutRewards().isEmpty,
         () => nav.pushNamed(Routes.routine),
       ),
       (

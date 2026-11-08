@@ -2,6 +2,18 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.20.0 — 2026-11-08 · Rutina y premios para cada hijo
+
+- **Rutina por hijo:** en Rutina y premios se elige el hijo arriba (con su avatar) y se ve su rutina. Cada tarea existe una sola vez ("Levantarse") y cada hijo tiene su propio horario: hora, otra hora para el fin de semana, días y puntos. Ya no hace falta repetir tareas.
+  - "Usar este horario para todos" iguala a los hermanos que la tienen; "¿Quién más la tiene?" suma a otros con el mismo horario.
+  - "Quitar a …" saca la tarea solo a ese hijo; si nadie la tiene, se borra.
+  - "Copiar la rutina de … a…" arma a un hermano en segundos.
+  - Lista sugerida por edad (peques, junior, teen) para tildar varias tareas a la vez.
+- **Premios por hijo:** cada premio puede ser para uno o varios y costar distinto a cada uno. El chico ve solo los suyos, con su costo.
+- **Hogar nuevo vacío:** se crea sin tareas ni premios. El chico ve "Todavía no tenés tareas. Un adulto de tu casa las está preparando". Los hogares que ya existen no cambian.
+- **Primeros pasos:** "Armá la rutina de cada hijo" y "Elegí los premios" son pasos separados, se marcan cuando todos los hijos tienen al menos una tarea y un premio, y dicen a quién le falta.
+- En la demostración, las tareas de la mañana tienen hora de fin de semana (levantarse a las 9).
+
 ## 0.19.0 — 2026-11-03 · Muchas familias amigas, favoritos e informes de fallos
 
 - **Sin límite de amigos:** las listas siguen siendo cómodas aunque haya muchas familias amigas.
