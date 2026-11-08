@@ -371,8 +371,11 @@ Future<void> addTaskMenu(BuildContext context, Member kid) async {
     ),
   );
   if (!context.mounted) return;
-  if (choice == 'nueva') await editTask(context, null, kid);
-  if (choice == 'lista') await pickSuggestedTasks(context, kid);
+  if (choice == 'nueva') {
+    await editTask(context, null, kid);
+  } else if (choice == 'lista') {
+    await pickSuggestedTasks(context, kid);
+  }
 }
 
 /// Lista sugerida: el adulto marca con ✓ lo que quiere para [kid].
@@ -571,10 +574,10 @@ class _TaskFormState extends State<_TaskForm> {
       id: t?.id ?? store.newTemplateId(),
       name: _name.text.trim(),
       block: _block,
-      time: base ? slot.time : t?.time ?? slot.time,
-      weekendTime: base ? slot.weekendTime : t?.weekendTime,
-      days: base ? slot.days : t?.days ?? slot.days,
-      points: base ? slot.points : t?.points ?? slot.points,
+      time: base ? slot.time : t.time,
+      weekendTime: base ? slot.weekendTime : t.weekendTime,
+      days: base ? slot.days : t.days,
+      points: base ? slot.points : t.points,
       validation: _validation,
       windowMinutes: t?.windowMinutes ?? 30,
       assignedTo: assigned,
@@ -952,8 +955,11 @@ Future<void> addRewardMenu(BuildContext context, Member kid) async {
     ),
   );
   if (!context.mounted) return;
-  if (choice == 'nuevo') await editReward(context, null, kid);
-  if (choice == 'lista') await pickSuggestedRewards(context, kid);
+  if (choice == 'nuevo') {
+    await editReward(context, null, kid);
+  } else if (choice == 'lista') {
+    await pickSuggestedRewards(context, kid);
+  }
 }
 
 Future<void> pickSuggestedRewards(BuildContext context, Member kid) async {
