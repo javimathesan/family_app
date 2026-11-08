@@ -52,6 +52,7 @@ void main() {
     await settle();
     // El hogar arranca vacío: el adulto le arma la rutina con la lista sugerida.
     adultStore.addSuggestedTasks(childId, FamilyStore.defaultTemplates);
+    adultStore.addSuggestedRewards(childId, FamilyStore.defaultRewards);
     await settle();
     childCloud.attach(childStore, home.homeId);
     await settle();
