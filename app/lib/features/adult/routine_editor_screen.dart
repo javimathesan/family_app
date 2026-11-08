@@ -617,13 +617,14 @@ class _TaskFormState extends State<_TaskForm> {
             const SizedBox(height: 12),
 
             // ---------------------------------------------- horario del hijo
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: kid.accent.withValues(alpha: .10),
+            Material(
+              color: kid.accent.withValues(alpha: .10),
+              shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: kid.accent.withValues(alpha: .35)),
+                side: BorderSide(color: kid.accent.withValues(alpha: .35)),
               ),
+              child: Padding(
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -724,6 +725,7 @@ class _TaskFormState extends State<_TaskForm> {
                       subtitle: Text('También para ${sharedWith.join(', ')}'),
                     ),
                 ],
+              ),
               ),
             ),
             const SizedBox(height: 16),

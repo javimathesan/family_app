@@ -371,7 +371,9 @@ class FamilyStore extends ChangeNotifier {
       return 0;
     }
     final now = _clock();
-    final task = _templates.firstWhere((t) => t.id == taskId).resolvedFor(memberId, now);
+    final base = _templateById(taskId);
+    if (base == null) return 0;
+    final task = base.resolvedFor(memberId, now);
     final points = PointsRules.pointsFor(task, now);
     final needsAdult = task.validation != Validation.self;
     final completion = TaskCompletion(

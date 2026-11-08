@@ -50,6 +50,9 @@ void main() {
     await settle();
     adultStore.confirmMember(childId);
     await settle();
+    // El hogar arranca vacío: el adulto le arma la rutina con la lista sugerida.
+    adultStore.addSuggestedTasks(childId, FamilyStore.defaultTemplates);
+    await settle();
     childCloud.attach(childStore, home.homeId);
     await settle();
     return (homeId: home.homeId, adultId: home.memberId, childId: childId);
@@ -234,10 +237,10 @@ void main() {
     expect(adultStore.balanceOf(ids.childId), 8);
   });
 
-  test('un hogar nuevo arranca con la rutina y los premios por defecto en la nube', () async {
+  test('un hogar nuevo arranca sin tareas ni premios en la nube', () async {
     final home = await adultCloud.createHome(homeName: 'Familia Test', nickname: 'Papá');
     final doc = await db.collection('homes').doc(home.homeId).get();
-    expect((doc.data()!['templates'] as List).length, FamilyStore.defaultTemplates.length);
-    expect((doc.data()!['rewards'] as List).length, FamilyStore.defaultRewards.length);
+    expect(doc.data()!['templates'] as List, isEmpty);
+    expect(doc.data()!['rewards'] as List, isEmpty);
   });
 }
