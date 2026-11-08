@@ -15,10 +15,12 @@ class InfoCard extends StatelessWidget {
     // Material (no Container) para que ListTile e InkWell muestren su efecto al tocar.
     final theme = Theme.of(context);
     final surface = theme.colorScheme.surface;
+    // Si el chico pintó esta tarjeta (Plus), manda su color.
+    final color = CardTint.maybeOf(context) ?? this.color;
     // En modo oscuro los colores claros de las tarjetas se vuelven un tinte suave.
     final bg = color == null
         ? surface
-        : (theme.brightness == Brightness.dark ? Color.alphaBlend(color!.withValues(alpha: 0.16), surface) : color!);
+        : (theme.brightness == Brightness.dark ? Color.alphaBlend(color.withValues(alpha: 0.16), surface) : color);
     final shape = theme.cardTheme.shape;
     return Material(
       color: bg,
@@ -27,6 +29,18 @@ class InfoCard extends StatelessWidget {
       child: Padding(padding: padding, child: child),
     );
   }
+}
+
+/// Pinta las [InfoCard] de adentro con un color elegido por el chico.
+class CardTint extends InheritedWidget {
+  const CardTint({super.key, required this.color, required super.child});
+
+  final Color color;
+
+  static Color? maybeOf(BuildContext context) => context.dependOnInheritedWidgetOfExactType<CardTint>()?.color;
+
+  @override
+  bool updateShouldNotify(CardTint old) => old.color != color;
 }
 
 /// Ícono dentro de un cuadrado de color suave.

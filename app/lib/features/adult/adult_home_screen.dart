@@ -599,7 +599,9 @@ class _ChildCard extends StatelessWidget {
     final store = FamilyScope.of(context);
     final ratio = store.completionRatio(member.id);
     final health = store.healthOf(member.id);
+    // Cada hijo con su color, para distinguirlos de un vistazo.
     return InfoCard(
+      color: Color.alphaBlend(member.accent.withValues(alpha: 0.09), Colors.white),
       child: Row(
         children: [
           AvatarView(config: member.avatar, size: 52, background: member.accent.withValues(alpha: 0.15)),
@@ -614,7 +616,7 @@ class _ChildCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(value: ratio, minHeight: 8, color: accent, backgroundColor: const Color(0xFFE9ECF4)),
+                  child: LinearProgressIndicator(value: ratio, minHeight: 8, color: member.accent, backgroundColor: const Color(0xFFE9ECF4)),
                 ),
               ],
             ),

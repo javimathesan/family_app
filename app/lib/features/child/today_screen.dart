@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app.dart';
+import '../../data/app_session.dart';
 import '../../data/family_store.dart';
 import '../../learning/vocabulary.dart';
 import '../../models/models.dart';
@@ -150,7 +151,7 @@ class TodayScreen extends StatelessWidget {
           ],
         ),
         for (final id in todayOrder(me.look))
-          if (!me.look.hidden.contains(id)) ...switch (id) {
+          if (!me.look.hidden.contains(id)) ..._tinted(me.look, id, plusOn: SessionScope.of(context).plusOpen, switch (id) {
             'paravos' => [
         if (forMe.isNotEmpty) ...[
           const SizedBox(height: 16),
@@ -282,7 +283,7 @@ class TodayScreen extends StatelessWidget {
       ],
             'cuerpo' => me.habitsOn ? [const SizedBox(height: 16), _HabitsCard(member: me)] : const <Widget>[],
             _ => const <Widget>[],
-          },
+          }),
         const SizedBox(height: 12),
         Center(
           child: TextButton.icon(
@@ -347,6 +348,13 @@ class _HealthTile extends StatelessWidget {
 }
 
 /// Tarjetas de la pantalla Hoy que se pueden ordenar u ocultar.
+/// Envuelve las tarjetas de [id] con el color que eligió el chico (Plus).
+List<Widget> _tinted(MemberLook look, String id, List<Widget> cards, {required bool plusOn}) {
+  final i = look.tints[id];
+  if (!plusOn || i == null || i < 0 || i >= LookOptions.tints.length) return cards;
+  return [for (final w in cards) w is SizedBox ? w : CardTint(color: LookOptions.tints[i].color, child: w)];
+}
+
 const todayCards = <String, String>{
   'paravos': 'Para vos (lo que te aprobaron)',
   'mascota': 'Mi mascota',

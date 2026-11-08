@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show listEquals, setEquals;
+import 'package:flutter/foundation.dart' show listEquals, mapEquals, setEquals;
 
 /// Rol de un miembro dentro del hogar.
 enum MemberRole {
@@ -184,9 +184,13 @@ class MemberLook {
     this.world = 0,
     this.home = const [],
     this.hidden = const [],
+    this.tints = const {},
   });
 
   final LookMode mode;
+
+  /// Color de cada tarjeta de Hoy (id → índice de [LookOptions.tints]). Plus.
+  final Map<String, int> tints;
 
   /// Índice de [LookOptions.backgrounds].
   final int background;
@@ -212,8 +216,10 @@ class MemberLook {
     int? world,
     List<String>? home,
     List<String>? hidden,
+    Map<String, int>? tints,
   }) =>
       MemberLook(
+        tints: tints ?? this.tints,
         mode: mode ?? this.mode,
         background: background ?? this.background,
         cards: cards ?? this.cards,
@@ -231,6 +237,7 @@ class MemberLook {
         'world': world,
         'home': home,
         'hidden': hidden,
+        if (tints.isNotEmpty) 'tints': tints,
       };
 
   static MemberLook fromJson(Object? raw) {
@@ -243,6 +250,7 @@ class MemberLook {
       world: (raw['world'] as num?)?.toInt() ?? 0,
       home: ((raw['home'] as List?) ?? const []).cast<String>().toList(),
       hidden: ((raw['hidden'] as List?) ?? const []).cast<String>().toList(),
+      tints: {for (final e in ((raw['tints'] as Map?) ?? const {}).entries) e.key as String: (e.value as num).toInt()},
     );
   }
 
@@ -255,10 +263,11 @@ class MemberLook {
       other.party == party &&
       other.world == world &&
       listEquals(other.home, home) &&
-      listEquals(other.hidden, hidden);
+      listEquals(other.hidden, hidden) &&
+      mapEquals(other.tints, tints);
 
   @override
-  int get hashCode => Object.hash(mode, background, cards, party, world, Object.hashAll(home), Object.hashAll(hidden));
+  int get hashCode => Object.hash(mode, background, cards, party, world, Object.hashAll(home), Object.hashAll(hidden), Object.hashAll(tints.entries.map((e) => '${e.key}${e.value}')));
 }
 
 /// Opciones de personalización. Las marcadas `plus` son de Family App Plus.
@@ -296,8 +305,33 @@ abstract final class LookOptions {
   static const cards = <({String name, bool plus})>[
     (name: 'Blancas', plus: false),
     (name: 'De mi color', plus: true),
-    (name: 'Con borde', plus: true),
+    (name: 'Con borde', plus: false),
     (name: 'Bien redondas', plus: true),
+  ];
+
+  /// Colores suaves para pintar cada tarjeta de Hoy (Plus).
+  static const tints = <({String name, Color color})>[
+    (name: 'Celeste', color: Color(0xFFE0F2FE)),
+    (name: 'Menta', color: Color(0xFFDCFCE7)),
+    (name: 'Amarillo', color: Color(0xFFFEF9C3)),
+    (name: 'Durazno', color: Color(0xFFFFEDD5)),
+    (name: 'Rosa', color: Color(0xFFFCE7F3)),
+    (name: 'Lila', color: Color(0xFFEDE9FE)),
+    (name: 'Gris', color: Color(0xFFF1F5F9)),
+  ];
+
+  /// Temas listos: color, fondo, mundo y estilo de tarjeta de un toque.
+  static const themes = <({String name, String emoji, Color accent, int background, int world, int cards, bool plus})>[
+    (name: 'Clásico', emoji: '✨', accent: Color(0xFF2563EB), background: 0, world: 0, cards: 0, plus: false),
+    (name: 'Cielo', emoji: '☁️', accent: Color(0xFF2563EB), background: 2, world: 0, cards: 2, plus: false),
+    (name: 'Lavanda', emoji: '💜', accent: Color(0xFF7C3AED), background: 3, world: 0, cards: 2, plus: false),
+    (name: 'Atardecer', emoji: '🌅', accent: Color(0xFFC2410C), background: 1, world: 0, cards: 0, plus: false),
+    (name: 'Océano', emoji: '🌊', accent: Color(0xFF0369A1), background: 2, world: 2, cards: 1, plus: true),
+    (name: 'Espacio', emoji: '🚀', accent: Color(0xFF4338CA), background: 7, world: 1, cards: 3, plus: true),
+    (name: 'Selva', emoji: '🌴', accent: Color(0xFFB45309), background: 1, world: 5, cards: 1, plus: true),
+    (name: 'Dinosaurios', emoji: '🦖', accent: Color(0xFF15803D), background: 4, world: 3, cards: 2, plus: true),
+    (name: 'Dulce', emoji: '🍭', accent: Color(0xFFDB2777), background: 5, world: 0, cards: 3, plus: true),
+    (name: 'Castillo', emoji: '🏰', accent: Color(0xFFBE185D), background: 5, world: 4, cards: 3, plus: true),
   ];
 
   /// Colores extra de Family App Plus (los 4 básicos están en AppColors.accents).

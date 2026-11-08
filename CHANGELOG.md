@@ -2,6 +2,14 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.21.0 — 2026-11-08 · Temas, colores por tarjeta y vista previa
+
+- **Temas listos de un toque** en Personalizar: combinan color, fondo, mundo y estilo de tarjeta. Gratis: Clásico, Cielo, Lavanda y Atardecer. Con Plus: Océano, Espacio, Selva, Dinosaurios, Dulce y Castillo.
+- **Vista previa en vivo** arriba de todo, y el botón "Como estaba" para deshacer lo que se cambió.
+- **Color de cada tarjeta (Plus):** el chico pinta Mascota, Reto, Agenda, Palabra y Hábitos con colores suaves distintos.
+- **Dos estilos de tarjeta gratis:** "Blancas" y "Con borde".
+- En el inicio del adulto, la tarjeta de cada hijo toma el color de ese hijo.
+
 ## 0.20.0 — 2026-11-08 · Rutina y premios para cada hijo
 
 - **Rutina por hijo:** en Rutina y premios se elige el hijo arriba (con su avatar) y se ve su rutina. Cada tarea existe una sola vez ("Levantarse") y cada hijo tiene su propio horario: hora, otra hora para el fin de semana, días y puntos. Ya no hace falta repetir tareas.
