@@ -487,6 +487,7 @@ class AdultHomeScreen extends StatelessWidget {
 }
 
 /// Metas del día del adulto: dar el ejemplo y afianzar el vínculo familiar.
+/// Cada adulto arma las suyas (de las ideas o propias) y las puede borrar.
 class _MyDay extends StatelessWidget {
   const _MyDay({required this.member});
 
@@ -496,37 +497,204 @@ class _MyDay extends StatelessWidget {
   Widget build(BuildContext context) {
     final store = FamilyScope.of(context);
     final accent = Theme.of(context).colorScheme.primary;
+    final goals = store.myGoals(member.id);
     final done = store.adultGoalsDone(member.id);
-    final total = AdultGoal.all.length;
+    final total = goals.length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Expanded(child: Text('Mi día', style: sectionTitle(context))),
-            Text('$done de $total', style: TextStyle(fontWeight: FontWeight.w800, color: accent)),
+            if (total > 0) Text('$done de $total', style: TextStyle(fontWeight: FontWeight.w800, color: accent)),
+            IconButton(
+              tooltip: 'Editar mi día',
+              icon: const Icon(Icons.tune),
+              onPressed: () => editMyDay(context, member),
+            ),
           ],
         ),
-        const SizedBox(height: 4),
-        Text(
-          done == total ? '¡Día completo! Gran ejemplo para tus hijos.' : 'Tus metas de hoy. Tus hijos ven que también te comprometés.',
-          style: mutedText(context),
-        ),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final g in AdultGoal.all)
-              FilterChip(
-                avatar: Icon(g.icon, size: 18),
-                label: Text(g.label),
-                selected: store.isGoalDone(member.id, g.id),
-                onSelected: (_) => store.toggleAdultGoal(member.id, g.id),
-              ),
-          ],
-        ),
+        if (total == 0) ...[
+          Text('Tus propias metas o recordatorios de cada día: hacer ejercicio, jugar con tus hijos, llamar a un familiar… '
+              'Tus hijos ven que también te comprometés.', style: mutedText(context)),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: () => editMyDay(context, member),
+            icon: const Icon(Icons.add),
+            label: const Text('Armar mi día'),
+          ),
+        ] else ...[
+          Text(
+            done == total ? '¡Día completo! Gran ejemplo para tus hijos.' : 'Tocá cada meta cuando la cumplas. Se reinician cada día.',
+            style: mutedText(context),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final g in goals)
+                FilterChip(
+                  avatar: Text(g.emoji, style: const TextStyle(fontSize: 16)),
+                  label: Text(g.label),
+                  selected: store.isGoalDone(member.id, g.id),
+                  onSelected: (_) => store.toggleAdultGoal(member.id, g.id),
+                ),
+            ],
+          ),
+        ],
       ],
+    );
+  }
+}
+
+/// Editor de "Mi día": quitar metas, sumar ideas o crear propias.
+Future<void> editMyDay(BuildContext context, Member member) {
+  final store = FamilyScope.of(context);
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (_) => ListenableBuilder(listenable: store, builder: (ctx, _) => _MyDayEditor(store: store, member: member)),
+  );
+}
+
+class _MyDayEditor extends StatefulWidget {
+  const _MyDayEditor({required this.store, required this.member});
+
+  final FamilyStore store;
+  final Member member;
+
+  @override
+  State<_MyDayEditor> createState() => _MyDayEditorState();
+}
+
+class _MyDayEditorState extends State<_MyDayEditor> {
+  final _name = TextEditingController();
+  String _emoji = '⭐';
+
+  static const _emojis = ['⭐', '🏃', '📖', '🧸', '💧', '🧘', '📞', '🛒', '💼', '🍎', '🌱', '🎵', '🧹', '💊', '❤️', '🙏'];
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  void _save(List<AdultGoal> goals) => widget.store.setMyGoals(widget.member.id, goals);
+
+  @override
+  Widget build(BuildContext context) {
+    final goals = widget.store.myGoals(widget.member.id);
+    final ideas = [for (final g in AdultGoal.all) if (!goals.any((m) => m.id == g.id)) g];
+    final name = _name.text.trim();
+    return SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * .85),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(20, 0, 20, 20 + MediaQuery.viewInsetsOf(context).bottom),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Mi día', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+              Text('Elegí lo que querés cumplir o recordar cada día. Es solo tuyo: cada adulto arma el suyo.',
+                  style: mutedText(context)),
+              const SizedBox(height: 12),
+              Text('Mis metas', style: sectionTitle(context)),
+              const SizedBox(height: 6),
+              if (goals.isEmpty) Text('Todavía no sumaste ninguna.', style: mutedText(context)),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final g in goals)
+                    InputChip(
+                      key: ValueKey('mia_${g.id}'),
+                      avatar: Text(g.emoji, style: const TextStyle(fontSize: 16)),
+                      label: Text(g.label),
+                      deleteButtonTooltipMessage: 'Quitar',
+                      onDeleted: () => _save([for (final x in goals) if (x.id != g.id) x]),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text('Crear una propia', style: sectionTitle(context)),
+              const SizedBox(height: 6),
+              SizedBox(
+                height: 44,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    for (final e in _emojis)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: ChoiceChip(
+                          label: Text(e, style: const TextStyle(fontSize: 18)),
+                          selected: _emoji == e,
+                          onSelected: (_) => setState(() => _emoji = e),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      key: const ValueKey('meta_nueva'),
+                      controller: _name,
+                      maxLength: 40,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: const InputDecoration(
+                        hintText: 'Por ejemplo: Revisar la agenda del colegio',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                      onChanged: (_) => setState(() {}),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: FilledButton(
+                      onPressed: name.isEmpty
+                          ? null
+                          : () {
+                              _save([...goals, AdultGoal(widget.store.newGoalId(), name, _emoji)]);
+                              setState(() {
+                                _name.clear();
+                                _emoji = '⭐';
+                              });
+                            },
+                      child: const Text('Sumar'),
+                    ),
+                  ),
+                ],
+              ),
+              if (ideas.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text('Ideas', style: sectionTitle(context)),
+                Text('Tocá para sumarla a tu día.', style: mutedText(context)),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final g in ideas)
+                      ActionChip(
+                        key: ValueKey('idea_${g.id}'),
+                        avatar: Text(g.emoji, style: const TextStyle(fontSize: 16)),
+                        label: Text(g.label),
+                        onPressed: () => _save([...goals, g]),
+                      ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -472,8 +472,22 @@ class FamilyStore extends ChangeNotifier {
 
   bool isGoalDone(String memberId, String goalId) => _today[memberId]?.containsKey(goalId) ?? false;
 
-  int adultGoalsDone(String memberId) =>
-      AdultGoal.all.where((g) => isGoalDone(memberId, g.id)).length;
+  /// Metas que eligió el adulto para su día (vacío hasta que las arma).
+  List<AdultGoal> myGoals(String memberId) => memberById(memberId)?.look.goals ?? const [];
+
+  /// Guarda las metas de "Mi día" de un adulto (agregar, borrar u ordenar).
+  void setMyGoals(String memberId, List<AdultGoal> goals) {
+    final m = memberById(memberId);
+    if (m == null) return;
+    m.look = m.look.copyWith(goals: goals);
+    sync?.memberUpdated(m);
+    notifyListeners();
+  }
+
+  /// Id para una meta propia.
+  String newGoalId() => 'meta_x${_clock().microsecondsSinceEpoch.toRadixString(36)}';
+
+  int adultGoalsDone(String memberId) => myGoals(memberId).where((g) => isGoalDone(memberId, g.id)).length;
 
   /// Marca o desmarca una meta del día del adulto. Devuelve si quedó marcada.
   bool toggleAdultGoal(String memberId, String goalId) {
@@ -486,7 +500,7 @@ class FamilyStore extends ChangeNotifier {
     final completion = TaskCompletion(taskId: goalId, completedAt: _clock(), pointsAwarded: 0);
     day[goalId] = completion;
     sync?.taskChanged(memberId, _todayKey, goalId, completion);
-    final goal = AdultGoal.all.where((g) => g.id == goalId).firstOrNull;
+    final goal = myGoals(memberId).where((g) => g.id == goalId).firstOrNull;
     final who = memberById(memberId)?.nickname;
     if (goal?.notice != null && who != null) _addNotice('$who ${goal!.notice}', kind: NoticeKind.goal, memberId: memberId);
     notifyListeners();
@@ -1353,7 +1367,7 @@ class FamilyStore extends ChangeNotifier {
   /// Hogar de ejemplo con los mismos datos que las maquetas.
   factory FamilyStore.demo({DateTime Function()? clock}) {
     final members = [
-      Member(id: 'adulto', nickname: 'Papá', role: MemberRole.admin),
+      Member(id: 'adulto', nickname: 'Papá', role: MemberRole.admin, look: MemberLook(goals: AdultGoal.all.take(6).toList())),
       Member(
         id: 'tomi',
         nickname: 'Tomi',

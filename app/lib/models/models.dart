@@ -185,9 +185,14 @@ class MemberLook {
     this.home = const [],
     this.hidden = const [],
     this.tints = const {},
+    this.goals,
   });
 
   final LookMode mode;
+
+  /// Metas de "Mi día" que eligió el adulto (`null` = todavía no armó su día).
+  /// Viajan dentro de `look` para no tocar las reglas de la base.
+  final List<AdultGoal>? goals;
 
   /// Color de cada tarjeta de Hoy (id → índice de [LookOptions.tints]). Plus.
   final Map<String, int> tints;
@@ -217,9 +222,11 @@ class MemberLook {
     List<String>? home,
     List<String>? hidden,
     Map<String, int>? tints,
+    List<AdultGoal>? goals,
   }) =>
       MemberLook(
         tints: tints ?? this.tints,
+        goals: goals ?? this.goals,
         mode: mode ?? this.mode,
         background: background ?? this.background,
         cards: cards ?? this.cards,
@@ -238,6 +245,7 @@ class MemberLook {
         'home': home,
         'hidden': hidden,
         if (tints.isNotEmpty) 'tints': tints,
+        if (goals != null) 'goals': [for (final g in goals!) g.toJson()],
       };
 
   static MemberLook fromJson(Object? raw) {
@@ -251,6 +259,9 @@ class MemberLook {
       home: ((raw['home'] as List?) ?? const []).cast<String>().toList(),
       hidden: ((raw['hidden'] as List?) ?? const []).cast<String>().toList(),
       tints: {for (final e in ((raw['tints'] as Map?) ?? const {}).entries) e.key as String: (e.value as num).toInt()},
+      goals: raw['goals'] is List
+          ? [for (final g in raw['goals'] as List) AdultGoal.fromJson((g as Map).cast<String, dynamic>())]
+          : null,
     );
   }
 
@@ -264,7 +275,8 @@ class MemberLook {
       other.world == world &&
       listEquals(other.home, home) &&
       listEquals(other.hidden, hidden) &&
-      mapEquals(other.tints, tints);
+      mapEquals(other.tints, tints) &&
+      listEquals(other.goals, goals);
 
   @override
   int get hashCode => Object.hash(mode, background, cards, party, world, Object.hashAll(home), Object.hashAll(hidden), Object.hashAll(tints.entries.map((e) => '${e.key}${e.value}')));
@@ -504,24 +516,43 @@ class TaskSlot {
 /// Meta diaria del adulto ("Mi día"). No da puntos: es para dar el ejemplo.
 @immutable
 class AdultGoal {
-  const AdultGoal(this.id, this.label, this.icon, {this.notice});
+  const AdultGoal(this.id, this.label, this.emoji, {this.notice});
 
   /// Siempre empieza con `meta_` para no mezclarse con las tareas de los chicos.
   final String id;
   final String label;
-  final IconData icon;
+  final String emoji;
 
   /// Si no es `null`, al marcarla se avisa al hogar: "<apodo> <notice>".
   final String? notice;
 
+  /// Ideas para armar "Mi día". Cada adulto elige las suyas y crea otras.
   static const all = <AdultGoal>[
-    AdultGoal('meta_ejercicio', 'Hice ejercicio', Icons.directions_run),
-    AdultGoal('meta_lectura', 'Leí o estudié', Icons.menu_book_outlined),
-    AdultGoal('meta_jugar', 'Jugué con mis hijos', Icons.toys_outlined, notice: 'jugó con sus hijos'),
-    AdultGoal('meta_mesa', 'Comida en familia sin celulares', Icons.dinner_dining_outlined, notice: 'propuso comer en familia sin celulares'),
-    AdultGoal('meta_amigos', 'Tiempo con amigos', Icons.groups_outlined),
-    AdultGoal('meta_pantalla', 'Menos de 2 horas de pantalla', Icons.phonelink_off_outlined),
+    AdultGoal('meta_ejercicio', 'Hice ejercicio', '🏃'),
+    AdultGoal('meta_lectura', 'Leí o estudié', '📖'),
+    AdultGoal('meta_jugar', 'Jugué con mis hijos', '🧸', notice: 'jugó con sus hijos'),
+    AdultGoal('meta_mesa', 'Comida en familia sin celulares', '🍽️', notice: 'propuso comer en familia sin celulares'),
+    AdultGoal('meta_amigos', 'Tiempo con amigos', '👥'),
+    AdultGoal('meta_pantalla', 'Menos de 2 horas de pantalla', '📵'),
+    AdultGoal('meta_agua', 'Tomé 8 vasos de agua', '💧'),
+    AdultGoal('meta_caminar', 'Salí a caminar', '🚶'),
+    AdultGoal('meta_dormir', 'Dormí 8 horas', '😴'),
+    AdultGoal('meta_llamar', 'Llamé a un familiar', '📞'),
+    AdultGoal('meta_cuento', 'Les leí un cuento', '📚', notice: 'les leyó un cuento'),
+    AdultGoal('meta_respirar', 'Un rato para mí', '🧘'),
   ];
+
+  Map<String, dynamic> toJson() => {'id': id, 'label': label, 'emoji': emoji, if (notice != null) 'notice': notice};
+
+  static AdultGoal fromJson(Map<String, dynamic> j) =>
+      AdultGoal(j['id'] as String, j['label'] as String, (j['emoji'] as String?) ?? '⭐', notice: j['notice'] as String?);
+
+  @override
+  bool operator ==(Object other) =>
+      other is AdultGoal && other.id == id && other.label == label && other.emoji == emoji && other.notice == notice;
+
+  @override
+  int get hashCode => Object.hash(id, label, emoji, notice);
 
   static bool isGoalId(String id) => id.startsWith('meta_');
 }

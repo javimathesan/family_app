@@ -2,6 +2,12 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.22.0 — 2026-11-09 · Mi día a medida de cada adulto
+
+- **Mi día ahora es personal:** cada adulto arma sus metas o recordatorios diarios. Arranca vacío, con el botón "Armar mi día".
+- En el editor (ícono de ajustes junto a "Mi día"): quitar metas, **crear propias** con su emoji (por ejemplo "Revisar la agenda del colegio") y sumar **ideas** (ejercicio, jugar con mis hijos, comida sin celulares, tomar agua, caminar, dormir 8 horas, llamar a un familiar, leerles un cuento, un rato para mí…).
+- Las metas de cada adulto son solo suyas y se reinician cada día. "Jugué con mis hijos", "Comida en familia sin celulares" y "Les leí un cuento" siguen avisando al hogar.
+
 ## 0.21.4 — 2026-11-09 · Términos al día
 
 - Pantalla "Términos y condiciones": salud opcional, familias amigas con el código de 24 horas y qué se comparte, sección Contacto y enlace al texto completo en la web (javimathesan.github.io/family_app_web/terminos.html).
