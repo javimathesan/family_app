@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/app_session.dart';
 import '../../data/family_store.dart';
+import '../../models/models.dart';
 import '../../widgets/common.dart';
 
 /// Lista de compras del hogar, compartida entre los adultos.
@@ -30,29 +31,79 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
     _focus.requestFocus();
   }
 
-  /// Pide el precio aproximado (vacío = sin precio).
-  Future<void> _askPrice(FamilyStore store, String id, String name, double? current) async {
-    final controller = TextEditingController(text: current == null ? '' : money(current).replaceAll(r'$ ', ''));
-    final result = await showDialog<String>(
+  /// Pide cantidad y precio por unidad (precio vacío = sin precio).
+  Future<void> _askAmount(FamilyStore store, ShoppingItem item) async {
+    final qtyText = TextEditingController(text: qtyLabel(item.qty));
+    final priceText = TextEditingController(text: item.price == null ? '' : money(item.price!).replaceAll(r'$ ', ''));
+    final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('¿Cuánto salió $name?'),
-        content: TextField(
-          key: const ValueKey('precio_campo'),
-          controller: controller,
-          autofocus: true,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(prefixText: '\$ ', hintText: 'Aproximado', border: OutlineInputBorder()),
-          onSubmitted: (v) => Navigator.pop(ctx, v),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Saltear')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, controller.text), child: const Text('Guardar')),
-        ],
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) {
+          final qty = parseMoney(qtyText.text) ?? 1;
+          final price = parseMoney(priceText.text);
+          return AlertDialog(
+            title: Text(item.name),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    IconButton.outlined(
+                      tooltip: 'Una menos',
+                      onPressed: qty > 1 ? () => setLocal(() => qtyText.text = qtyLabel(qty - 1)) : null,
+                      icon: const Icon(Icons.remove),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: TextField(
+                          key: const ValueKey('cantidad_campo'),
+                          controller: qtyText,
+                          textAlign: TextAlign.center,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          decoration: const InputDecoration(labelText: 'Cantidad', border: OutlineInputBorder(), isDense: true),
+                          onChanged: (_) => setLocal(() {}),
+                        ),
+                      ),
+                    ),
+                    IconButton.outlined(
+                      tooltip: 'Una más',
+                      onPressed: () => setLocal(() => qtyText.text = qtyLabel(qty + 1)),
+                      icon: const Icon(Icons.add),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  key: const ValueKey('precio_campo'),
+                  controller: priceText,
+                  autofocus: item.price == null,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(
+                    labelText: 'Precio por unidad',
+                    prefixText: '\$ ',
+                    hintText: 'Aproximado',
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (_) => setLocal(() {}),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  price == null ? 'Sin precio' : '${qtyLabel(qty)} × ${money(price)} = ${money(qty * price)}',
+                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Saltear')),
+              FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Guardar')),
+            ],
+          );
+        },
       ),
     );
-    if (result == null) return;
-    store.setShoppingPrice(id, parseMoney(result));
+    if (ok != true) return;
+    store.setShoppingAmount(item.id, qty: parseMoney(qtyText.text) ?? 1, price: parseMoney(priceText.text));
   }
 
   @override
@@ -118,7 +169,7 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
                         onSubmitted: (_) => _add(store, me?.nickname),
                         decoration: const InputDecoration(
                           hintText: 'Leche, pan, manzanas…',
-                          helperText: 'Podés sumar varias separadas por coma.',
+                          helperText: 'Varias separadas por coma; cantidad al final: "arroz x4".',
                           border: OutlineInputBorder(),
                           isDense: true,
                         ),
@@ -163,8 +214,8 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
                               secondary: prices
                                   ? TextButton(
                                       key: ValueKey('precio_${i.id}'),
-                                      onPressed: canEdit ? () => _askPrice(store, i.id, i.name, i.price) : null,
-                                      child: Text(i.price == null ? '\$ —' : money(i.price!),
+                                      onPressed: canEdit ? () => _askAmount(store, i) : null,
+                                      child: Text(i.price == null ? '\$ —' : money(i.subtotal),
                                           style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
                                     )
                                   : null,
@@ -173,10 +224,10 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
                                   : (_) {
                                       store.toggleShopping(i.id);
                                       // Al tildar algo sin precio, pregunta cuánto salió (se puede saltear).
-                                      if (prices && !i.done && i.price == null) _askPrice(store, i.id, i.name, null);
+                                      if (prices && !i.done && i.price == null) _askAmount(store, i);
                                     },
                               title: Text(
-                                i.name,
+                                i.qty == 1 ? i.name : '${i.name} · ${qtyLabel(i.qty)}',
                                 style: TextStyle(
                                   fontSize: 17,
                                   fontWeight: FontWeight.w700,
@@ -184,7 +235,7 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
                                   color: i.done ? Theme.of(context).disabledColor : null,
                                 ),
                               ),
-                              subtitle: i.by == null ? null : Text('Lo agregó ${i.by}'),
+                              subtitle: _subtitle(i, prices),
                             ),
                           ),
                         if (prices && store.shoppingTotal > 0)
@@ -195,6 +246,8 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
                                 Text('En el carrito: ${money(store.shoppingInCart)}',
                                     style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
                                 Text('Total aproximado de la lista: ${money(store.shoppingTotal)}', style: mutedText(context)),
+                                Text('${store.shopping.length} productos · ${qtyLabel(store.shoppingUnits)} unidades',
+                                    style: mutedText(context)),
                               ],
                             ),
                           ),
@@ -211,4 +264,13 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
       ),
     );
   }
+}
+
+/// "4 × $ 900 = $ 3.600 · Lo agregó Papá" (o nada).
+Widget? _subtitle(ShoppingItem i, bool prices) {
+  final parts = [
+    if (prices && i.price != null) '${qtyLabel(i.qty)} × ${money(i.price!)} = ${money(i.subtotal)}',
+    if (i.by != null) 'Lo agregó ${i.by}',
+  ];
+  return parts.isEmpty ? null : Text(parts.join(' · '));
 }

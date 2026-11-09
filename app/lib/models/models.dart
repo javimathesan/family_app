@@ -615,7 +615,7 @@ class TaskCompletion {
 /// Algo para comprar en la lista del hogar.
 @immutable
 class ShoppingItem {
-  const ShoppingItem({required this.id, required this.name, this.done = false, this.by, required this.at, this.price});
+  const ShoppingItem({required this.id, required this.name, this.done = false, this.by, required this.at, this.price, this.qty = 1});
 
   final String id;
   final String name;
@@ -625,14 +625,26 @@ class ShoppingItem {
   final String? by;
   final DateTime at;
 
-  /// Precio aproximado (opcional), para llevar la cuenta.
+  /// Precio aproximado por unidad (opcional), para llevar la cuenta.
   final double? price;
 
-  ShoppingItem copyWith({bool? done, double? Function()? price}) =>
-      ShoppingItem(id: id, name: name, done: done ?? this.done, by: by, at: at, price: price == null ? this.price : price());
+  /// Cantidad (unidades, kilos…). Puede tener decimales: 1,5 kg.
+  final double qty;
 
-  Map<String, dynamic> toJson() =>
-      {'name': name, 'done': done, if (by != null) 'by': by, 'at': at.toIso8601String(), if (price != null) 'price': price};
+  /// Cantidad × precio (0 si no tiene precio).
+  double get subtotal => (price ?? 0) * qty;
+
+  ShoppingItem copyWith({bool? done, double? Function()? price, double? qty}) => ShoppingItem(
+      id: id, name: name, done: done ?? this.done, by: by, at: at, price: price == null ? this.price : price(), qty: qty ?? this.qty);
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'done': done,
+        if (by != null) 'by': by,
+        'at': at.toIso8601String(),
+        if (price != null) 'price': price,
+        if (qty != 1) 'qty': qty,
+      };
 
   static ShoppingItem fromJson(String id, Map<String, dynamic> j) => ShoppingItem(
         id: id,
@@ -641,6 +653,7 @@ class ShoppingItem {
         by: j['by'] as String?,
         at: DateTime.tryParse(j['at'] as String? ?? '') ?? DateTime(2026),
         price: (j['price'] as num?)?.toDouble(),
+        qty: (j['qty'] as num?)?.toDouble() ?? 1,
       );
 }
 

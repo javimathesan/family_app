@@ -2,6 +2,12 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.24.1 — 2026-11-09 · Cantidades en la lista de compras
+
+- Cada cosa de la lista tiene **cantidad y precio por unidad**: "Arroz · 4 — 4 × $ 900 = $ 3.600". El diálogo de precio tiene + y − para la cantidad (acepta decimales, por ejemplo 1,5 kg) y muestra la cuenta al instante.
+- Se puede escribir la cantidad al agregar: "arroz x4, leche x2".
+- Abajo: en el carrito, total general aproximado, cantidad de productos y de unidades.
+
 ## 0.24.0 — 2026-11-09 · Herramientas del hogar a elección
 
 - **Lista de compras opcional:** ya no aparece sola en el inicio del adulto. Cada adulto la activa en *Mi día → editar → Herramientas del hogar*. Sigue también en Ajustes → La casa.

@@ -72,6 +72,26 @@ void main() {
     expect(store.shoppingDate, DateTime(2026, 11, 14));
   });
 
+  test('cantidad × precio: arroz x4 a 900 = 3600 y total general', () {
+    final store = FamilyStore.demo(clock: () => DateTime(2026, 11, 9, 9));
+    store.addShopping('Arroz x4, Leche, Pan x 1,5');
+    final arroz = store.shopping.firstWhere((i) => i.name == 'Arroz');
+    final pan = store.shopping.firstWhere((i) => i.name == 'Pan');
+    expect(arroz.qty, 4);
+    expect(pan.qty, 1.5);
+    store.setShoppingAmount(arroz.id, qty: 4, price: 900);
+    final leche = store.shopping.firstWhere((i) => i.name == 'Leche');
+    store.setShoppingAmount(leche.id, qty: 2, price: 1200);
+    expect(store.shopping.firstWhere((i) => i.name == 'Arroz').subtotal, 3600);
+    expect(store.shoppingTotal, 3600 + 2400);
+    expect(store.shoppingUnits, 4 + 2 + 1.5);
+    expect(qtyLabel(1.5), '1,5');
+    expect(qtyLabel(4), '4');
+    final ida = ShoppingItem.fromJson('x', store.shopping.firstWhere((i) => i.name == 'Arroz').toJson());
+    expect(ida.qty, 4);
+    expect(ida.price, 900);
+  });
+
   test('renombrar el hogar', () {
     final store = FamilyStore.demo(clock: () => DateTime(2026, 11, 9, 9));
     store.renameHome('  Familia Matheus ');

@@ -11,16 +11,21 @@ extension FamilyShopping on FamilyStore {
   int get shoppingPending => _shopping.where((i) => !i.done).length;
 
   /// Agrega uno o varios (separados por coma o renglón: "leche, pan").
+  /// La cantidad se puede escribir al final: "arroz x4".
   void addShopping(String text, {String? by}) {
-    final names = text.split(RegExp(r'[,\n]')).map((n) => n.trim()).where((n) => n.isNotEmpty);
-    for (final name in names) {
+    final entries = text.split(RegExp(r'[,\n]')).map((n) => n.trim()).where((n) => n.isNotEmpty);
+    for (final entry in entries) {
+      final m = RegExp(r'^(.*?)\s*[xX×]\s*(\d+(?:[.,]\d+)?)$').firstMatch(entry);
+      final name = (m == null ? entry : m.group(1)!).trim();
+      final qty = m == null ? 1.0 : double.parse(m.group(2)!.replaceAll(',', '.'));
+      if (name.isEmpty) continue;
       // Si ya estaba comprado, vuelve a la lista en lugar de repetirse.
       final existing = _shopping.where((i) => i.name.toLowerCase() == name.toLowerCase()).firstOrNull;
       if (existing != null) {
         if (existing.done) toggleShopping(existing.id);
         continue;
       }
-      final item = ShoppingItem(id: _newId('c'), name: name, by: by, at: _clock());
+      final item = ShoppingItem(id: _newId('c'), name: name, by: by, at: _clock(), qty: qty <= 0 ? 1 : qty);
       _shopping.add(item);
       sync?.shoppingSaved(item);
     }
@@ -50,11 +55,23 @@ extension FamilyShopping on FamilyStore {
     _changed();
   }
 
-  /// Total aproximado de todo lo que tiene precio.
-  double get shoppingTotal => _shopping.fold(0, (sum, i) => sum + (i.price ?? 0));
+  /// Cantidad y precio por unidad de una cosa.
+  void setShoppingAmount(String id, {required double qty, double? price}) {
+    final i = _shopping.indexWhere((x) => x.id == id);
+    if (i < 0) return;
+    _shopping[i] = _shopping[i].copyWith(qty: qty <= 0 ? 1 : qty, price: () => price);
+    sync?.shoppingSaved(_shopping[i]);
+    _changed();
+  }
+
+  /// Total aproximado (cantidad × precio) de todo lo que tiene precio.
+  double get shoppingTotal => _shopping.fold(0, (sum, i) => sum + i.subtotal);
 
   /// Total de lo que ya está en el carrito (tildado).
-  double get shoppingInCart => _shopping.where((i) => i.done).fold(0, (sum, i) => sum + (i.price ?? 0));
+  double get shoppingInCart => _shopping.where((i) => i.done).fold(0, (sum, i) => sum + i.subtotal);
+
+  /// Unidades en total (sumando las cantidades).
+  double get shoppingUnits => _shopping.fold(0, (sum, i) => sum + i.qty);
 
   /// Fecha probable de la próxima compra (la comparten los adultos).
   DateTime? get shoppingDate => _shoppingDate;

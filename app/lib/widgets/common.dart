@@ -140,3 +140,7 @@ double? parseMoney(String text) {
   final v = double.tryParse(t);
   return v == null || v < 0 ? null : v;
 }
+
+/// Cantidad sin ceros de más: "4", "1,5".
+String qtyLabel(double q) =>
+    q == q.roundToDouble() ? q.toInt().toString() : q.toStringAsFixed(2).replaceAll(RegExp(r'0+$'), '').replaceAll('.', ',');
