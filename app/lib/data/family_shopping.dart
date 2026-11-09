@@ -13,7 +13,7 @@ extension FamilyShopping on FamilyStore {
   /// Agrega uno o varios (separados por coma o renglón: "leche, pan").
   /// La cantidad se puede escribir al final: "arroz x4".
   void addShopping(String text, {String? by}) {
-    final entries = text.split(RegExp(r'[,\n]')).map((n) => n.trim()).where((n) => n.isNotEmpty);
+    final entries = text.split(RegExp(r',(?!\d)|\n'))  // la coma seguida de número es decimal (x1,5).map((n) => n.trim()).where((n) => n.isNotEmpty);
     for (final entry in entries) {
       final m = RegExp(r'^(.*?)\s*[xX×]\s*(\d+(?:[.,]\d+)?)$').firstMatch(entry);
       final name = (m == null ? entry : m.group(1)!).trim();
