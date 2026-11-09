@@ -328,8 +328,10 @@ Future<void> showHabitsSettings(BuildContext context) {
               children: [
                 const Text('Mis hábitos', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
                 const SizedBox(height: 4),
-                Text('Elegí qué registra cada hijo en su pantalla Hoy. Solo lo ven el chico y los adultos de la casa. '
-                    'Si apagás todo, la tarjeta no aparece.', style: mutedText(ctx)),
+                Text('Elegí qué registra cada hijo en su pantalla Hoy. Para los hijos nuevos arranca apagado. '
+                    'Al activarlo, aceptás que se registren esos datos de salud de tu hijo: solo los ven el chico '
+                    'y los adultos de la casa, nunca las familias amigas. Si apagás todo, la tarjeta no aparece.',
+                    style: mutedText(ctx)),
                 if (kids.isEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 16),

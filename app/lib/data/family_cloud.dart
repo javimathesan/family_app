@@ -433,8 +433,11 @@ class FamilyCloud implements FamilySync {
   }
 
   @override
-  void memberAdded(Member member) =>
-      _write((h) => _members(h).doc(member.id).set(_memberData(member, pending: false)));
+  void memberAdded(Member member) => _write((h) => _members(h).doc(member.id).set({
+        ..._memberData(member, pending: false),
+        if (member.water != null) 'water': member.water,
+        if (member.bathroom != null) 'bathroom': member.bathroom,
+      }));
 
   @override
   void memberUpdated(Member member) => _write((h) => _members(h).doc(member.id).update({
@@ -453,7 +456,13 @@ class FamilyCloud implements FamilySync {
 
   @override
   void memberConfirmed(Member member) => _write((h) {
-        final batch = db.batch()..update(_members(h).doc(member.id), {'pending': false, 'relink': FieldValue.delete()});
+        final batch = db.batch()
+          ..update(_members(h).doc(member.id), {
+            'pending': false,
+            'relink': FieldValue.delete(),
+            if (member.water != null) 'water': member.water,
+            if (member.bathroom != null) 'bathroom': member.bathroom,
+          });
         final phone = member.uid;
         if (phone != null) {
           batch.update(_homeRef(h), {

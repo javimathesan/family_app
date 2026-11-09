@@ -29,7 +29,7 @@ class PrivacyScreen extends StatelessWidget {
     ),
     (
       'Hábitos de los chicos',
-      'El agua y el baño son opcionales: un adulto administrador los prende o apaga para cada hijo en Ajustes → Hogar. '
+      'El agua y el baño son opcionales y arrancan apagados: un adulto administrador los activa para cada hijo en Ajustes → Hogar. '
           'Solo los ven el chico y los adultos de su hogar, y nunca se comparten con familias amigas.'
     ),
     (

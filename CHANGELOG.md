@@ -2,6 +2,11 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.21.2 — 2026-11-09 · Hábitos apagados de entrada y textos legales
+
+- **"Mis hábitos" arranca apagado para cada hijo nuevo:** un adulto administrador lo activa en Ajustes → Hogar → Mis hábitos de los chicos, y al hacerlo da su consentimiento para esos datos de salud. Los hijos que ya estaban en el hogar siguen como antes.
+- Política de privacidad, términos y pantalla "Privacidad y datos": el borrado del hogar desde Ajustes ya está disponible, se explican las familias amigas (qué se comparte y que no hay chat libre) y los hábitos (opcionales, solo para el hogar, nunca con familias amigas). Se quitó "ánimo", que la app ya no registra.
+
 ## 0.21.1 — 2026-11-08 · Se lee bien en modo oscuro
 
 - Tiro al blanco, el tablero de Mi Barrio, los recuadros del calendario y el resultado de "Ordenar letras" tienen fondo claro fijo: en modo oscuro el texto quedaba blanco sobre celeste y no se leía. Ahora adentro de esas zonas el texto es siempre oscuro.

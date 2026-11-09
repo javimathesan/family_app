@@ -411,7 +411,7 @@ Future<void> showTodayOrder(BuildContext context) {
                         key: ValueKey(id),
                         value: !me.look.hidden.contains(id) && (id != 'cuerpo' || me.habitsOn),
                         title: Text(todayCards[id]!, style: const TextStyle(fontWeight: FontWeight.w700)),
-                        subtitle: id == 'cuerpo' && !me.habitsOn ? const Text('Lo apagó un adulto de tu casa') : null,
+                        subtitle: id == 'cuerpo' && !me.habitsOn ? const Text('Lo activa un adulto de tu casa') : null,
                         secondary: const Icon(Icons.drag_handle),
                         onChanged: id == 'cuerpo' && !me.habitsOn
                             ? null

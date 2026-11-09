@@ -17,6 +17,18 @@ void main() {
     expect(LookOptions.themes.where((t) => !t.plus), isNotEmpty);
   });
 
+  test('Mis hábitos arranca apagado para un hijo nuevo', () {
+    final store = FamilyStore.demo(clock: () => DateTime(2026, 11, 9, 9));
+    final nuevo = store.addMember(nickname: 'Pía', role: MemberRole.child, mode: AgeMode.peques);
+    expect(nuevo.habitsOn, isFalse);
+    expect(store.memberById('luli')!.bathroomOn, isTrue, reason: 'los que ya estaban siguen igual');
+    store.setHabits(nuevo.id, water: true);
+    expect(store.memberById(nuevo.id)!.waterOn, isTrue);
+    final pendiente = store.addPendingMember(nickname: 'Leo', role: MemberRole.child, mode: AgeMode.junior);
+    store.confirmMember(pendiente.id);
+    expect(store.memberById(pendiente.id)!.habitsOn, isFalse);
+  });
+
   testWidgets('temas de un toque, vista previa y color por tarjeta', (tester) async {
     tester.view.physicalSize = const Size(1170, 2532);
     tester.view.devicePixelRatio = 3;

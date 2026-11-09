@@ -190,6 +190,7 @@ class FamilyStore extends ChangeNotifier {
   /// se maneja desde el teléfono de un adulto.
   Member addMember({required String nickname, required MemberRole role, AgeMode? mode, String? uid}) {
     final member = Member(id: _newId('m'), nickname: nickname.trim(), role: role, mode: mode, uid: uid);
+    _habitsOffForNewChild(member);
     _members.add(member);
     sync?.memberAdded(member);
     notifyListeners();
@@ -224,8 +225,18 @@ class FamilyStore extends ChangeNotifier {
   void confirmMember(String id) {
     final m = memberById(id);
     if (m == null || !_pendingMembers.remove(id)) return;
+    _habitsOffForNewChild(m);
     sync?.memberConfirmed(m);
     notifyListeners();
+  }
+
+  /// "Mis hábitos" arranca apagado para cada hijo nuevo: un adulto lo activa
+  /// (consentimiento explícito para datos de salud de menores). Los hijos que ya
+  /// estaban (sin valor guardado) siguen como antes.
+  void _habitsOffForNewChild(Member m) {
+    if (m.role != MemberRole.child || m.water != null || m.bathroom != null) return;
+    m.water = false;
+    m.bathroom = false;
   }
 
   /// Rechaza un alta pendiente o quita a un miembro del hogar.

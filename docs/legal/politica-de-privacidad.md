@@ -34,7 +34,7 @@ Pedimos lo mínimo. **No pedimos** nombre completo, email, número de teléfono,
 
 **Datos de salud.** El registro de agua, popó y pipí puede considerarse un **dato sensible** según la Ley 25.326, y en este caso es de menores. Por eso:
 
-- Es **opcional**: un adulto administrador lo prende o apaga para cada hijo en *Ajustes → Hogar → Mis hábitos de los chicos*. Si se apaga, la tarjeta desaparece y no se registra nada.
+- Es **opcional y arranca apagado**: un adulto administrador lo activa para cada hijo en *Ajustes → Hogar → Mis hábitos de los chicos*, y con eso presta su consentimiento. Lo puede apagar cuando quiera: la tarjeta desaparece y no se registra nada más.
 - Lo ven **únicamente el chico y los adultos de su hogar**.
 - **Nunca se comparte con familias amigas** ni con terceros, y no se usa para otra finalidad.
 
