@@ -170,6 +170,22 @@ service cloud.firestore {
         allow read, write: if isMember(homeId);
       }
 
+      // Pedidos de los chicos para la lista de compras: cada uno pide los
+      // suyos (pendientes) y puede borrarlos mientras nadie los vio; los
+      // adultos los aprueban o rechazan.
+      match /shoppingRequests/{requestId} {
+        allow read: if isMember(homeId);
+        allow create: if isAdmin(homeId)
+          || (isMember(homeId)
+            && request.resource.data.status == 'pending'
+            && isMe(homeId, request.resource.data.memberId));
+        allow update: if isAdmin(homeId);
+        allow delete: if isAdmin(homeId)
+          || (isMember(homeId)
+            && resource.data.status == 'pending'
+            && isMe(homeId, resource.data.memberId));
+      }
+
       match /notices/{noticeId} {
         allow read, create: if isMember(homeId);
         allow delete: if isAdmin(homeId);

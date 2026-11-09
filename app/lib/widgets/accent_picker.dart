@@ -266,6 +266,7 @@ const todayCardNames = <String, String>{
   'agenda': 'Agenda',
   'palabra': 'Palabra',
   'cuerpo': 'Hábitos',
+  'compras': 'Compras',
 };
 
 class _MiniSwatch extends StatelessWidget {

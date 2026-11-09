@@ -52,4 +52,8 @@ abstract class FamilySync {
   /// Lista de compras del hogar.
   void shoppingSaved(ShoppingItem item);
   void shoppingRemoved(List<String> ids);
+
+  /// Pedidos de los chicos para la lista de compras.
+  void shoppingRequestSaved(ShoppingRequest request);
+  void shoppingRequestRemoved(String id);
 }

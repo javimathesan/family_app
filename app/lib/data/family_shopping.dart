@@ -12,7 +12,7 @@ extension FamilyShopping on FamilyStore {
 
   /// Agrega uno o varios (separados por coma o renglón: "leche, pan").
   /// La cantidad se puede escribir al final: "arroz x4".
-  void addShopping(String text, {String? by}) {
+  void addShopping(String text, {String? by, String category = 'casa'}) {
     // La coma seguida de un número es decimal ("pan x1,5"), no separa productos.
     final entries = text.split(RegExp(r',(?!\d)|\n')).map((n) => n.trim()).where((n) => n.isNotEmpty);
     for (final entry in entries) {
@@ -26,7 +26,7 @@ extension FamilyShopping on FamilyStore {
         if (existing.done) toggleShopping(existing.id);
         continue;
       }
-      final item = ShoppingItem(id: _newId('c'), name: name, by: by, at: _clock(), qty: qty <= 0 ? 1 : qty);
+      final item = ShoppingItem(id: _newId('c'), name: name, by: by, at: _clock(), qty: qty <= 0 ? 1 : qty, category: category);
       _shopping.add(item);
       sync?.shoppingSaved(item);
     }
@@ -104,4 +104,95 @@ extension FamilyShopping on FamilyStore {
     sync?.shoppingRemoved(ids);
     _changed();
   }
+
+  // --------------------------------------------------- pedidos de los chicos
+
+  /// Pedidos que esperan que un adulto los apruebe.
+  List<ShoppingRequest> get pendingShoppingRequests =>
+      [for (final r in _requests) if (r.status == RequestStatus.pending) r]..sort((a, b) => a.at.compareTo(b.at));
+
+  /// Pedidos de un chico: los pendientes y los resueltos de las últimas 2 semanas.
+  List<ShoppingRequest> requestsOf(String memberId) {
+    final since = _clock().subtract(const Duration(days: 14));
+    return [
+      for (final r in _requests)
+        if (r.memberId == memberId && (r.status == RequestStatus.pending || r.at.isAfter(since))) r,
+    ]..sort((a, b) => b.at.compareTo(a.at));
+  }
+
+  /// En qué quedó un pedido, para mostrárselo al chico.
+  String requestStatusLabel(ShoppingRequest r) {
+    switch (r.status) {
+      case RequestStatus.pending:
+        return 'Esperando que un adulto lo vea';
+      case RequestStatus.rejected:
+        return 'Esta vez no';
+      case RequestStatus.approved:
+        final item = _shopping.where((i) => i.id == r.itemId).firstOrNull;
+        if (item == null || item.done) return '¡Comprado!';
+        return 'En la lista de compras';
+    }
+  }
+
+  /// Un chico pide algo para la lista (opcional: para cuándo lo necesita).
+  ShoppingRequest requestShopping(String memberId, String name, {double qty = 1, String category = 'colegio', DateTime? due}) {
+    final request = ShoppingRequest(
+      id: _newId('p'),
+      memberId: memberId,
+      name: name.trim(),
+      qty: qty <= 0 ? 1 : qty,
+      category: category,
+      due: due == null ? null : DateTime(due.year, due.month, due.day),
+      at: _clock(),
+    );
+    _requests.add(request);
+    sync?.shoppingRequestSaved(request);
+    final who = memberById(memberId)?.nickname ?? 'Alguien';
+    final when = request.due == null ? '' : ' (para el ${weekdayShort(request.due!)} ${request.due!.day}/${request.due!.month})';
+    _addNotice('$who pidió para comprar: ${request.name}$when', kind: NoticeKind.shopping, memberId: memberId);
+    _changed();
+    return request;
+  }
+
+  /// El chico se arrepiente de un pedido que todavía nadie vio.
+  void cancelShoppingRequest(String id) {
+    final r = _requests.where((x) => x.id == id).firstOrNull;
+    if (r == null || r.status != RequestStatus.pending) return;
+    _requests.remove(r);
+    sync?.shoppingRequestRemoved(id);
+    _changed();
+  }
+
+  /// Un adulto lo aprueba: pasa a la lista de compras, en su sección y con su fecha.
+  void approveShoppingRequest(String id) {
+    final i = _requests.indexWhere((x) => x.id == id);
+    if (i < 0 || _requests[i].status != RequestStatus.pending) return;
+    final r = _requests[i];
+    final kid = memberById(r.memberId)?.nickname;
+    final item = ShoppingItem(
+      id: _newId('c'),
+      name: r.name,
+      by: kid == null ? null : 'pedido de $kid',
+      at: _clock(),
+      qty: r.qty,
+      category: r.category,
+      due: r.due,
+    );
+    _shopping.add(item);
+    sync?.shoppingSaved(item);
+    _requests[i] = r.copyWith(status: RequestStatus.approved, itemId: item.id);
+    sync?.shoppingRequestSaved(_requests[i]);
+    _changed();
+  }
+
+  void rejectShoppingRequest(String id) {
+    final i = _requests.indexWhere((x) => x.id == id);
+    if (i < 0 || _requests[i].status != RequestStatus.pending) return;
+    _requests[i] = _requests[i].copyWith(status: RequestStatus.rejected);
+    sync?.shoppingRequestSaved(_requests[i]);
+    _changed();
+  }
 }
+
+/// "lun", "mar"… para fechas cortas en avisos.
+String weekdayShort(DateTime d) => const ['lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom'][d.weekday - 1];

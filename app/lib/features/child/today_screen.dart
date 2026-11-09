@@ -224,6 +224,7 @@ class TodayScreen extends StatelessWidget {
           ),
         ],
       ],
+            'compras' => [const SizedBox(height: 16), _ShoppingRequestsCard(member: me)],
             'agenda' => [
         const SizedBox(height: 16),
         InfoCard(
@@ -362,6 +363,7 @@ const todayCards = <String, String>{
   'agenda': 'Hoy en la agenda',
   'palabra': 'Palabra del día',
   'cuerpo': 'Mis hábitos (agua y baño)',
+  'compras': 'Pedir para comprar',
 };
 
 /// Orden de las tarjetas: el elegido y, al final, las que falten.
@@ -690,5 +692,146 @@ class _HabitsCardState extends State<_HabitsCard> {
         ],
       ),
     );
+  }
+}
+
+
+/// El chico pide algo para la lista de compras (materiales, cosas personales)
+/// y ve en qué quedó cada pedido.
+class _ShoppingRequestsCard extends StatelessWidget {
+  const _ShoppingRequestsCard({required this.member});
+
+  final Member member;
+
+  @override
+  Widget build(BuildContext context) {
+    final store = FamilyScope.of(context);
+    final mine = store.requestsOf(member.id);
+    return InfoCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text('🛒', style: TextStyle(fontSize: 26)),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text('¿Necesitás que compren algo?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+              ),
+              FilledButton.tonal(
+                key: const ValueKey('pedir_compra'),
+                onPressed: () => askForShopping(context, member),
+                child: const Text('Pedir'),
+              ),
+            ],
+          ),
+          if (mine.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text('Materiales del colegio, algo personal… Un adulto lo ve y lo suma a la lista.', style: mutedText(context)),
+            ),
+          for (final r in mine)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              title: Text(r.qty == 1 ? r.name : '${r.name} · ${qtyLabel(r.qty)}', style: const TextStyle(fontWeight: FontWeight.w700)),
+              subtitle: Text([
+                shoppingCategories[r.category] ?? '',
+                if (r.due != null) 'para el ${shortDay(r.due!)}',
+                store.requestStatusLabel(r),
+              ].join(' · ')),
+              trailing: r.status == RequestStatus.pending
+                  ? IconButton(
+                      tooltip: 'Ya no lo necesito',
+                      icon: const Icon(Icons.close),
+                      onPressed: () => store.cancelShoppingRequest(r.id),
+                    )
+                  : Text(switch (r.status) { RequestStatus.rejected => '🙅', _ => store.requestStatusLabel(r) == '¡Comprado!' ? '✅' : '🛒' },
+                      style: const TextStyle(fontSize: 20)),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Hoja para pedir algo: qué, cuántos, para qué y para cuándo.
+Future<void> askForShopping(BuildContext context, Member member) async {
+  final store = FamilyScope.of(context);
+  final name = TextEditingController();
+  var qty = 1.0;
+  var category = 'colegio';
+  DateTime? due;
+  final ok = await showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setLocal) => Padding(
+        padding: EdgeInsets.fromLTRB(20, 0, 20, 20 + MediaQuery.viewInsetsOf(ctx).bottom),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Pedir para comprar', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 12),
+            TextField(
+              key: const ValueKey('pedido_nombre'),
+              controller: name,
+              autofocus: true,
+              maxLength: 40,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(labelText: '¿Qué necesitás?', hintText: 'Por ejemplo: cartulina azul', border: OutlineInputBorder()),
+              onChanged: (_) => setLocal(() {}),
+            ),
+            Wrap(
+              spacing: 8,
+              children: [
+                for (final e in shoppingCategories.entries)
+                  ChoiceChip(label: Text(e.value), selected: category == e.key, onSelected: (_) => setLocal(() => category = e.key)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Expanded(child: Text('¿Cuántos?', style: TextStyle(fontWeight: FontWeight.w700))),
+                IconButton.outlined(onPressed: qty > 1 ? () => setLocal(() => qty--) : null, icon: const Icon(Icons.remove)),
+                SizedBox(width: 40, child: Text(qtyLabel(qty), textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800))),
+                IconButton.outlined(onPressed: () => setLocal(() => qty++), icon: const Icon(Icons.add)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () async {
+                final now = store.now;
+                final picked = await showDatePicker(
+                  context: ctx,
+                  initialDate: due ?? now,
+                  firstDate: DateTime(now.year, now.month, now.day),
+                  lastDate: now.add(const Duration(days: 90)),
+                  helpText: '¿Para cuándo lo necesitás?',
+                );
+                if (picked != null) setLocal(() => due = picked);
+              },
+              icon: const Icon(Icons.event_outlined),
+              label: Text(due == null ? '¿Para cuándo? (opcional)' : 'Para el ${longDate(due!).toLowerCase()}'),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: name.text.trim().isEmpty ? null : () => Navigator.pop(ctx, true),
+                child: const Text('Enviar pedido'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+  if (ok != true) return;
+  store.requestShopping(member.id, name.text, qty: qty, category: category, due: due);
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('¡Listo! Un adulto lo va a ver.')));
   }
 }

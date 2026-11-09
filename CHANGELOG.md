@@ -2,6 +2,13 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.25.0 — 2026-11-09 · Los chicos piden para la lista de compras
+
+- **Pedir para comprar (chicos):** nueva tarjeta en Hoy. Eligen qué necesitan, cuántos, si es 🏫 Colegio, 🧴 Personal o 🏠 Casa, y para cuándo (opcional). Ven en qué quedó cada pedido: esperando, en la lista, comprado o "esta vez no", y pueden cancelarlo mientras nadie lo vio. La tarjeta se puede ocultar o reordenar como las demás.
+- **Adultos:** aviso en Novedades ("Tomi pidió para comprar: cartulina (para el jue 12/11)") y, arriba de la lista de compras, "Pedidos de los chicos" para sumarlos a la lista o decir que no.
+- **Secciones en la lista:** Casa, Colegio y Personal. Al agregar, el adulto elige la sección. Lo que tiene fecha muestra "📅 para el jue 12/11" y se destaca si es para hoy o mañana.
+- **Reglas:** nueva colección `shoppingRequests` (cada chico crea sus pedidos; los adultos los aprueban).
+
 ## 0.24.1 — 2026-11-09 · Cantidades en la lista de compras
 
 - Cada cosa de la lista tiene **cantidad y precio por unidad**: "Arroz · 4 — 4 × $ 900 = $ 3.600". El diálogo de precio tiene + y − para la cantidad (acepta decimales, por ejemplo 1,5 kg) y muestra la cuenta al instante.

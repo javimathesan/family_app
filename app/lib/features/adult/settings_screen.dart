@@ -93,7 +93,10 @@ class SettingsScreen extends StatelessWidget {
             section('La casa', [
               tile(Icons.shopping_cart_outlined, 'Lista de compras',
                   () => nav.push(MaterialPageRoute<void>(builder: (_) => const ShoppingScreen())),
-                  subtitle: store.shoppingPending == 0 ? 'Vacía' : '${store.shoppingPending} por comprar'),
+                  subtitle: [
+                    store.shoppingPending == 0 ? 'Vacía' : '${store.shoppingPending} por comprar',
+                    if (store.pendingShoppingRequests.isNotEmpty) '${store.pendingShoppingRequests.length} pedidos de los chicos',
+                  ].join(' · ')),
             ]),
             section('Este teléfono', [
               tile(Icons.notifications_outlined, 'Avisos', () => _pickNotifyMode(context), subtitle: session.notifyMode.label),

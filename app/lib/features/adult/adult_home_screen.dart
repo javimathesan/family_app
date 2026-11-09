@@ -163,6 +163,7 @@ class AdultHomeScreen extends StatelessWidget {
                   title: const Text('Lista de compras', style: TextStyle(fontWeight: FontWeight.w800)),
                   subtitle: Text([
                     store.shoppingPending == 0 ? 'Vacía · tocá para agregar' : '${store.shoppingPending} por comprar',
+                    if (store.pendingShoppingRequests.isNotEmpty) '${store.pendingShoppingRequests.length} pedidos de los chicos',
                     if (store.shoppingDate != null) 'compra ${shortDay(store.shoppingDate!)}',
                     if (store.shoppingTotal > 0) 'aprox. ${money(store.shoppingTotal)}',
                   ].join(' · ')),

@@ -16,6 +16,7 @@ class ShoppingScreen extends StatefulWidget {
 class _ShoppingScreenState extends State<ShoppingScreen> {
   final _text = TextEditingController();
   final _focus = FocusNode();
+  String _category = 'casa';
 
   @override
   void dispose() {
@@ -26,7 +27,7 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
 
   void _add(FamilyStore store, String? by) {
     if (_text.text.trim().isEmpty) return;
-    store.addShopping(_text.text, by: by);
+    store.addShopping(_text.text, by: by, category: _category);
     _text.clear();
     _focus.requestFocus();
   }
@@ -183,6 +184,19 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
                   ],
                 ),
               ),
+            if (canEdit)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Wrap(
+                  spacing: 8,
+                  children: [
+                    for (final e in shoppingCategories.entries)
+                      ChoiceChip(label: Text(e.value), selected: _category == e.key, onSelected: (_) => setState(() => _category = e.key)),
+                  ],
+                ),
+              ),
+            if (store.pendingShoppingRequests.isNotEmpty)
+              _Requests(store: store, canEdit: canEdit),
             Expanded(
               child: items.isEmpty
                   ? ListView(
@@ -198,7 +212,14 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
                   : ListView(
                       padding: const EdgeInsets.fromLTRB(8, 4, 8, 24),
                       children: [
-                        for (final i in items)
+                        for (final cat in shoppingCategories.keys)
+                          if (items.where((i) => i.category == cat).toList() case final group when group.isNotEmpty) ...[
+                          if (items.any((i) => i.category != 'casa'))
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                              child: Text(shoppingCategories[cat]!, style: sectionTitle(context)),
+                            ),
+                        for (final i in group)
                           Dismissible(
                             key: ValueKey('compra_${i.id}'),
                             direction: canEdit ? DismissDirection.endToStart : DismissDirection.none,
@@ -235,9 +256,10 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
                                   color: i.done ? Theme.of(context).disabledColor : null,
                                 ),
                               ),
-                              subtitle: _subtitle(i, prices),
+                              subtitle: _subtitle(context, i, prices, store.now),
                             ),
                           ),
+                          ],
                         if (prices && store.shoppingTotal > 0)
                           InfoCard(
                             child: Column(
@@ -267,10 +289,70 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
 }
 
 /// "4 × $ 900 = $ 3.600 · Lo agregó Papá" (o nada).
-Widget? _subtitle(ShoppingItem i, bool prices) {
+Widget? _subtitle(BuildContext context, ShoppingItem i, bool prices, DateTime now) {
+  final today = DateTime(now.year, now.month, now.day);
+  final urgent = i.due != null && !i.done && !i.due!.isAfter(today.add(const Duration(days: 1)));
   final parts = [
+    if (i.due != null) '📅 para el ${shortDay(i.due!)}',
     if (prices && i.price != null) '${qtyLabel(i.qty)} × ${money(i.price!)} = ${money(i.subtotal)}',
-    if (i.by != null) 'Lo agregó ${i.by}',
+    if (i.by != null) i.by!.startsWith('pedido de ') ? i.by! : 'Lo agregó ${i.by}',
   ];
-  return parts.isEmpty ? null : Text(parts.join(' · '));
+  if (parts.isEmpty) return null;
+  // Lo que se necesita para hoy o mañana se destaca.
+  return Text(parts.join(' · '),
+      style: urgent ? TextStyle(color: Theme.of(context).colorScheme.error, fontWeight: FontWeight.w700) : null);
+}
+
+/// Pedidos de los chicos que esperan respuesta.
+class _Requests extends StatelessWidget {
+  const _Requests({required this.store, required this.canEdit});
+
+  final FamilyStore store;
+  final bool canEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final pending = store.pendingShoppingRequests;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      child: InfoCard(
+        color: const Color(0xFFFFF4D6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Pedidos de los chicos (${pending.length})', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+            for (final r in pending)
+              ListTile(
+                key: ValueKey('pedido_${r.id}'),
+                contentPadding: EdgeInsets.zero,
+                title: Text(r.qty == 1 ? r.name : '${r.name} · ${qtyLabel(r.qty)}', style: const TextStyle(fontWeight: FontWeight.w800)),
+                subtitle: Text([
+                  store.memberById(r.memberId)?.nickname ?? '',
+                  shoppingCategories[r.category] ?? '',
+                  if (r.due != null) 'para el ${shortDay(r.due!)}',
+                ].where((p) => p.isNotEmpty).join(' · ')),
+                trailing: !canEdit
+                    ? null
+                    : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            tooltip: 'Esta vez no',
+                            icon: const Icon(Icons.close),
+                            onPressed: () => store.rejectShoppingRequest(r.id),
+                          ),
+                          IconButton.filled(
+                            key: ValueKey('aprobar_${r.id}'),
+                            tooltip: 'Sumar a la lista',
+                            icon: const Icon(Icons.add_shopping_cart),
+                            onPressed: () => store.approveShoppingRequest(r.id),
+                          ),
+                        ],
+                      ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }

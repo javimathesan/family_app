@@ -69,6 +69,7 @@ class FamilyStore extends ChangeNotifier {
   final List<AgendaEvent> _events = [];
   final List<ShoppingItem> _shopping = [];
   DateTime? _shoppingDate;
+  final List<ShoppingRequest> _requests = [];
 
   /// Familias amigas y partidas con ellas (solo en la nube).
   final List<Friendship> _friendships = [];
@@ -813,6 +814,7 @@ class FamilyStore extends ChangeNotifier {
     Map<String, int>? gameSeconds,
     List<AgendaEvent>? events,
     List<ShoppingItem>? shopping,
+    List<ShoppingRequest>? shoppingRequests,
     DateTime? shoppingDate,
     bool clearShoppingDate = false,
     bool? plus,
@@ -841,6 +843,11 @@ class FamilyStore extends ChangeNotifier {
         ..addAll(events);
     }
     if (shoppingDate != null || clearShoppingDate) _shoppingDate = shoppingDate;
+    if (shoppingRequests != null) {
+      _requests
+        ..clear()
+        ..addAll(shoppingRequests);
+    }
     if (shopping != null) {
       _shopping
         ..clear()
@@ -986,6 +993,7 @@ class FamilyStore extends ChangeNotifier {
         'events': [for (final e in _events) _eventToJson(e)],
         'shopping': {for (final i in _shopping) i.id: i.toJson()},
         if (_shoppingDate != null) 'shoppingDate': _shoppingDate!.toIso8601String(),
+        'requests': {for (final r in _requests) r.id: r.toJson()},
         'history': {
           for (final e in _history.entries) e.key: [for (final s in e.value) _summaryToJson(s)],
         },
@@ -1049,6 +1057,12 @@ class FamilyStore extends ChangeNotifier {
       ..clear()
       ..addAll([for (final e in (json['events'] as List?) ?? const []) _eventFromJson((e as Map).cast<String, dynamic>())]);
     _shoppingDate = DateTime.tryParse(json['shoppingDate'] as String? ?? '');
+    _requests
+      ..clear()
+      ..addAll([
+        for (final e in ((json['requests'] as Map?) ?? const {}).entries)
+          ShoppingRequest.fromJson(e.key as String, (e.value as Map).cast<String, dynamic>()),
+      ]);
     _shopping
       ..clear()
       ..addAll([

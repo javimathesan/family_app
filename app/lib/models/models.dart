@@ -615,7 +615,23 @@ class TaskCompletion {
 /// Algo para comprar en la lista del hogar.
 @immutable
 class ShoppingItem {
-  const ShoppingItem({required this.id, required this.name, this.done = false, this.by, required this.at, this.price, this.qty = 1});
+  const ShoppingItem({
+    required this.id,
+    required this.name,
+    this.done = false,
+    this.by,
+    required this.at,
+    this.price,
+    this.qty = 1,
+    this.category = 'casa',
+    this.due,
+  });
+
+  /// Sección de la lista (ver [shoppingCategories]).
+  final String category;
+
+  /// Para cuándo hace falta (por ejemplo, materiales del colegio).
+  final DateTime? due;
 
   final String id;
   final String name;
@@ -635,7 +651,15 @@ class ShoppingItem {
   double get subtotal => (price ?? 0) * qty;
 
   ShoppingItem copyWith({bool? done, double? Function()? price, double? qty}) => ShoppingItem(
-      id: id, name: name, done: done ?? this.done, by: by, at: at, price: price == null ? this.price : price(), qty: qty ?? this.qty);
+      id: id,
+      name: name,
+      done: done ?? this.done,
+      by: by,
+      at: at,
+      price: price == null ? this.price : price(),
+      qty: qty ?? this.qty,
+      category: category,
+      due: due);
 
   Map<String, dynamic> toJson() => {
         'name': name,
@@ -644,6 +668,8 @@ class ShoppingItem {
         'at': at.toIso8601String(),
         if (price != null) 'price': price,
         if (qty != 1) 'qty': qty,
+        if (category != 'casa') 'category': category,
+        if (due != null) 'due': due!.toIso8601String(),
       };
 
   static ShoppingItem fromJson(String id, Map<String, dynamic> j) => ShoppingItem(
@@ -654,6 +680,80 @@ class ShoppingItem {
         at: DateTime.tryParse(j['at'] as String? ?? '') ?? DateTime(2026),
         price: (j['price'] as num?)?.toDouble(),
         qty: (j['qty'] as num?)?.toDouble() ?? 1,
+        category: shoppingCategories.containsKey(j['category']) ? j['category'] as String : 'casa',
+        due: DateTime.tryParse(j['due'] as String? ?? ''),
+      );
+}
+
+/// Secciones de la lista de compras.
+const shoppingCategories = <String, String>{
+  'casa': '🏠 Casa',
+  'colegio': '🏫 Colegio',
+  'personal': '🧴 Personal',
+};
+
+enum RequestStatus { pending, approved, rejected }
+
+/// Algo que un chico pide para la lista de compras; un adulto lo aprueba.
+@immutable
+class ShoppingRequest {
+  const ShoppingRequest({
+    required this.id,
+    required this.memberId,
+    required this.name,
+    this.qty = 1,
+    this.category = 'colegio',
+    this.due,
+    this.status = RequestStatus.pending,
+    this.itemId,
+    required this.at,
+  });
+
+  final String id;
+  final String memberId;
+  final String name;
+  final double qty;
+  final String category;
+  final DateTime? due;
+  final RequestStatus status;
+
+  /// La cosa que se agregó a la lista al aprobarlo.
+  final String? itemId;
+  final DateTime at;
+
+  ShoppingRequest copyWith({RequestStatus? status, String? itemId}) => ShoppingRequest(
+        id: id,
+        memberId: memberId,
+        name: name,
+        qty: qty,
+        category: category,
+        due: due,
+        status: status ?? this.status,
+        itemId: itemId ?? this.itemId,
+        at: at,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'memberId': memberId,
+        'name': name,
+        if (qty != 1) 'qty': qty,
+        'category': category,
+        if (due != null) 'due': due!.toIso8601String(),
+        'status': status.name,
+        if (itemId != null) 'itemId': itemId,
+        'at': at.toIso8601String(),
+      };
+
+  static ShoppingRequest fromJson(String id, Map<String, dynamic> j) => ShoppingRequest(
+        id: id,
+        memberId: j['memberId'] as String? ?? '',
+        name: j['name'] as String? ?? '',
+        qty: (j['qty'] as num?)?.toDouble() ?? 1,
+        category: shoppingCategories.containsKey(j['category']) ? j['category'] as String : 'casa',
+        due: DateTime.tryParse(j['due'] as String? ?? ''),
+        status: RequestStatus.values.asNameMap()[j['status']] ?? RequestStatus.pending,
+        itemId: j['itemId'] as String?,
+        at: DateTime.tryParse(j['at'] as String? ?? '') ?? DateTime(2026),
       );
 }
 
@@ -805,6 +905,7 @@ enum NoticeKind {
   goal(false, Icons.favorite_border),
   alert(true, Icons.warning_amber_outlined),
   game(false, Icons.sports_esports_outlined),
+  shopping(true, Icons.shopping_cart_outlined),
   info(false, Icons.info_outline);
 
   const NoticeKind(this.important, this.icon);

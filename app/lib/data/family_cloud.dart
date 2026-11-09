@@ -112,6 +112,7 @@ class FamilyCloud implements FamilySync {
   CollectionReference<Map<String, dynamic>> _notices(String home) => _homeRef(home).collection('notices');
   CollectionReference<Map<String, dynamic>> _games(String home) => _homeRef(home).collection('games');
   CollectionReference<Map<String, dynamic>> _events(String home) => _homeRef(home).collection('events');
+  CollectionReference<Map<String, dynamic>> _requests(String home) => _homeRef(home).collection('shoppingRequests');
 
   String _newMemberId() =>
       'm${_clock().microsecondsSinceEpoch.toRadixString(36)}${_random.nextInt(1296).toRadixString(36)}';
@@ -385,6 +386,13 @@ class FamilyCloud implements FamilySync {
       ]);
     }, onError: onError));
 
+    // Pedidos de los chicos para la lista de compras (los últimos 60).
+    _subs.add(_requests(homeId).orderBy('at', descending: true).limit(60).snapshots().listen((snap) {
+      store.applyRemote(shoppingRequests: [
+        for (final doc in snap.docs) ShoppingRequest.fromJson(doc.id, doc.data()),
+      ]);
+    }, onError: onError));
+
     _attachFriends(store, homeId, onError);
 
     _subs.add(_games(homeId).orderBy('updatedAt', descending: true).limit(30).snapshots().listen((snap) {
@@ -578,6 +586,13 @@ class FamilyCloud implements FamilySync {
   @override
   void shoppingRemoved(List<String> ids) =>
       _write((h) => _homeRef(h).update({for (final id in ids) 'shopping.$id': FieldValue.delete()}));
+
+  @override
+  void shoppingRequestSaved(ShoppingRequest request) =>
+      _write((h) => _requests(h).doc(request.id).set(request.toJson()));
+
+  @override
+  void shoppingRequestRemoved(String id) => _write((h) => _requests(h).doc(id).delete());
 
   /// Las familias amigas ven el nombre nuevo del hogar.
   Future<void> renameInFriendships(String name) async {
