@@ -2,6 +2,13 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.24.0 — 2026-11-09 · Herramientas del hogar a elección
+
+- **Lista de compras opcional:** ya no aparece sola en el inicio del adulto. Cada adulto la activa en *Mi día → editar → Herramientas del hogar*. Sigue también en Ajustes → La casa.
+- **Fecha probable de compra:** arriba de la lista ("Próxima compra: sábado 14 de noviembre"), compartida entre los adultos y visible en la tarjeta del inicio.
+- **Llevar la cuenta de precios (opcional):** al tildar algo sin precio pregunta cuánto salió (se puede saltear); cada cosa muestra su precio y abajo se ve "En el carrito" y el total aproximado. Acepta "1.234,50", "1234" o "$ 900".
+- **Arreglo:** en Mi día, al restar con "−" una meta que se cuenta (agua, caminar…), en la nube quedaba el número viejo y no bajaba de 2. Ahora baja hasta cero.
+
 ## 0.23.0 — 2026-11-09 · Contar, comprar, renombrar y más avatares
 
 - **Metas que se cuentan en Mi día:** "💧 Vasos de agua 3/8": cada toque suma uno, "−" resta si te equivocaste, y se puede pasar de la meta (10/8). Las metas propias pueden ser "se marca una vez" o "se cuenta N veces".

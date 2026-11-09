@@ -290,6 +290,8 @@ class FamilyCloud implements FamilySync {
       final rewards = data['rewards'];
       store.applyRemote(
         homeName: data['name'] as String?,
+        shoppingDate: data.containsKey('shoppingDate') ? DateTime.tryParse(data['shoppingDate'] as String? ?? '') : null,
+        clearShoppingDate: data.containsKey('shoppingDate') && data['shoppingDate'] == null,
         shopping: [
           for (final e in ((data['shopping'] as Map?) ?? const {}).entries)
             if (e.value is Map) ShoppingItem.fromJson(e.key as String, (e.value as Map).cast<String, dynamic>()),
@@ -507,7 +509,8 @@ class FamilyCloud implements FamilySync {
               'at': Timestamp.fromDate(completion.completedAt),
               'pts': completion.pointsAwarded,
               'pending': completion.pendingApproval,
-              if (completion.count != 1) 'n': completion.count,
+              // Siempre: con "merge" un 'n' viejo quedaría y el contador no bajaría.
+              'n': completion.count,
             },
           },
         }, SetOptions(merge: true));

@@ -6,6 +6,7 @@ import 'package:family_app/data/family_storage.dart';
 import 'package:family_app/data/family_store.dart';
 import 'package:family_app/models/models.dart';
 import 'package:family_app/widgets/avatar_view.dart';
+import 'package:family_app/widgets/common.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -49,6 +50,28 @@ void main() {
     expect(copia.shopping.length, 2);
   });
 
+  test('precios: se leen como los escribe la gente y suman', () {
+    expect(parseMoney('1.234,50'), 1234.5);
+    expect(parseMoney('1234'), 1234);
+    expect(parseMoney(r'$ 900'), 900);
+    expect(parseMoney('2.500'), 2500);
+    expect(parseMoney('12.5'), 12.5);
+    expect(parseMoney(''), isNull);
+    expect(money(1234.5), r'$ 1.234,50');
+    expect(money(900), r'$ 900');
+    final store = FamilyStore.demo(clock: () => DateTime(2026, 11, 9, 9));
+    store.addShopping('Leche, Pan');
+    final leche = store.shopping.firstWhere((i) => i.name == 'Leche');
+    final pan = store.shopping.firstWhere((i) => i.name == 'Pan');
+    store.setShoppingPrice(leche.id, 1200);
+    store.setShoppingPrice(pan.id, 800);
+    store.toggleShopping(leche.id);
+    expect(store.shoppingTotal, 2000);
+    expect(store.shoppingInCart, 1200);
+    store.setShoppingDate(DateTime(2026, 11, 14, 18));
+    expect(store.shoppingDate, DateTime(2026, 11, 14));
+  });
+
   test('renombrar el hogar', () {
     final store = FamilyStore.demo(clock: () => DateTime(2026, 11, 9, 9));
     store.renameHome('  Familia Matheus ');
@@ -89,6 +112,8 @@ void main() {
     final session = AppSession(store: store, prefs: prefs, storage: FamilyStorage(prefs));
     await session.restore();
     await session.startDemo();
+    expect(store.usesTool('adulto', 'compras'), isFalse, reason: 'la lista arranca apagada');
+    store.setTool('adulto', 'compras', true);
 
     await tester.pumpWidget(FamilyApp(store: store, session: session));
     await tester.tap(find.text('Papá'));

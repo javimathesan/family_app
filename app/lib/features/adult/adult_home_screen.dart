@@ -153,6 +153,7 @@ class AdultHomeScreen extends StatelessWidget {
             if (me != null) ...[
               const SizedBox(height: 20),
               _MyDay(member: me),
+              if (store.usesTool(me.id, 'compras')) ...[
               const SizedBox(height: 12),
               InfoCard(
                 padding: EdgeInsets.zero,
@@ -160,11 +161,16 @@ class AdultHomeScreen extends StatelessWidget {
                   key: const ValueKey('ir_compras'),
                   leading: const Text('🛒', style: TextStyle(fontSize: 26)),
                   title: const Text('Lista de compras', style: TextStyle(fontWeight: FontWeight.w800)),
-                  subtitle: Text(store.shoppingPending == 0 ? 'Vacía · tocá para agregar' : '${store.shoppingPending} por comprar'),
+                  subtitle: Text([
+                    store.shoppingPending == 0 ? 'Vacía · tocá para agregar' : '${store.shoppingPending} por comprar',
+                    if (store.shoppingDate != null) 'compra ${shortDay(store.shoppingDate!)}',
+                    if (store.shoppingTotal > 0) 'aprox. ${money(store.shoppingTotal)}',
+                  ].join(' · ')),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ShoppingScreen())),
                 ),
               ),
+              ],
             ],
             const SizedBox(height: 20),
             Row(
@@ -648,6 +654,26 @@ class _MyDayEditorState extends State<_MyDayEditor> {
                     ),
                 ],
               ),
+              const SizedBox(height: 16),
+              Text('Herramientas del hogar', style: sectionTitle(context)),
+              Text('Opcionales: se muestran en tu inicio solo si las activás.', style: mutedText(context)),
+              SwitchListTile(
+                key: const ValueKey('tool_compras'),
+                contentPadding: EdgeInsets.zero,
+                title: const Text('🛒 Lista de compras', style: TextStyle(fontWeight: FontWeight.w700)),
+                subtitle: const Text('La comparten los adultos, con fecha probable de compra.'),
+                value: widget.store.usesTool(widget.member.id, 'compras'),
+                onChanged: (on) => widget.store.setTool(widget.member.id, 'compras', on),
+              ),
+              if (widget.store.usesTool(widget.member.id, 'compras'))
+                SwitchListTile(
+                  key: const ValueKey('tool_precios'),
+                  contentPadding: const EdgeInsets.only(left: 24),
+                  title: const Text('💲 Llevar la cuenta de precios', style: TextStyle(fontWeight: FontWeight.w700)),
+                  subtitle: const Text('Al tildar algo te pregunta cuánto salió, y ves el total aproximado.'),
+                  value: widget.store.usesTool(widget.member.id, 'compras_precios'),
+                  onChanged: (on) => widget.store.setTool(widget.member.id, 'compras_precios', on),
+                ),
               const SizedBox(height: 16),
               Text('Crear una propia', style: sectionTitle(context)),
               const SizedBox(height: 6),

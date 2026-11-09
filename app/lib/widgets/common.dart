@@ -111,3 +111,32 @@ String longDate(DateTime d) {
   final w = weekdayName(d);
   return '${w[0].toUpperCase()}${w.substring(1)} ${d.day} de ${monthName(d.month)}';
 }
+
+/// "sáb 14/11".
+String shortDay(DateTime d) => '${weekdayName(d).substring(0, 3)} ${d.day}/${d.month}';
+
+/// Plata al estilo argentino: "$ 1.234" o "$ 1.234,50".
+String money(double value) {
+  final cents = (value * 100).round();
+  final whole = (cents ~/ 100).abs().toString();
+  final grouped = StringBuffer();
+  for (var i = 0; i < whole.length; i++) {
+    if (i > 0 && (whole.length - i) % 3 == 0) grouped.write('.');
+    grouped.write(whole[i]);
+  }
+  final rest = (cents % 100).abs();
+  return '${cents < 0 ? '-' : ''}\$ $grouped${rest == 0 ? '' : ',${rest.toString().padLeft(2, '0')}'}';
+}
+
+/// Lee un precio escrito a mano: "1234", "1.234,50", "1234.5", "$ 900".
+double? parseMoney(String text) {
+  var t = text.replaceAll(RegExp(r'[\s$]'), '');
+  if (t.isEmpty) return null;
+  if (t.contains(',')) {
+    t = t.replaceAll('.', '').replaceAll(',', '.');
+  } else if ('.'.allMatches(t).length > 1 || RegExp(r'\.\d{3}$').hasMatch(t)) {
+    t = t.replaceAll('.', '');
+  }
+  final v = double.tryParse(t);
+  return v == null || v < 0 ? null : v;
+}

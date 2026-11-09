@@ -41,6 +41,43 @@ extension FamilyShopping on FamilyStore {
     _changed();
   }
 
+  /// Precio aproximado de una cosa (`null` lo borra).
+  void setShoppingPrice(String id, double? price) {
+    final i = _shopping.indexWhere((x) => x.id == id);
+    if (i < 0) return;
+    _shopping[i] = _shopping[i].copyWith(price: () => price);
+    sync?.shoppingSaved(_shopping[i]);
+    _changed();
+  }
+
+  /// Total aproximado de todo lo que tiene precio.
+  double get shoppingTotal => _shopping.fold(0, (sum, i) => sum + (i.price ?? 0));
+
+  /// Total de lo que ya está en el carrito (tildado).
+  double get shoppingInCart => _shopping.where((i) => i.done).fold(0, (sum, i) => sum + (i.price ?? 0));
+
+  /// Fecha probable de la próxima compra (la comparten los adultos).
+  DateTime? get shoppingDate => _shoppingDate;
+
+  void setShoppingDate(DateTime? date) {
+    _shoppingDate = date == null ? null : DateTime(date.year, date.month, date.day);
+    sync?.homeSettingsChanged({'shoppingDate': _shoppingDate?.toIso8601String()});
+    _changed();
+  }
+
+  /// Si [memberId] eligió ver una herramienta del hogar (por ejemplo `compras`).
+  bool usesTool(String memberId, String tool) => memberById(memberId)?.look.tools.contains(tool) ?? false;
+
+  void setTool(String memberId, String tool, bool on) {
+    final m = memberById(memberId);
+    if (m == null) return;
+    final tools = [...m.look.tools]..remove(tool);
+    if (on) tools.add(tool);
+    m.look = m.look.copyWith(tools: tools);
+    sync?.memberUpdated(m);
+    _changed();
+  }
+
   /// Borra lo que ya se compró.
   void clearBoughtShopping() {
     final ids = [for (final i in _shopping) if (i.done) i.id];

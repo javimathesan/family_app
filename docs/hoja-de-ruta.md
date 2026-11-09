@@ -25,6 +25,12 @@ Misión: que los más chicos tomen conciencia de sus tareas y responsabilidades,
 - [ ] Panel web para padres.
 - [ ] Cumplimiento legal por país (COPPA, LGPD, política de familias de Play).
 
+## Herramientas del hogar (la "guinda")
+Que la app conecte a toda la casa, no solo a los chicos: herramientas útiles en un solo lugar, **siempre opcionales** (cada adulto activa las que quiere en Mi día).
+- [x] Mi día personal con metas que se cuentan.
+- [x] Lista de compras con fecha probable y precios.
+- [ ] Ideas: gastos del hogar por mes, menú semanal, vencimientos (servicios, impuestos), turnos médicos de la familia, cumpleaños.
+
 ## Juegos nuevos
 Solo si suman a la misión: educativos (tablas, sopa de letras, memoria, rompecabezas) o para jugar entre familias (damas, batalla naval, dibujos). Siempre como premio, respetando "primero la rutina".
 

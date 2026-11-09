@@ -199,7 +199,12 @@ class MemberLook {
     this.hidden = const [],
     this.tints = const {},
     this.goals,
+    this.tools = const [],
   });
+
+  /// Herramientas del hogar que el adulto eligió ver en su inicio
+  /// (por ejemplo `compras`, `compras_precios`). Todas arrancan apagadas.
+  final List<String> tools;
 
   final LookMode mode;
 
@@ -236,8 +241,10 @@ class MemberLook {
     List<String>? hidden,
     Map<String, int>? tints,
     List<AdultGoal>? goals,
+    List<String>? tools,
   }) =>
       MemberLook(
+        tools: tools ?? this.tools,
         tints: tints ?? this.tints,
         goals: goals ?? this.goals,
         mode: mode ?? this.mode,
@@ -259,6 +266,7 @@ class MemberLook {
         'hidden': hidden,
         if (tints.isNotEmpty) 'tints': tints,
         if (goals != null) 'goals': [for (final g in goals!) g.toJson()],
+        if (tools.isNotEmpty) 'tools': tools,
       };
 
   static MemberLook fromJson(Object? raw) {
@@ -275,6 +283,7 @@ class MemberLook {
       goals: raw['goals'] is List
           ? [for (final g in raw['goals'] as List) AdultGoal.fromJson((g as Map).cast<String, dynamic>())]
           : null,
+      tools: ((raw['tools'] as List?) ?? const []).cast<String>().toList(),
     );
   }
 
@@ -289,7 +298,8 @@ class MemberLook {
       listEquals(other.home, home) &&
       listEquals(other.hidden, hidden) &&
       mapEquals(other.tints, tints) &&
-      listEquals(other.goals, goals);
+      listEquals(other.goals, goals) &&
+      listEquals(other.tools, tools);
 
   @override
   int get hashCode => Object.hash(mode, background, cards, party, world, Object.hashAll(home), Object.hashAll(hidden), Object.hashAll(tints.entries.map((e) => '${e.key}${e.value}')));
@@ -605,7 +615,7 @@ class TaskCompletion {
 /// Algo para comprar en la lista del hogar.
 @immutable
 class ShoppingItem {
-  const ShoppingItem({required this.id, required this.name, this.done = false, this.by, required this.at});
+  const ShoppingItem({required this.id, required this.name, this.done = false, this.by, required this.at, this.price});
 
   final String id;
   final String name;
@@ -615,9 +625,14 @@ class ShoppingItem {
   final String? by;
   final DateTime at;
 
-  ShoppingItem copyWith({bool? done}) => ShoppingItem(id: id, name: name, done: done ?? this.done, by: by, at: at);
+  /// Precio aproximado (opcional), para llevar la cuenta.
+  final double? price;
 
-  Map<String, dynamic> toJson() => {'name': name, 'done': done, if (by != null) 'by': by, 'at': at.toIso8601String()};
+  ShoppingItem copyWith({bool? done, double? Function()? price}) =>
+      ShoppingItem(id: id, name: name, done: done ?? this.done, by: by, at: at, price: price == null ? this.price : price());
+
+  Map<String, dynamic> toJson() =>
+      {'name': name, 'done': done, if (by != null) 'by': by, 'at': at.toIso8601String(), if (price != null) 'price': price};
 
   static ShoppingItem fromJson(String id, Map<String, dynamic> j) => ShoppingItem(
         id: id,
@@ -625,6 +640,7 @@ class ShoppingItem {
         done: j['done'] as bool? ?? false,
         by: j['by'] as String?,
         at: DateTime.tryParse(j['at'] as String? ?? '') ?? DateTime(2026),
+        price: (j['price'] as num?)?.toDouble(),
       );
 }
 

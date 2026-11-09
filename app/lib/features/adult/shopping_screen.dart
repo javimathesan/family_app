@@ -30,6 +30,31 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
     _focus.requestFocus();
   }
 
+  /// Pide el precio aproximado (vacío = sin precio).
+  Future<void> _askPrice(FamilyStore store, String id, String name, double? current) async {
+    final controller = TextEditingController(text: current == null ? '' : money(current).replaceAll(r'$ ', ''));
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('¿Cuánto salió $name?'),
+        content: TextField(
+          key: const ValueKey('precio_campo'),
+          controller: controller,
+          autofocus: true,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(prefixText: '\$ ', hintText: 'Aproximado', border: OutlineInputBorder()),
+          onSubmitted: (v) => Navigator.pop(ctx, v),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Saltear')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, controller.text), child: const Text('Guardar')),
+        ],
+      ),
+    );
+    if (result == null) return;
+    store.setShoppingPrice(id, parseMoney(result));
+  }
+
   @override
   Widget build(BuildContext context) {
     final store = FamilyScope.of(context);
@@ -39,6 +64,8 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
     final canEdit = !session.isCloud || (me?.role.canManage ?? false);
     final items = store.shopping;
     final bought = items.where((i) => i.done).length;
+    final prices = me != null && store.usesTool(me.id, 'compras_precios');
+    final date = store.shoppingDate;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Lista de compras', style: TextStyle(fontWeight: FontWeight.w800)),
@@ -54,6 +81,28 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            ListTile(
+              key: const ValueKey('fecha_compra'),
+              leading: const Icon(Icons.event_outlined),
+              title: Text(date == null ? 'Sin fecha de compra' : 'Próxima compra: ${longDate(date)}',
+                  style: const TextStyle(fontWeight: FontWeight.w700)),
+              subtitle: Text(canEdit ? (date == null ? 'Tocá para elegir una fecha probable' : 'Tocá para cambiarla') : 'La elige un administrador'),
+              trailing: date != null && canEdit
+                  ? IconButton(tooltip: 'Quitar la fecha', icon: const Icon(Icons.close), onPressed: () => store.setShoppingDate(null))
+                  : null,
+              onTap: !canEdit
+                  ? null
+                  : () async {
+                      final now = store.now;
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: date != null && !date.isBefore(DateTime(now.year, now.month, now.day)) ? date : now,
+                        firstDate: DateTime(now.year, now.month, now.day),
+                        lastDate: now.add(const Duration(days: 120)),
+                      );
+                      if (picked != null) store.setShoppingDate(picked);
+                    },
+            ),
             if (canEdit)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
@@ -111,7 +160,21 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
                             child: CheckboxListTile(
                               controlAffinity: ListTileControlAffinity.leading,
                               value: i.done,
-                              onChanged: canEdit ? (_) => store.toggleShopping(i.id) : null,
+                              secondary: prices
+                                  ? TextButton(
+                                      key: ValueKey('precio_${i.id}'),
+                                      onPressed: canEdit ? () => _askPrice(store, i.id, i.name, i.price) : null,
+                                      child: Text(i.price == null ? '\$ —' : money(i.price!),
+                                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                                    )
+                                  : null,
+                              onChanged: !canEdit
+                                  ? null
+                                  : (_) {
+                                      store.toggleShopping(i.id);
+                                      // Al tildar algo sin precio, pregunta cuánto salió (se puede saltear).
+                                      if (prices && !i.done && i.price == null) _askPrice(store, i.id, i.name, null);
+                                    },
                               title: Text(
                                 i.name,
                                 style: TextStyle(
@@ -122,6 +185,17 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
                                 ),
                               ),
                               subtitle: i.by == null ? null : Text('Lo agregó ${i.by}'),
+                            ),
+                          ),
+                        if (prices && store.shoppingTotal > 0)
+                          InfoCard(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('En el carrito: ${money(store.shoppingInCart)}',
+                                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
+                                Text('Total aproximado de la lista: ${money(store.shoppingTotal)}', style: mutedText(context)),
+                              ],
                             ),
                           ),
                         if (canEdit)

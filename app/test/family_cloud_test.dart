@@ -244,4 +244,34 @@ void main() {
     expect(doc.data()!['templates'] as List, isEmpty);
     expect(doc.data()!['rewards'] as List, isEmpty);
   });
+
+  test('el contador de Mi día baja también en la nube (no queda un número viejo)', () async {
+    final ids = await familyWithOneChild();
+    final agua = AdultGoal.all.firstWhere((g) => g.id == 'meta_agua');
+    adultStore.setMyGoals(ids.adultId, [agua]);
+    adultStore.addGoalCount(ids.adultId, agua.id);
+    adultStore.addGoalCount(ids.adultId, agua.id);
+    await settle();
+    adultStore.addGoalCount(ids.adultId, agua.id, delta: -1);
+    await settle();
+    expect(adultStore.goalCount(ids.adultId, agua.id), 1);
+    adultStore.addGoalCount(ids.adultId, agua.id, delta: -1);
+    await settle();
+    expect(adultStore.goalCount(ids.adultId, agua.id), 0);
+  });
+
+  test('lista de compras con precio y fecha en la nube', () async {
+    final ids = await familyWithOneChild();
+    adultStore.addShopping('Leche');
+    final leche = adultStore.shopping.single;
+    adultStore.setShoppingPrice(leche.id, 1200);
+    adultStore.setShoppingDate(DateTime(2026, 11, 14));
+    await settle();
+    expect(childStore.shopping.single.price, 1200);
+    expect(childStore.shoppingDate, DateTime(2026, 11, 14));
+    adultStore.setShoppingDate(null);
+    await settle();
+    expect(childStore.shoppingDate, isNull);
+    expect(ids.homeId, isNotEmpty);
+  });
 }
