@@ -6,7 +6,7 @@
 
 ## 1. Quiénes somos y aceptación
 
-Family App es ofrecida por **[NOMBRE O RAZÓN SOCIAL]**, [DOMICILIO], Argentina ([EMAIL DE CONTACTO]). Al crear un hogar o unirse a uno, el adulto responsable acepta estos términos y la [Política de privacidad](politica-de-privacidad.md), en nombre propio y de los menores a su cargo.
+Family App es ofrecida por **[NOMBRE O RAZÓN SOCIAL]**, [DOMICILIO], Argentina (familyapps.oficial@gmail.com). Al crear un hogar o unirse a uno, el adulto responsable acepta estos términos y la [Política de privacidad](politica-de-privacidad.md), en nombre propio y de los menores a su cargo.
 
 ## 2. Quién puede usarla
 

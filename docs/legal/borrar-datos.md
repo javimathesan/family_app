@@ -20,6 +20,6 @@ Si solo querés sacar un teléfono, usá **"Desvincular este teléfono"**. Para 
 
 ## Sin la app
 
-Si ya no tenés la app instalada, escribinos a **[EMAIL DE CONTACTO]** con el asunto "Borrar mis datos" y el nombre del hogar. Lo borramos dentro de los 30 días y te confirmamos por email.
+Si ya no tenés la app instalada, escribinos a **familyapps.oficial@gmail.com** con el asunto "Borrar mis datos" y el nombre del hogar. Lo borramos dentro de los 30 días y te confirmamos por email.
 
 [NOMBRE O RAZÓN SOCIAL] · Responsable de los datos · Ley 25.326

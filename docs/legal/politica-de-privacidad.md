@@ -6,7 +6,7 @@
 
 ## 1. Quién es el responsable
 
-El responsable de los datos es **[NOMBRE O RAZÓN SOCIAL]**, con domicilio en **[DOMICILIO]**, Argentina (en adelante, "nosotros"). Por cualquier consulta sobre privacidad escribinos a **[EMAIL DE CONTACTO]**.
+El responsable de los datos es **[NOMBRE O RAZÓN SOCIAL]**, con domicilio en **[DOMICILIO]**, Argentina (en adelante, "nosotros"). Por cualquier consulta sobre privacidad escribinos a **familyapps.oficial@gmail.com**.
 
 ## 2. Qué es Family App
 
@@ -70,7 +70,7 @@ Nosotros solo accedemos a los datos cuando es necesario para soporte técnico o 
 
 ## 8. Cuánto tiempo los guardamos
 
-Mientras el hogar esté activo. Si se desvincula un teléfono o se quita un miembro, sus datos dejan de estar disponibles para ese teléfono. Un adulto administrador puede **borrar el hogar y todos sus datos** desde la app, en *Ajustes → Sesión → "Borrar el hogar y todos sus datos"*; el borrado es inmediato y no se puede deshacer. También podés pedirlo escribiendo a [EMAIL DE CONTACTO]; lo hacemos dentro de los [30] días.
+Mientras el hogar esté activo. Si se desvincula un teléfono o se quita un miembro, sus datos dejan de estar disponibles para ese teléfono. Un adulto administrador puede **borrar el hogar y todos sus datos** desde la app, en *Ajustes → Sesión → "Borrar el hogar y todos sus datos"*; el borrado es inmediato y no se puede deshacer. También podés pedirlo escribiendo a [familyapps.oficial@gmail.com]; lo hacemos dentro de los [30] días.
 
 ## 9. Seguridad
 
@@ -78,7 +78,7 @@ Usamos conexiones cifradas, reglas de acceso por hogar en el servidor, invitacio
 
 ## 10. Tus derechos
 
-Como titular (o representante de un menor) podés pedir **acceso, rectificación, actualización y supresión** de los datos escribiendo a [EMAIL DE CONTACTO].
+Como titular (o representante de un menor) podés pedir **acceso, rectificación, actualización y supresión** de los datos escribiendo a **familyapps.oficial@gmail.com**.
 
 El titular de los datos personales tiene la facultad de ejercer el derecho de acceso a los mismos en forma gratuita a intervalos no inferiores a seis meses, salvo que se acredite un interés legítimo al efecto, conforme lo establecido en el artículo 14, inciso 3 de la Ley N° 25.326.
 
@@ -90,4 +90,4 @@ Si la cambiamos, lo vamos a avisar en la app antes de que el cambio rija. Si el 
 
 ## 12. Contacto
 
-[NOMBRE O RAZÓN SOCIAL] · [EMAIL DE CONTACTO] · [DOMICILIO]
+[NOMBRE O RAZÓN SOCIAL] · familyapps.oficial@gmail.com · [DOMICILIO]
