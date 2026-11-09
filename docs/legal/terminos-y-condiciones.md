@@ -34,7 +34,7 @@ El usuario se compromete a:
 
 ## 6. Salud y bienestar
 
-Los registros de agua, popó, pipí y ánimo, y sus alertas, son **orientativos** y sirven para acompañar hábitos. **Family App no es un dispositivo médico ni reemplaza la consulta con profesionales de la salud.**
+Los registros de agua, popó y pipí (opcionales, los decide un adulto para cada hijo) y sus alertas son **orientativos** y sirven para acompañar hábitos. **Family App no es un dispositivo médico ni reemplaza la consulta con profesionales de la salud.**
 
 ## 7. Agenda, avisos y alarmas
 

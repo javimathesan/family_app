@@ -10,7 +10,7 @@ class PrivacyScreen extends StatelessWidget {
     (
       'Qué guardamos',
       'Apodos (no nombres completos), avatares, rutina y tareas hechas, puntos y premios, vasos de agua, '
-          'hábitos (agua y baño) y ánimo del día, partidas de juegos, agenda y avisos del hogar.'
+          'hábitos opcionales (agua y baño), partidas de juegos, agenda y avisos del hogar.'
     ),
     (
       'Qué NO pedimos',
@@ -25,7 +25,12 @@ class PrivacyScreen extends StatelessWidget {
     (
       'Quién decide',
       'Los adultos administradores aprueban cada teléfono, pueden quitar miembros y desvincular teléfonos. '
-          'Los chicos no pueden hablar con personas de fuera del hogar.'
+          'Los chicos solo juegan con familias amigas aprobadas por adultos; se comparte apodo y avatar y no hay chat libre.'
+    ),
+    (
+      'Hábitos de los chicos',
+      'El agua y el baño son opcionales: un adulto administrador los prende o apaga para cada hijo en Ajustes → Hogar. '
+          'Solo los ven el chico y los adultos de su hogar, y nunca se comparten con familias amigas.'
     ),
     (
       'Informes de fallos',
@@ -43,7 +48,7 @@ class PrivacyScreen extends StatelessWidget {
     (
       'Borrar los datos',
       'Desvincular un teléfono lo saca del hogar y los adultos pueden quitar miembros. '
-          'El borrado completo de un hogar desde la app llega en una próxima versión.'
+          'Un adulto administrador puede borrar el hogar y todos sus datos en Ajustes → Sesión.'
     ),
   ];
 

@@ -23,19 +23,26 @@ Pedimos lo mínimo. **No pedimos** nombre completo, email, número de teléfono,
 | **Apodo** de cada miembro, rol (adulto o hijo) y modo por edad | Mostrar quién es quién dentro del hogar |
 | **Avatar** (dibujo elegido), colores y preferencias de la app | Personalizar la app |
 | **Rutina**: tareas, horarios, tareas hechas, puntos, premios pedidos y aprobados | Funcionamiento principal |
-| **Salud básica**: vasos de agua, registro de popó y pipí, ánimo del día | Que el adulto acompañe hábitos saludables y reciba avisos (por ejemplo, 2 días sin registrar popó) |
+| **Hábitos (opcionales)**: vasos de agua y registro de popó y pipí | Que el adulto acompañe hábitos saludables y reciba avisos (por ejemplo, 2 días sin registrar popó) |
 | **Agenda**: título, lugar, fecha, hora y notas que cargan los miembros | Recordatorios y alarmas |
 | **Juegos y palabras**: partidas, tiempo de juego y resultados del quiz | Juegos por turnos, límite diario y puntos |
+| **Familias amigas**: nombre del hogar, y apodo y avatar de los miembros que cada familia habilita para jugar | Jugar partidas entre hogares que se aprobaron mutuamente |
 | **Identificador anónimo** de cada teléfono (Firebase Authentication) | Saber qué teléfonos pertenecen a qué hogar, sin cuenta ni email |
 | **Avisos** del hogar (por ejemplo, "Tomi completó Aseo personal") | Mantener informados a los adultos |
 | **Informes de fallos** (Firebase Crashlytics): qué pantalla falló, modelo de teléfono, versión de Android y de la app, y un identificador de instalación | Encontrar y arreglar errores. No incluyen apodos, rutinas ni datos de salud |
 | **Verificación de la app** (Firebase App Check con Play Integrity de Google) | Confirmar que quien accede a los datos es la app original y no una copia modificada |
 
-**Datos de salud.** El registro de agua, popó, pipí y ánimo puede considerarse un **dato sensible** según la Ley 25.326. Solo se carga si la familia lo usa, lo ven únicamente los miembros aprobados del hogar y nunca se usa para otra finalidad. El adulto puede no usar esas funciones.
+**Datos de salud.** El registro de agua, popó y pipí puede considerarse un **dato sensible** según la Ley 25.326, y en este caso es de menores. Por eso:
+
+- Es **opcional**: un adulto administrador lo prende o apaga para cada hijo en *Ajustes → Hogar → Mis hábitos de los chicos*. Si se apaga, la tarjeta desaparece y no se registra nada.
+- Lo ven **únicamente el chico y los adultos de su hogar**.
+- **Nunca se comparte con familias amigas** ni con terceros, y no se usa para otra finalidad.
 
 ## 4. Datos de menores
 
-Los datos de los chicos los carga o habilita el **adulto responsable**, que presta el consentimiento al crear el hogar y al aprobar cada teléfono. Recomendamos usar **apodos** y no nombres completos. Los chicos no pueden comunicarse con personas de fuera del hogar.
+Los datos de los chicos los carga o habilita el **adulto responsable**, que presta el consentimiento al crear el hogar y al aprobar cada teléfono. Recomendamos usar **apodos** y no nombres completos.
+
+**Familias amigas.** Los chicos solo juegan con familias amigas **aprobadas por un adulto de cada hogar** (con un código que dura 24 horas), y cada adulto elige qué miembros pueden jugar. Con la otra familia se comparte solo el **nombre del hogar y el apodo y avatar** de esos miembros, más las jugadas de las partidas. **No hay chat libre**: solo reacciones predefinidas. Rutinas, hábitos, agenda y puntos nunca se comparten. Un adulto puede terminar la amistad en cualquier momento.
 
 ## 5. Para qué usamos los datos y para qué no
 
@@ -63,7 +70,7 @@ Nosotros solo accedemos a los datos cuando es necesario para soporte técnico o 
 
 ## 8. Cuánto tiempo los guardamos
 
-Mientras el hogar esté activo. Si se desvincula un teléfono o se quita un miembro, sus datos dejan de estar disponibles para ese teléfono. Podés pedir el **borrado completo del hogar** escribiendo a [EMAIL DE CONTACTO]; lo hacemos dentro de los [30] días. [Cuando esté disponible: también desde la app, en "Privacidad y datos".]
+Mientras el hogar esté activo. Si se desvincula un teléfono o se quita un miembro, sus datos dejan de estar disponibles para ese teléfono. Un adulto administrador puede **borrar el hogar y todos sus datos** desde la app, en *Ajustes → Sesión → "Borrar el hogar y todos sus datos"*; el borrado es inmediato y no se puede deshacer. También podés pedirlo escribiendo a [EMAIL DE CONTACTO]; lo hacemos dentro de los [30] días.
 
 ## 9. Seguridad
 

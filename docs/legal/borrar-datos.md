@@ -11,7 +11,7 @@ Podés borrar tu hogar y todos sus datos cuando quieras.
 Se borran para siempre, en todos los teléfonos del hogar:
 
 - miembros, avatares, puntos y premios;
-- rutina, tareas hechas, hábitos (agua y baño) y ánimo;
+- rutina, tareas hechas y hábitos (agua y baño);
 - agenda, partidas, avance en Palabras y novedades.
 
 Las amistades con otras familias terminan y se borran las partidas compartidas.
