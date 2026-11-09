@@ -2,6 +2,10 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.21.4 — 2026-11-09 · Términos al día
+
+- Pantalla "Términos y condiciones": salud opcional, familias amigas con el código de 24 horas y qué se comparte, sección Contacto y enlace al texto completo en la web (javimathesan.github.io/family_app_web/terminos.html).
+
 ## 0.21.3 — 2026-11-09 · Privacidad y datos completa
 
 - Pantalla "Privacidad y datos" alineada con la política: QR de 15 minutos, familias amigas (código de 24 horas, sin chat libre), hábitos con consentimiento, Crashlytics y App Check, borrado del hogar y email de contacto (familyapps.oficial@gmail.com).

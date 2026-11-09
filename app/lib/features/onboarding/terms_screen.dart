@@ -12,12 +12,13 @@ class TermsScreen extends StatelessWidget {
   static const sections = [
     ('Quién puede usarla', 'Un adulto mayor de 18 años crea el hogar y aprueba a cada miembro. Los chicos la usan con su supervisión.'),
     ('Puntos y premios', 'Los puntos y las monedas de los juegos no tienen valor en dinero. Los premios los define y entrega cada familia.'),
-    ('Salud', 'El registro de agua y baño es orientativo. Family App no es un dispositivo médico ni reemplaza a un profesional.'),
+    ('Salud', 'El registro de agua y baño es opcional y orientativo. Family App no es un dispositivo médico ni reemplaza a un profesional.'),
     ('Avisos y alarmas', 'Dependen del teléfono (permisos, batería, No molestar). No uses la app como único recordatorio para algo crítico.'),
-    ('Familias amigas', 'Solo con doble aprobación de adultos. Se comparten apodo y avatar; no hay chat libre.'),
+    ('Familias amigas', 'Solo con aprobación de un adulto de cada hogar, mediante un código de amistad que vence en 24 horas. Se comparte el nombre del hogar, el apodo y el avatar de los miembros que cada adulto elige, y las jugadas de las partidas. No hay chat libre: solo reacciones predefinidas.'),
     ('Family App Plus', 'Cuando se pueda contratar, será por Google Play, con baja en cualquier momento y derecho de arrepentimiento de 10 días.'),
     ('Tus datos', 'Podés borrar el hogar y todos sus datos desde Ajustes. Más detalles en "Privacidad y datos".'),
     ('Ley aplicable', 'Rigen las leyes de la República Argentina y los derechos de la Ley 24.240 de Defensa del Consumidor.'),
+    ('Contacto', 'Consultas o reclamos: familyapps.oficial@gmail.com'),
   ];
 
   @override
@@ -34,7 +35,7 @@ class TermsScreen extends StatelessWidget {
               Text(body, style: const TextStyle(fontSize: 15, height: 1.35)),
               const SizedBox(height: 16),
             ],
-            Text('Versión $legalVersion · Texto completo: github.com/javimathesan/family_app (docs/legal)', style: mutedText(context)),
+            Text('Versión $legalVersion · Texto completo: javimathesan.github.io/family_app_web/terminos.html', style: mutedText(context)),
           ],
         ),
       ),
