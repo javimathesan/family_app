@@ -9,8 +9,8 @@ class PrivacyScreen extends StatelessWidget {
   static const sections = [
     (
       'Qué guardamos',
-      'Apodos (no nombres completos), avatares, rutina y tareas hechas, puntos y premios, vasos de agua, '
-          'hábitos opcionales (agua y baño), partidas de juegos, agenda y avisos del hogar.'
+      'Apodos (no nombres completos), avatares, rutina y tareas hechas, puntos, premios y pedidos, '
+          'hábitos opcionales (agua y baño), partidas de juegos, agenda, avisos del hogar y amistades con otras familias.'
     ),
     (
       'Qué NO pedimos',
@@ -25,17 +25,27 @@ class PrivacyScreen extends StatelessWidget {
     (
       'Quién decide',
       'Los adultos administradores aprueban cada teléfono, pueden quitar miembros y desvincular teléfonos. '
-          'Los chicos solo juegan con familias amigas aprobadas por adultos; se comparte apodo y avatar y no hay chat libre.'
+          'Para sumar un teléfono se usa un QR de un solo uso que vence en 15 minutos. '
+          'El modo adulto se puede proteger con un PIN.'
+    ),
+    (
+      'Familias amigas',
+      'Los chicos solo juegan con familias amigas aprobadas por un adulto de cada hogar, con un código de amistad '
+          'que vence en 24 horas. Cada adulto elige qué miembros pueden jugar. Se comparte solo el nombre del hogar, '
+          'el apodo y el avatar de esos miembros, y las jugadas de las partidas. No hay chat libre: solo reacciones '
+          'predefinidas. Rutinas, hábitos, agenda y puntos nunca se comparten.'
     ),
     (
       'Hábitos de los chicos',
-      'El agua y el baño son opcionales y arrancan apagados: un adulto administrador los activa para cada hijo en Ajustes → Hogar. '
-          'Solo los ven el chico y los adultos de su hogar, y nunca se comparten con familias amigas.'
+      'El agua y el baño son opcionales y arrancan apagados: un adulto administrador los activa para cada hijo en '
+          'Ajustes → Hogar, y al hacerlo da su consentimiento. Solo los ven el chico y los adultos de su hogar, y nunca '
+          'se comparten con familias amigas ni con terceros. Son orientativos: Family App no es un dispositivo médico.'
     ),
     (
       'Informes de fallos',
-      'Si la app se cierra por un error, se manda un informe técnico (pantalla, modelo de teléfono y versión) '
-          'para arreglarlo. No incluye apodos, rutinas ni hábitos.'
+      'Si la app se cierra por un error, se envía un informe técnico a Firebase Crashlytics (Google): qué pantalla '
+          'falló, modelo de teléfono, versión de Android y de la app. No incluye apodos, rutinas ni hábitos. '
+          'La app también se identifica ante Firebase con App Check (Play Integrity) para confirmar que es la original.'
     ),
     (
       'Avisos y alarmas',
@@ -47,8 +57,13 @@ class PrivacyScreen extends StatelessWidget {
     ),
     (
       'Borrar los datos',
-      'Desvincular un teléfono lo saca del hogar y los adultos pueden quitar miembros. '
-          'Un adulto administrador puede borrar el hogar y todos sus datos en Ajustes → Sesión.'
+      'Un adulto administrador puede borrar el hogar y todos sus datos en Ajustes → Sesión → "Borrar el hogar y '
+          'todos sus datos". El borrado es inmediato y no se puede deshacer. También se puede pedir por email a '
+          'familyapps.oficial@gmail.com, y se resuelve dentro de los 30 días. Desvincular un teléfono lo saca del hogar.'
+    ),
+    (
+      'Contacto',
+      'Consultas, pedidos de acceso, corrección o borrado: familyapps.oficial@gmail.com'
     ),
   ];
 

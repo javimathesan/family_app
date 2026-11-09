@@ -7,6 +7,7 @@ Misión: que los más chicos tomen conciencia de sus tareas y responsabilidades,
 - [ ] Simplificar el inicio del adulto: lo esencial a la vista, lo secundario en Ajustes.
 - [ ] Validar los puntos en el servidor (Cloud Functions) para evitar trampas.
 - [ ] Probar en un celular de gama baja.
+- [ ] Limpiar el campo `mood` (ánimo) del modelo: la app ya no lo registra ni lo muestra.
 - [ ] Prueba cerrada en Play (12 personas, 14 días) y ajustes con lo que digan.
 
 ## Etapa 2 · Primeros meses publicados

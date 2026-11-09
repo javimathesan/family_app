@@ -2,6 +2,12 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.21.3 — 2026-11-09 · Privacidad y datos completa
+
+- Pantalla "Privacidad y datos" alineada con la política: QR de 15 minutos, familias amigas (código de 24 horas, sin chat libre), hábitos con consentimiento, Crashlytics y App Check, borrado del hogar y email de contacto (familyapps.oficial@gmail.com).
+- Se quitó "Mi ánimo" del calendario y el chip "Ánimo" del resumen semanal: la app no lo registra.
+- Documentos legales con el email de contacto.
+
 ## 0.21.2 — 2026-11-09 · Hábitos apagados de entrada y textos legales
 
 - **"Mis hábitos" arranca apagado para cada hijo nuevo:** un adulto administrador lo activa en Ajustes → Hogar → Mis hábitos de los chicos, y al hacerlo da su consentimiento para esos datos de salud. Los hijos que ya estaban en el hogar siguen como antes.

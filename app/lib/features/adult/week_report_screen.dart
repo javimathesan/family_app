@@ -49,12 +49,6 @@ class _ChildWeek extends StatelessWidget {
     final avg = withData.isEmpty ? 0.0 : withData.map((d) => d.summary!.completionRatio).reduce((a, b) => a + b) / withData.length;
     final points = withData.fold<int>(0, (sum, d) => sum + d.summary!.points);
     final waterDays = withData.where((d) => d.summary!.glasses >= 8).length;
-    final moods = <String, int>{};
-    for (final d in withData) {
-      final m = d.summary!.mood;
-      if (m != null) moods[m] = (moods[m] ?? 0) + 1;
-    }
-    final topMood = moods.isEmpty ? null : (moods.entries.toList()..sort((a, b) => b.value.compareTo(a.value))).first.key;
     final best = withData.isEmpty
         ? null
         : (withData.toList()..sort((a, b) => b.summary!.completionRatio.compareTo(a.summary!.completionRatio))).first;
@@ -121,7 +115,6 @@ class _ChildWeek extends StatelessWidget {
                         ? 'Reto cumplido 🏅'
                         : 'Reto: ${store.challengeProgress(member.id)} de ${store.challenge!.target}'),
                   ),
-                if (topMood != null) Chip(avatar: const Icon(Icons.mood, size: 18), label: Text('Ánimo: ${topMood.toLowerCase()}')),
               ],
             ),
             if (best != null && best.summary!.completionRatio > 0) ...[

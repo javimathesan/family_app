@@ -192,8 +192,6 @@ class _DayDetail extends StatelessWidget {
               _Stat(label: 'Agua', value: '${summary.glasses} vasos'),
               const SizedBox(width: 8),
               _Stat(label: 'Pantallas', value: m == 0 ? '$h h' : '$h h $m'),
-              const SizedBox(width: 8),
-              _Stat(label: 'Mi ánimo', value: summary.mood ?? '—'),
             ],
           ),
         ],
