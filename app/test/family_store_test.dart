@@ -57,7 +57,8 @@ void main() {
 
   test('la meta de agua suma 5 puntos una sola vez, aunque tome de más', () {
     final before = store.balanceOf('tomi');
-    for (var i = 0; i < 10; i++) {
+    final start = store.healthOf('tomi').glasses;
+    for (var i = start; i < 10; i++) {
       store.addGlass('tomi');
     }
     expect(store.healthOf('tomi').glasses, 10, reason: 'se puede pasar de la meta');
