@@ -11,6 +11,7 @@ import '../../widgets/common.dart';
 import '../../widgets/crest_badge.dart';
 import '../../widgets/mood_face.dart';
 import '../../widgets/pin_dialog.dart';
+import 'shopping_screen.dart';
 
 /// Panel del adulto: miembros, aprobaciones pendientes y avisos.
 class AdultHomeScreen extends StatelessWidget {
@@ -152,6 +153,18 @@ class AdultHomeScreen extends StatelessWidget {
             if (me != null) ...[
               const SizedBox(height: 20),
               _MyDay(member: me),
+              const SizedBox(height: 12),
+              InfoCard(
+                padding: EdgeInsets.zero,
+                child: ListTile(
+                  key: const ValueKey('ir_compras'),
+                  leading: const Text('🛒', style: TextStyle(fontSize: 26)),
+                  title: const Text('Lista de compras', style: TextStyle(fontWeight: FontWeight.w800)),
+                  subtitle: Text(store.shoppingPending == 0 ? 'Vacía · tocá para agregar' : '${store.shoppingPending} por comprar'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ShoppingScreen())),
+                ),
+              ),
             ],
             const SizedBox(height: 20),
             Row(
@@ -525,7 +538,9 @@ class _MyDay extends StatelessWidget {
           ),
         ] else ...[
           Text(
-            done == total ? '¡Día completo! Gran ejemplo para tus hijos.' : 'Tocá cada meta cuando la cumplas. Se reinician cada día.',
+            done == total
+                ? '¡Día completo! Gran ejemplo para tus hijos.'
+                : 'Tocá cada meta cuando la cumplas; las que tienen número suman uno por toque. Se reinician cada día.',
             style: mutedText(context),
           ),
           const SizedBox(height: 10),
@@ -534,12 +549,27 @@ class _MyDay extends StatelessWidget {
             runSpacing: 8,
             children: [
               for (final g in goals)
-                FilterChip(
-                  avatar: Text(g.emoji, style: const TextStyle(fontSize: 16)),
-                  label: Text(g.label),
-                  selected: store.isGoalDone(member.id, g.id),
-                  onSelected: (_) => store.toggleAdultGoal(member.id, g.id),
-                ),
+                if (g.counted)
+                  // Se cuenta: cada toque suma uno (se puede pasar de la meta) y "−" resta.
+                  InputChip(
+                    key: ValueKey('contar_${g.id}'),
+                    avatar: Text(g.emoji, style: const TextStyle(fontSize: 16)),
+                    label: Text('${g.label} ${store.goalCount(member.id, g.id)}/${g.target}'),
+                    selected: store.isGoalMet(member.id, g),
+                    showCheckmark: false,
+                    tooltip: 'Tocá para sumar uno',
+                    onPressed: () => store.addGoalCount(member.id, g.id),
+                    deleteIcon: const Icon(Icons.remove_circle_outline, size: 20),
+                    deleteButtonTooltipMessage: 'Restar uno',
+                    onDeleted: store.goalCount(member.id, g.id) == 0 ? null : () => store.addGoalCount(member.id, g.id, delta: -1),
+                  )
+                else
+                  FilterChip(
+                    avatar: Text(g.emoji, style: const TextStyle(fontSize: 16)),
+                    label: Text(g.label),
+                    selected: store.isGoalDone(member.id, g.id),
+                    onSelected: (_) => store.toggleAdultGoal(member.id, g.id),
+                  ),
             ],
           ),
         ],
@@ -572,6 +602,7 @@ class _MyDayEditor extends StatefulWidget {
 class _MyDayEditorState extends State<_MyDayEditor> {
   final _name = TextEditingController();
   String _emoji = '⭐';
+  int _target = 1;
 
   static const _emojis = ['⭐', '🏃', '📖', '🧸', '💧', '🧘', '📞', '🛒', '💼', '🍎', '🌱', '🎵', '🧹', '💊', '❤️', '🙏'];
 
@@ -611,7 +642,7 @@ class _MyDayEditorState extends State<_MyDayEditor> {
                     InputChip(
                       key: ValueKey('mia_${g.id}'),
                       avatar: Text(g.emoji, style: const TextStyle(fontSize: 16)),
-                      label: Text(g.label),
+                      label: Text(g.counted ? '${g.label} (${g.target})' : g.label),
                       deleteButtonTooltipMessage: 'Quitar',
                       onDeleted: () => _save([for (final x in goals) if (x.id != g.id) x]),
                     ),
@@ -661,14 +692,34 @@ class _MyDayEditorState extends State<_MyDayEditor> {
                       onPressed: name.isEmpty
                           ? null
                           : () {
-                              _save([...goals, AdultGoal(widget.store.newGoalId(), name, _emoji)]);
+                              _save([...goals, AdultGoal(widget.store.newGoalId(), name, _emoji, target: _target)]);
                               setState(() {
                                 _name.clear();
                                 _emoji = '⭐';
+                                _target = 1;
                               });
                             },
                       child: const Text('Sumar'),
                     ),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(_target == 1 ? 'Se marca una vez' : 'Se cuenta: $_target veces (se puede pasar)',
+                        style: const TextStyle(fontWeight: FontWeight.w700)),
+                  ),
+                  IconButton.outlined(
+                    tooltip: 'Menos veces',
+                    onPressed: _target > 1 ? () => setState(() => _target--) : null,
+                    icon: const Icon(Icons.remove),
+                  ),
+                  SizedBox(width: 36, child: Text('$_target', textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800))),
+                  IconButton.outlined(
+                    tooltip: 'Más veces',
+                    onPressed: _target < 20 ? () => setState(() => _target++) : null,
+                    icon: const Icon(Icons.add),
                   ),
                 ],
               ),

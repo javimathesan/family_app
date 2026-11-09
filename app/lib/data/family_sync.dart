@@ -48,4 +48,8 @@ abstract class FamilySync {
   /// Partidas con familias amigas (se guardan fuera del hogar).
   void sharedMatchSaved(GameMatch match);
   void sharedMatchRemoved(String matchId);
+
+  /// Lista de compras del hogar.
+  void shoppingSaved(ShoppingItem item);
+  void shoppingRemoved(List<String> ids);
 }

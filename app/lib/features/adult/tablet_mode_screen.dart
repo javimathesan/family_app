@@ -147,7 +147,7 @@ class _KidTasks extends StatelessWidget {
             Expanded(child: Text('Tareas de ${member.nickname}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900))),
             if (member.waterOn)
             FilledButton.tonalIcon(
-              onPressed: health.glasses >= FamilyStore.waterGoal ? null : () => store.addGlass(member.id),
+              onPressed: health.glasses >= FamilyStore.maxGlasses ? null : () => store.addGlass(member.id),
               icon: const Icon(Icons.local_drink),
               label: Text('${health.glasses}/${FamilyStore.waterGoal}'),
             ),

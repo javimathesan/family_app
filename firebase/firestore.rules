@@ -66,10 +66,11 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/friendInvites/$(request.resource.data.inviteCode)).data.homeId == request.resource.data.homeA
         && getAfter(/databases/$(database)/documents/friendInvites/$(request.resource.data.inviteCode)).data.usedBy == request.auth.uid;
       // Cada familia cambia solo su lista; cualquiera de las dos puede terminarla.
+      // (y su propio nombre, si lo corrige).
       allow update: if (isAdmin(resource.data.homeA)
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['kidsA', 'status']))
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['kidsA', 'nameA', 'status']))
         || (isAdmin(resource.data.homeB)
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['kidsB', 'status']));
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['kidsB', 'nameB', 'status']));
     }
 
     // Partidas entre dos familias amigas (con la amistad activa).

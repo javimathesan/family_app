@@ -340,6 +340,12 @@ class AppSession extends ChangeNotifier {
 
   Future<void> endFriendship(String friendshipId) => _requireCloud().endFriendship(friendshipId);
 
+  /// Corrige el nombre del hogar (también lo ven las familias amigas).
+  Future<void> renameHome(String name) async {
+    store.renameHome(name);
+    if (isCloud) await cloud?.renameInFriendships(store.homeName);
+  }
+
   /// Se une al hogar de la invitación; queda esperando la aprobación.
   Future<void> joinHome(Invitation invite, String nickname) async {
     final c = _requireCloud();

@@ -55,13 +55,25 @@ class AvatarConfig {
     this.hairStyle = 0,
     this.hairColor = 1,
     this.eyes = 0,
-    this.glasses = false,
+    bool glasses = false,
+    int? eyewear,
     this.shirt = 0,
     this.accessory = 0,
     this.outfit = 0,
     this.brows = 0,
     this.freckles = false,
-  });
+    this.facialHair = 0,
+  }) : eyewear = eyewear ?? (glasses ? 1 : 0);
+
+  /// Anteojos y parches (ver `AvatarOptions.eyewear`): 0 nada, 1 anteojos,
+  /// 2 de sol, 3 parche en el ojo izquierdo, 4 en el derecho.
+  final int eyewear;
+
+  /// Barba y bigote (ver `AvatarOptions.facialHair`).
+  final int facialHair;
+
+  /// Compatibilidad con los avatares guardados antes (solo "anteojos sí/no").
+  bool get glasses => eyewear == 1;
 
   /// Cejas: 0 sin, 1 finas, 2 gruesas.
   final int brows;
@@ -71,7 +83,6 @@ class AvatarConfig {
   final int hairStyle;
   final int hairColor;
   final int eyes;
-  final bool glasses;
   final int shirt;
   final int accessory;
 
@@ -83,7 +94,8 @@ class AvatarConfig {
     int? hairStyle,
     int? hairColor,
     int? eyes,
-    bool? glasses,
+    int? eyewear,
+    int? facialHair,
     int? shirt,
     int? accessory,
     int? outfit,
@@ -97,7 +109,8 @@ class AvatarConfig {
       hairStyle: hairStyle ?? this.hairStyle,
       hairColor: hairColor ?? this.hairColor,
       eyes: eyes ?? this.eyes,
-      glasses: glasses ?? this.glasses,
+      eyewear: eyewear ?? this.eyewear,
+      facialHair: facialHair ?? this.facialHair,
       shirt: shirt ?? this.shirt,
       accessory: accessory ?? this.accessory,
       outfit: outfit ?? this.outfit,
@@ -516,7 +529,7 @@ class TaskSlot {
 /// Meta diaria del adulto ("Mi día"). No da puntos: es para dar el ejemplo.
 @immutable
 class AdultGoal {
-  const AdultGoal(this.id, this.label, this.emoji, {this.notice});
+  const AdultGoal(this.id, this.label, this.emoji, {this.notice, this.target = 1});
 
   /// Siempre empieza con `meta_` para no mezclarse con las tareas de los chicos.
   final String id;
@@ -526,6 +539,12 @@ class AdultGoal {
   /// Si no es `null`, al marcarla se avisa al hogar: "<apodo> <notice>".
   final String? notice;
 
+  /// Cuántas veces hay que hacerla para cumplirla (1 = se marca y listo).
+  /// Se puede pasar: 10 vasos de 8 también vale.
+  final int target;
+
+  bool get counted => target > 1;
+
   /// Ideas para armar "Mi día". Cada adulto elige las suyas y crea otras.
   static const all = <AdultGoal>[
     AdultGoal('meta_ejercicio', 'Hice ejercicio', '🏃'),
@@ -534,7 +553,7 @@ class AdultGoal {
     AdultGoal('meta_mesa', 'Comida en familia sin celulares', '🍽️', notice: 'propuso comer en familia sin celulares'),
     AdultGoal('meta_amigos', 'Tiempo con amigos', '👥'),
     AdultGoal('meta_pantalla', 'Menos de 2 horas de pantalla', '📵'),
-    AdultGoal('meta_agua', 'Tomé 8 vasos de agua', '💧'),
+    AdultGoal('meta_agua', 'Vasos de agua', '💧', target: 8),
     AdultGoal('meta_caminar', 'Salí a caminar', '🚶'),
     AdultGoal('meta_dormir', 'Dormí 8 horas', '😴'),
     AdultGoal('meta_llamar', 'Llamé a un familiar', '📞'),
@@ -542,17 +561,23 @@ class AdultGoal {
     AdultGoal('meta_respirar', 'Un rato para mí', '🧘'),
   ];
 
-  Map<String, dynamic> toJson() => {'id': id, 'label': label, 'emoji': emoji, if (notice != null) 'notice': notice};
+  Map<String, dynamic> toJson() =>
+      {'id': id, 'label': label, 'emoji': emoji, if (notice != null) 'notice': notice, if (target > 1) 'target': target};
 
-  static AdultGoal fromJson(Map<String, dynamic> j) =>
-      AdultGoal(j['id'] as String, j['label'] as String, (j['emoji'] as String?) ?? '⭐', notice: j['notice'] as String?);
+  static AdultGoal fromJson(Map<String, dynamic> j) => AdultGoal(j['id'] as String, j['label'] as String, (j['emoji'] as String?) ?? '⭐',
+      notice: j['notice'] as String?, target: (j['target'] as num?)?.toInt() ?? 1);
 
   @override
   bool operator ==(Object other) =>
-      other is AdultGoal && other.id == id && other.label == label && other.emoji == emoji && other.notice == notice;
+      other is AdultGoal &&
+      other.id == id &&
+      other.label == label &&
+      other.emoji == emoji &&
+      other.notice == notice &&
+      other.target == target;
 
   @override
-  int get hashCode => Object.hash(id, label, emoji, notice);
+  int get hashCode => Object.hash(id, label, emoji, notice, target);
 
   static bool isGoalId(String id) => id.startsWith('meta_');
 }
@@ -565,12 +590,42 @@ class TaskCompletion {
     required this.completedAt,
     required this.pointsAwarded,
     this.pendingApproval = false,
+    this.count = 1,
   });
 
   final String taskId;
   final DateTime completedAt;
   final int pointsAwarded;
   final bool pendingApproval;
+
+  /// Cuántas veces se hizo (metas que se cuentan, como los vasos de agua).
+  final int count;
+}
+
+/// Algo para comprar en la lista del hogar.
+@immutable
+class ShoppingItem {
+  const ShoppingItem({required this.id, required this.name, this.done = false, this.by, required this.at});
+
+  final String id;
+  final String name;
+  final bool done;
+
+  /// Apodo de quien lo agregó.
+  final String? by;
+  final DateTime at;
+
+  ShoppingItem copyWith({bool? done}) => ShoppingItem(id: id, name: name, done: done ?? this.done, by: by, at: at);
+
+  Map<String, dynamic> toJson() => {'name': name, 'done': done, if (by != null) 'by': by, 'at': at.toIso8601String()};
+
+  static ShoppingItem fromJson(String id, Map<String, dynamic> j) => ShoppingItem(
+        id: id,
+        name: j['name'] as String? ?? '',
+        done: j['done'] as bool? ?? false,
+        by: j['by'] as String?,
+        at: DateTime.tryParse(j['at'] as String? ?? '') ?? DateTime(2026),
+      );
 }
 
 /// Registro de salud del día (sin diagnósticos, solo conteos).

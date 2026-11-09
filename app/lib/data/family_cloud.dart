@@ -290,6 +290,10 @@ class FamilyCloud implements FamilySync {
       final rewards = data['rewards'];
       store.applyRemote(
         homeName: data['name'] as String?,
+        shopping: [
+          for (final e in ((data['shopping'] as Map?) ?? const {}).entries)
+            if (e.value is Map) ShoppingItem.fromJson(e.key as String, (e.value as Map).cast<String, dynamic>()),
+        ],
         templates: templates is List
             ? [for (final t in templates) FamilyStore.templateFromJson((t as Map).cast<String, dynamic>())]
             : null,
@@ -410,6 +414,7 @@ class FamilyCloud implements FamilySync {
             completedAt: (e.value['at'] as Timestamp).toDate(),
             pointsAwarded: (e.value['pts'] as num).toInt(),
             pendingApproval: e.value['pending'] as bool? ?? false,
+            count: (e.value['n'] as num?)?.toInt() ?? 1,
           ),
     };
   }
@@ -502,6 +507,7 @@ class FamilyCloud implements FamilySync {
               'at': Timestamp.fromDate(completion.completedAt),
               'pts': completion.pointsAwarded,
               'pending': completion.pendingApproval,
+              if (completion.count != 1) 'n': completion.count,
             },
           },
         }, SetOptions(merge: true));
@@ -560,6 +566,28 @@ class FamilyCloud implements FamilySync {
 
   @override
   void homeSettingsChanged(Map<String, dynamic> fields) => _write((h) => _homeRef(h).update(fields));
+
+  // Cada cosa por separado ("shopping.<id>"): si dos adultos agregan a la vez,
+  // no se pisan.
+  @override
+  void shoppingSaved(ShoppingItem item) => _write((h) => _homeRef(h).update({'shopping.${item.id}': item.toJson()}));
+
+  @override
+  void shoppingRemoved(List<String> ids) =>
+      _write((h) => _homeRef(h).update({for (final id in ids) 'shopping.$id': FieldValue.delete()}));
+
+  /// Las familias amigas ven el nombre nuevo del hogar.
+  Future<void> renameInFriendships(String name) async {
+    for (final e in _friendDocs.entries) {
+      final side = _friendSide[e.key];
+      if (side == null) continue;
+      try {
+        await db.collection('friendships').doc(e.key).update({'name$side': name});
+      } catch (error) {
+        debugPrint('No se pudo cambiar el nombre en la amistad ${e.key}: $error');
+      }
+    }
+  }
 
   @override
   void gameTimeChanged(String memberId, String day, int seconds) => _write((h) => _days(h).doc(_dayId(memberId, day)).set({

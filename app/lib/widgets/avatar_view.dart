@@ -35,6 +35,15 @@ abstract final class AvatarOptions {
   static const hairStyles = [
     'Corto', 'Flequillo', 'Largo', 'Rulos', 'Rapado', 'Puntiagudo', 'Coletas', 'Rodete',
     'Trenzas', 'Afro', 'Mohicano', 'Colita alta', 'Ondas', 'Melena corta',
+    'Dos rodetes', 'Muy largo', 'Carré con flequillo', 'Rizos largos', 'Trenza al costado', 'Media cola',
+  ];
+
+  /// Anteojos y parches (el parche, para que todos se puedan ver reflejados).
+  static const eyewear = ['Sin anteojos', 'Anteojos', 'Anteojos de sol', 'Parche izquierdo', 'Parche derecho'];
+
+  /// Barba y bigote: toman el color del pelo, salvo la barba blanca.
+  static const facialHair = [
+    'Sin barba', 'Barba corta', 'Barba larga', 'Barba larga blanca', 'Bigote', 'Mostacho', 'Candado', 'Tres pelitos',
   ];
   static const hairColors = <(String, Color)>[
     ('Negro', Color(0xFF1E1E1E)),
@@ -217,13 +226,25 @@ class _FunkoPainter extends CustomPainter {
     _eyes(canvas);
     _face(canvas, hair, skin);
     _mouth(canvas);
+    if (c.facialHair > 0 && _outfit != _ninja && _outfit != _robot) _facialHair(canvas, hair, skin);
     if (_outfit == _ninja) _ninjaMask(canvas);
     if (_hood) {
       _hoodFor(canvas, main);
     } else {
       _hairFront(canvas, hair);
     }
-    if (c.glasses && _outfit != _ninja) _glasses(canvas);
+    if (_outfit != _ninja && _outfit != _pirata) {
+      switch (c.eyewear) {
+        case 1:
+          _glasses(canvas);
+        case 2:
+          _sunglasses(canvas);
+        case 3:
+          _eyePatchAt(canvas, 125);
+        case 4:
+          _eyePatchAt(canvas, 175);
+      }
+    }
     switch (_outfit) {
       case _princesa:
         _crown(canvas, small: true);
@@ -660,6 +681,62 @@ class _FunkoPainter extends CustomPainter {
         }
         w.close();
         _shape(canvas, w, color);
+      case 14: // dos rodetes
+        for (final x in [92.0, 208.0]) {
+          _shape(canvas, Path()..addOval(Rect.fromCenter(center: Offset(x, 40), width: 52, height: 48)), color);
+        }
+      case 15: // muy largo
+        _shape(
+          canvas,
+          Path()
+            ..moveTo(60, 248)
+            ..quadraticBezierTo(44, 28, 150, 24)
+            ..quadraticBezierTo(256, 28, 240, 248)
+            ..close(),
+          color,
+        );
+      case 16: // carré con flequillo
+        _shape(
+          canvas,
+          Path()
+            ..moveTo(64, 156)
+            ..quadraticBezierTo(52, 28, 150, 26)
+            ..quadraticBezierTo(248, 28, 236, 156)
+            ..lineTo(64, 156)
+            ..close(),
+          color,
+        );
+      case 17: // rizos largos
+        final r = Path()..moveTo(62, 214);
+        r.quadraticBezierTo(44, 28, 150, 24);
+        r.quadraticBezierTo(256, 28, 238, 214);
+        for (var i = 0; i < 6; i++) {
+          final x = 238 - i * 176 / 6;
+          r.arcToPoint(Offset(x - 176 / 6, 214), radius: const Radius.circular(16));
+        }
+        r.close();
+        _shape(canvas, r, color);
+        for (final o in const [Offset(64, 120), Offset(236, 120), Offset(60, 160), Offset(240, 160)]) {
+          canvas.drawCircle(o, 10, _line(_shade(color, 0.3), 2.5));
+        }
+      case 18: // trenza al costado
+        for (var i = 0; i < 6; i++) {
+          _shape(canvas, Path()..addOval(Rect.fromCenter(center: Offset(222 + i * 2.0, 118 + i * 20.0), width: 28 - i * 1.5, height: 24)), color, outline: 2);
+        }
+        canvas.drawCircle(const Offset(234, 236), 6, _fill(const Color(0xFFDB2777)));
+      case 19: // media cola
+        _shape(
+          canvas,
+          Path()
+            ..moveTo(66, 176)
+            ..quadraticBezierTo(52, 28, 150, 26)
+            ..quadraticBezierTo(248, 28, 234, 176)
+            ..lineTo(66, 176)
+            ..close(),
+          color,
+        );
+        _shape(canvas, Path()..addOval(Rect.fromCenter(center: const Offset(150, 24), width: 34, height: 26)), color);
+        canvas.drawCircle(const Offset(150, 36), 6, _fill(const Color(0xFFDB2777)));
       case 13: // melena corta
         _shape(
           canvas,
@@ -765,7 +842,28 @@ class _FunkoPainter extends CustomPainter {
           ..lineTo(176, 30)
           ..lineTo(168, 64)
           ..close();
-      case 12 || 13: // ondas y melena: flequillo de costado
+      case 16: // carré: flequillo recto
+        p
+          ..moveTo(70, 112)
+          ..quadraticBezierTo(66, 26, 150, 26)
+          ..quadraticBezierTo(234, 26, 230, 112)
+          ..lineTo(224, 84)
+          ..lineTo(76, 84)
+          ..close();
+      case 17: // rizos largos: frente con rulos
+        p
+          ..moveTo(70, 110)
+          ..quadraticBezierTo(58, 84, 74, 70)
+          ..quadraticBezierTo(66, 44, 94, 40)
+          ..quadraticBezierTo(102, 20, 128, 28)
+          ..quadraticBezierTo(150, 12, 172, 28)
+          ..quadraticBezierTo(198, 20, 206, 40)
+          ..quadraticBezierTo(234, 44, 226, 70)
+          ..quadraticBezierTo(242, 84, 230, 110)
+          ..quadraticBezierTo(220, 76, 150, 70)
+          ..quadraticBezierTo(80, 76, 70, 110)
+          ..close();
+      case 12 || 13 || 15 || 18 || 19: // flequillo de costado
         p
           ..moveTo(70, 112)
           ..quadraticBezierTo(66, 26, 150, 26)
@@ -875,6 +973,83 @@ class _FunkoPainter extends CustomPainter {
     canvas.drawCircle(const Offset(125, 112), 22, g);
     canvas.drawCircle(const Offset(175, 112), 22, g);
     canvas.drawLine(const Offset(147, 110), const Offset(153, 110), g);
+  }
+
+  void _sunglasses(Canvas canvas) {
+    final lens = _fill(const Color(0xFF111827));
+    for (final x in [125.0, 175.0]) {
+      final r = RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(x, 114), width: 44, height: 32), const Radius.circular(12));
+      canvas.drawRRect(r, lens);
+      canvas.drawLine(Offset(x - 12, 106), Offset(x - 4, 102), _line(Colors.white.withValues(alpha: 0.55), 3));
+    }
+    canvas.drawLine(const Offset(147, 110), const Offset(153, 110), _line(const Color(0xFF111827), 5));
+    canvas.drawLine(const Offset(103, 108), const Offset(80, 104), _line(const Color(0xFF111827), 4));
+    canvas.drawLine(const Offset(197, 108), const Offset(220, 104), _line(const Color(0xFF111827), 4));
+  }
+
+  /// Parche sobre un ojo (x = 125 izquierdo, 175 derecho).
+  void _eyePatchAt(Canvas canvas, double x) {
+    final left = x < 150;
+    canvas.drawLine(Offset(left ? 216 : 84, left ? 94 : 94), Offset(left ? 84 : 216, left ? 128 : 128), _line(_ink, 3));
+    canvas.drawOval(Rect.fromCenter(center: Offset(x, 114), width: 34, height: 30), _fill(_ink));
+  }
+
+  /// Barba y bigote, con el color del pelo (o blanco).
+  void _facialHair(Canvas canvas, Color hair, Color skin) {
+    final kind = c.facialHair;
+    final color = kind == 3 ? const Color(0xFFE5E7EB) : hair;
+    void mustache({bool curly = false}) {
+      final m = Path()
+        ..moveTo(150, 136)
+        ..quadraticBezierTo(136, 128, 122, 136)
+        ..quadraticBezierTo(curly ? 104 : 116, curly ? 132 : 144, curly ? 106 : 120, curly ? 122 : 146)
+        ..quadraticBezierTo(curly ? 114 : 130, curly ? 146 : 148, 150, 142)
+        ..quadraticBezierTo(curly ? 186 : 170, curly ? 146 : 148, curly ? 194 : 180, curly ? 122 : 146)
+        ..quadraticBezierTo(curly ? 196 : 184, curly ? 132 : 144, 178, 136)
+        ..quadraticBezierTo(164, 128, 150, 136)
+        ..close();
+      _shape(canvas, m, color, outline: 2);
+    }
+
+    switch (kind) {
+      case 1 || 2 || 3: // barbas
+        final long = kind >= 2;
+        final b = Path()
+          ..moveTo(78, 112)
+          ..quadraticBezierTo(84, 160, 116, long ? 200 : 178)
+          ..quadraticBezierTo(150, long ? 246 : 196, 184, long ? 200 : 178)
+          ..quadraticBezierTo(216, 160, 222, 112)
+          ..quadraticBezierTo(206, 150, 174, 152)
+          ..quadraticBezierTo(150, 162, 126, 152)
+          ..quadraticBezierTo(94, 150, 78, 112)
+          ..close();
+        _shape(canvas, b, color, outline: 2);
+        mustache();
+        // Boca a la vista.
+        canvas.drawOval(Rect.fromCenter(center: const Offset(150, 149), width: 24, height: 10), _fill(skin));
+        _mouth(canvas);
+      case 4: // bigote
+        mustache();
+      case 5: // mostacho con puntas
+        mustache(curly: true);
+      case 6: // candado
+        mustache();
+        _shape(
+          canvas,
+          Path()
+            ..moveTo(132, 156)
+            ..quadraticBezierTo(150, 194, 168, 156)
+            ..quadraticBezierTo(150, 164, 132, 156)
+            ..close(),
+          color,
+          outline: 2,
+        );
+      case 7: // tres pelitos en el mentón
+        final hairLine = _line(_shade(color, 0.1), 2.5);
+        for (final dx in [-8.0, 0.0, 8.0]) {
+          canvas.drawLine(Offset(150 + dx, 166), Offset(150 + dx * 1.4, 180), hairLine);
+        }
+    }
   }
 
   void _crown(Canvas canvas, {bool small = false}) {

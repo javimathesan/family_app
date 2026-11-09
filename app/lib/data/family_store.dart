@@ -14,6 +14,7 @@ part 'family_room.dart';
 part 'family_medals.dart';
 part 'family_words.dart';
 part 'family_games.dart';
+part 'family_shopping.dart';
 
 /// Estado del hogar en memoria.
 ///
@@ -66,6 +67,7 @@ class FamilyStore extends ChangeNotifier {
   final Set<String> _relinking = {};
   final List<GameMatch> _matches = [];
   final List<AgendaEvent> _events = [];
+  final List<ShoppingItem> _shopping = [];
 
   /// Familias amigas y partidas con ellas (solo en la nube).
   final List<Friendship> _friendships = [];
@@ -107,6 +109,9 @@ class FamilyStore extends ChangeNotifier {
   String? _currentMemberId;
 
   static const waterGoal = 8;
+
+  /// Tope de vasos por día (para que un toque de más no sume sin fin).
+  static const maxGlasses = 20;
 
   String get _todayKey => dayKey(_clock());
 
@@ -487,7 +492,39 @@ class FamilyStore extends ChangeNotifier {
   /// Id para una meta propia.
   String newGoalId() => 'meta_x${_clock().microsecondsSinceEpoch.toRadixString(36)}';
 
-  int adultGoalsDone(String memberId) => myGoals(memberId).where((g) => isGoalDone(memberId, g.id)).length;
+  /// Cuántas veces hizo hoy una meta que se cuenta (vasos de agua…).
+  int goalCount(String memberId, String goalId) => _today[memberId]?[goalId]?.count ?? 0;
+
+  /// Si cumplió la meta: las que se cuentan, al llegar a su cantidad.
+  bool isGoalMet(String memberId, AdultGoal goal) =>
+      goal.counted ? goalCount(memberId, goal.id) >= goal.target : isGoalDone(memberId, goal.id);
+
+  int adultGoalsDone(String memberId) => myGoals(memberId).where((g) => isGoalMet(memberId, g)).length;
+
+  /// Suma (o resta, con [delta] negativo) una vez a una meta que se cuenta.
+  /// Puede pasar la cantidad pedida (10 vasos de 8). Devuelve el total de hoy.
+  int addGoalCount(String memberId, String goalId, {int delta = 1}) {
+    final day = _today.putIfAbsent(memberId, () => {});
+    final next = ((day[goalId]?.count ?? 0) + delta).clamp(0, 99);
+    if (next == 0) {
+      if (day.remove(goalId) != null) sync?.taskChanged(memberId, _todayKey, goalId, null);
+    } else {
+      final completion = TaskCompletion(taskId: goalId, completedAt: _clock(), pointsAwarded: 0, count: next);
+      day[goalId] = completion;
+      sync?.taskChanged(memberId, _todayKey, goalId, completion);
+    }
+    notifyListeners();
+    return next;
+  }
+
+  /// El administrador corrige el nombre del hogar.
+  void renameHome(String name) {
+    final clean = name.trim();
+    if (clean.isEmpty || clean == homeName) return;
+    homeName = clean;
+    sync?.homeSettingsChanged({'name': clean});
+    notifyListeners();
+  }
 
   /// Marca o desmarca una meta del día del adulto. Devuelve si quedó marcada.
   bool toggleAdultGoal(String memberId, String goalId) {
@@ -575,10 +612,11 @@ class FamilyStore extends ChangeNotifier {
 
   void addGlass(String memberId) {
     final log = healthOf(memberId);
-    if (log.glasses >= waterGoal) return;
+    // Se puede pasar de la meta (hasta 20 vasos); los puntos se dan una sola vez.
+    if (log.glasses >= maxGlasses) return;
     log.glasses++;
     sync?.healthChanged(memberId, _todayKey, log);
-    if (HealthRules.reachedWaterGoal(log.glasses, waterGoal)) {
+    if (log.glasses == waterGoal) {
       _addBalance(memberId, 5);
       final who = memberById(memberId)?.nickname ?? 'Alguien';
       _addNotice('$who llegó a su meta de agua', kind: NoticeKind.health, memberId: memberId);
@@ -773,6 +811,7 @@ class FamilyStore extends ChangeNotifier {
     List<String>? languages,
     Map<String, int>? gameSeconds,
     List<AgendaEvent>? events,
+    List<ShoppingItem>? shopping,
     bool? plus,
     List<Friendship>? friendships,
     List<GameMatch>? sharedMatches,
@@ -797,6 +836,11 @@ class FamilyStore extends ChangeNotifier {
       _events
         ..clear()
         ..addAll(events);
+    }
+    if (shopping != null) {
+      _shopping
+        ..clear()
+        ..addAll(shopping);
     }
     if (gamesMinutes != null) _gamesMinutes = gamesMinutes;
     if (languages != null) _languages = [...languages];
@@ -936,6 +980,7 @@ class FamilyStore extends ChangeNotifier {
         'gameSeconds': _gameSeconds,
         'matches': [for (final m in _matches) _matchToJson(m)],
         'events': [for (final e in _events) _eventToJson(e)],
+        'shopping': {for (final i in _shopping) i.id: i.toJson()},
         'history': {
           for (final e in _history.entries) e.key: [for (final s in e.value) _summaryToJson(s)],
         },
@@ -961,6 +1006,7 @@ class FamilyStore extends ChangeNotifier {
                   'at': c.completedAt.toIso8601String(),
                   'pts': c.pointsAwarded,
                   'pending': c.pendingApproval,
+                  if (c.count != 1) 'n': c.count,
                 },
             ],
         },
@@ -997,6 +1043,12 @@ class FamilyStore extends ChangeNotifier {
     _events
       ..clear()
       ..addAll([for (final e in (json['events'] as List?) ?? const []) _eventFromJson((e as Map).cast<String, dynamic>())]);
+    _shopping
+      ..clear()
+      ..addAll([
+        for (final e in ((json['shopping'] as Map?) ?? const {}).entries)
+          ShoppingItem.fromJson(e.key as String, (e.value as Map).cast<String, dynamic>()),
+      ]);
     _languages = ((json['languages'] as List?) ?? const ['en', 'pt', 'ko']).cast<String>().toList();
     _gameSeconds.clear();
     if (json['day'] == dayKey(_clock()) && json['gameSeconds'] is Map) {
@@ -1050,6 +1102,7 @@ class FamilyStore extends ChangeNotifier {
               completedAt: DateTime.parse(c['at'] as String),
               pointsAwarded: c['pts'] as int,
               pendingApproval: c['pending'] as bool,
+              count: (c['n'] as int?) ?? 1,
             ),
         },
     };
@@ -1129,6 +1182,8 @@ class FamilyStore extends ChangeNotifier {
         'hairColor': a.hairColor,
         'eyes': a.eyes,
         'glasses': a.glasses,
+        if (a.eyewear > 1) 'eyewear': a.eyewear,
+        if (a.facialHair > 0) 'facialHair': a.facialHair,
         'shirt': a.shirt,
         'accessory': a.accessory,
         'outfit': a.outfit,
@@ -1157,6 +1212,8 @@ class FamilyStore extends ChangeNotifier {
         hairColor: (a['hairColor'] as num?)?.toInt() ?? 1,
         eyes: (a['eyes'] as num?)?.toInt() ?? 0,
         glasses: a['glasses'] as bool? ?? false,
+        eyewear: (a['eyewear'] as num?)?.toInt(),
+        facialHair: (a['facialHair'] as num?)?.toInt() ?? 0,
         shirt: (a['shirt'] as num?)?.toInt() ?? 0,
         accessory: (a['accessory'] as num?)?.toInt() ?? 0,
         outfit: (a['outfit'] as num?)?.toInt() ?? 0,

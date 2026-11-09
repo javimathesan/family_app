@@ -623,7 +623,7 @@ class _HabitsCardState extends State<_HabitsCard> {
                               ),
                             ),
                             FilledButton(
-                              onPressed: health.glasses >= FamilyStore.waterGoal ? null : () => store.addGlass(me.id),
+                              onPressed: health.glasses >= FamilyStore.maxGlasses ? null : () => store.addGlass(me.id),
                               child: const Text('+1 vaso'),
                             ),
                           ],
@@ -646,7 +646,11 @@ class _HabitsCardState extends State<_HabitsCard> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          health.glasses >= FamilyStore.waterGoal ? '¡Meta cumplida! +5 pts' : '${health.glasses} de ${FamilyStore.waterGoal} vasos',
+                          health.glasses > FamilyStore.waterGoal
+                              ? '¡Meta cumplida! Ya vas ${health.glasses} vasos 💪'
+                              : health.glasses == FamilyStore.waterGoal
+                                  ? '¡Meta cumplida! +5 pts'
+                                  : '${health.glasses} de ${FamilyStore.waterGoal} vasos',
                           style: mutedText(context).copyWith(fontWeight: FontWeight.w700),
                         ),
                       ],

@@ -2,6 +2,15 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.23.0 — 2026-11-09 · Contar, comprar, renombrar y más avatares
+
+- **Metas que se cuentan en Mi día:** "💧 Vasos de agua 3/8": cada toque suma uno, "−" resta si te equivocaste, y se puede pasar de la meta (10/8). Las metas propias pueden ser "se marca una vez" o "se cuenta N veces".
+- **Agua de los chicos sin tope en 8:** pueden seguir sumando (hasta 20 por día); los 5 puntos se dan una sola vez, al llegar a 8.
+- **Lista de compras del hogar:** en el inicio del adulto y en Ajustes → La casa. Se agregan varias cosas separadas por coma, se tildan en el súper, se borran deslizando y "Borrar comprados" limpia la lista. Si algo ya estaba comprado, vuelve a la lista en lugar de repetirse. La comparten los adultos administradores.
+- **Nombre del hogar editable:** Ajustes → Hogar → Nombre del hogar (solo administradores). Las familias amigas también ven el nombre nuevo (requiere actualizar las reglas).
+- **Avatares:** barba corta, barba larga, barba larga blanca, bigote, mostacho, candado y tres pelitos; anteojos de sol y parche en el ojo izquierdo o derecho; seis peinados nuevos: dos rodetes, muy largo, carré con flequillo, rizos largos, trenza al costado y media cola.
+- **Reglas:** cada familia puede cambiar su propio nombre en la amistad (`nameA` / `nameB`).
+
 ## 0.22.0 — 2026-11-09 · Mi día a medida de cada adulto
 
 - **Mi día ahora es personal:** cada adulto arma sus metas o recordatorios diarios. Arranca vacío, con el botón "Armar mi día".

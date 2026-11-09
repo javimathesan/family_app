@@ -54,6 +54,7 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
       hairColor: _random.nextInt(AvatarOptions.hairColors.length),
       eyes: _random.nextInt(AvatarOptions.eyes.length),
       glasses: _random.nextDouble() > 0.7,
+      facialHair: _config!.facialHair,
       shirt: _random.nextInt(AvatarOptions.shirts.length),
       outfit: outfits[_random.nextInt(outfits.length)],
       accessory: accessories[_random.nextInt(accessories.length)],
@@ -220,10 +221,17 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
                       selected: c.brows,
                       onPick: (i) => _set(c.copyWith(brows: i)),
                     ),
-                    SwitchListTile(
-                      title: const Text('Anteojos', style: TextStyle(fontWeight: FontWeight.w800)),
-                      value: c.glasses,
-                      onChanged: (v) => _set(c.copyWith(glasses: v)),
+                    _Chips(
+                      title: 'Anteojos y parches',
+                      options: AvatarOptions.eyewear,
+                      selected: c.eyewear,
+                      onPick: (i) => _set(c.copyWith(eyewear: i)),
+                    ),
+                    _Chips(
+                      title: 'Barba y bigote',
+                      options: AvatarOptions.facialHair,
+                      selected: c.facialHair,
+                      onPick: (i) => _set(c.copyWith(facialHair: i)),
                     ),
                     SwitchListTile(
                       title: const Text('Pecas', style: TextStyle(fontWeight: FontWeight.w800)),

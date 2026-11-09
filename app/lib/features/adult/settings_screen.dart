@@ -10,6 +10,7 @@ import '../agenda/agenda_screen.dart';
 import '../onboarding/terms_screen.dart';
 import '../games/games_hub.dart';
 import 'adult_home_screen.dart';
+import 'shopping_screen.dart';
 
 /// Todo lo configurable en un solo lugar.
 class SettingsScreen extends StatelessWidget {
@@ -89,6 +90,11 @@ class SettingsScreen extends StatelessWidget {
                     : (session.plusOpen ? 'Abierto para probar (demostración)' : 'No activo'),
               ),
             ]),
+            section('La casa', [
+              tile(Icons.shopping_cart_outlined, 'Lista de compras',
+                  () => nav.push(MaterialPageRoute<void>(builder: (_) => const ShoppingScreen())),
+                  subtitle: store.shoppingPending == 0 ? 'Vacía' : '${store.shoppingPending} por comprar'),
+            ]),
             section('Este teléfono', [
               tile(Icons.notifications_outlined, 'Avisos', () => _pickNotifyMode(context), subtitle: session.notifyMode.label),
               tile(Icons.battery_charging_full, 'Que los avisos lleguen siempre', () => nav.pushNamed(Routes.reliability),
@@ -101,6 +107,7 @@ class SettingsScreen extends StatelessWidget {
             ]),
             if (admin)
               section('Hogar', [
+                tile(Icons.home_outlined, 'Nombre del hogar', () => _renameHome(context), subtitle: store.homeName),
                 tile(Icons.checklist, 'Rutina y premios', () => nav.pushNamed(Routes.routine)),
                 tile(Icons.rule, 'Reglas de juego de los chicos', () => showGameRules(context),
                     subtitle: '${store.gamesRule.label} · ${store.gamesMinutes == 0 ? 'sin límite' : '${store.gamesMinutes} min por día'}'),
@@ -369,4 +376,39 @@ Future<void> showHabitsSettings(BuildContext context) {
       },
     ),
   );
+}
+
+
+/// El administrador corrige el nombre del hogar (por ejemplo, un error de tipeo).
+Future<void> _renameHome(BuildContext context) async {
+  final store = FamilyScope.of(context);
+  final session = SessionScope.of(context);
+  final controller = TextEditingController(text: store.homeName);
+  final name = await showDialog<String>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Nombre del hogar'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            key: const ValueKey('nombre_hogar'),
+            controller: controller,
+            autofocus: true,
+            maxLength: 40,
+            textCapitalization: TextCapitalization.words,
+            decoration: const InputDecoration(border: OutlineInputBorder()),
+          ),
+          const Text('Lo ven todos los de la casa y las familias amigas.'),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+        FilledButton(onPressed: () => Navigator.pop(ctx, controller.text), child: const Text('Guardar')),
+      ],
+    ),
+  );
+  if (name == null || name.trim().isEmpty) return;
+  await session.renameHome(name);
 }
