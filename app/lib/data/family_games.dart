@@ -187,7 +187,7 @@ extension FamilyGames on FamilyStore {
     // En la revancha empieza el que iba segundo.
     final players = [...match.players.skip(1), match.players.first];
     final open = activeMatchWith(match.kind, players);
-    if (open != null) return open;
+    if (open != null && open.id != match.id) return open;
     return createMatch(match.kind, players, sameDevice: match.sameDevice, friendshipId: match.friendshipId, id: id);
   }
 
