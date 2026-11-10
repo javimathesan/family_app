@@ -2,6 +2,11 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.25.2 — 2026-11-10 · Parches y preparación para Google Play
+
+- Avatares: la cinta del parche iba por encima del otro ojo. Ahora va hacia la oreja del mismo lado y por la frente, sin tapar el ojo sano.
+- Preparación para Google Play: la app apunta a Android 16 (API 36), la versión pasa a 0.25.2 con número de compilación automático, y cada compilación genera también el paquete `family-app.aab` para subir a Play.
+
 ## 0.25.1 — 2026-11-10 · Revancha sin partidas repetidas
 
 - Si los dos jugadores tocaban "Revancha" se creaban dos partidas: la revancha no pasaba por el control de "una partida a la vez". Ahora, si el otro ya la pidió, se abre esa misma, y si los dos la piden a la vez desde sus teléfonos escriben la misma partida.

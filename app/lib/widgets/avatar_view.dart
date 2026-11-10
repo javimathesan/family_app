@@ -989,8 +989,12 @@ class _FunkoPainter extends CustomPainter {
 
   /// Parche sobre un ojo (x = 125 izquierdo, 175 derecho).
   void _eyePatchAt(Canvas canvas, double x) {
-    final left = x < 150;
-    canvas.drawLine(Offset(left ? 216 : 84, left ? 94 : 94), Offset(left ? 84 : 216, left ? 128 : 128), _line(_ink, 3));
+    // La cinta va hacia la oreja del mismo lado y, por la frente, por encima
+    // de la ceja del otro ojo: nunca le tapa la vista al ojo sano.
+    final dir = x < 150 ? 1.0 : -1.0;
+    final strap = _line(_ink, 3);
+    canvas.drawLine(Offset(x, 114), Offset(x - dir * 50, 106), strap);
+    canvas.drawLine(Offset(x, 100), Offset(x + dir * 75, 46), strap);
     canvas.drawOval(Rect.fromCenter(center: Offset(x, 114), width: 34, height: 30), _fill(_ink));
   }
 

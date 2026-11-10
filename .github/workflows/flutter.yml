@@ -100,15 +100,21 @@ jobs:
           fi
 
       # Sin la clave de firma, Gradle firma con la clave de depuración.
-      - name: Compilar APK
+      # El número de compilación sube solo en cada corrida (Google Play exige
+      # que cada subida tenga uno mayor). El .aab es el que se sube a Play.
+      - name: Compilar APK y paquete para Google Play
         run: |
-          flutter build apk --release
+          flutter build apk --release --build-number=${{ github.run_number }}
           cp build/app/outputs/flutter-apk/app-release.apk family-app.apk
+          flutter build appbundle --release --build-number=${{ github.run_number }}
+          cp build/app/outputs/bundle/release/app-release.aab family-app.aab
 
       - uses: actions/upload-artifact@v4
         with:
           name: family-app-apk
-          path: app/family-app.apk
+          path: |
+            app/family-app.apk
+            app/family-app.aab
           retention-days: 7
 
       # Versión de prueba siempre en el mismo enlace:
@@ -126,4 +132,4 @@ jobs:
           else
             gh release create prueba --title "Versión de prueba" --notes "$NOTES" --prerelease --target "$GITHUB_SHA"
           fi
-          gh release upload prueba family-app.apk --clobber
+          gh release upload prueba family-app.apk family-app.aab --clobber
