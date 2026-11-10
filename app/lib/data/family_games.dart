@@ -176,14 +176,29 @@ extension FamilyGames on FamilyStore {
     return null;
   }
 
-  GameMatch createMatch(GameKind kind, List<String> players, {bool sameDevice = false, String? friendshipId}) {
+  /// Revancha de una partida terminada. Si el otro ya la pidió (o ya hay una
+  /// partida abierta con los mismos jugadores), devuelve esa en lugar de crear
+  /// otra. El id sale de la partida anterior: si los dos tocan "Revancha" a la
+  /// vez desde sus teléfonos, escriben la misma partida y no quedan dos.
+  GameMatch rematch(GameMatch match) {
+    final id = '${match.id}r';
+    final existing = matchById(id);
+    if (existing != null) return existing;
+    // En la revancha empieza el que iba segundo.
+    final players = [...match.players.skip(1), match.players.first];
+    final open = activeMatchWith(match.kind, players);
+    if (open != null) return open;
+    return createMatch(match.kind, players, sameDevice: match.sameDevice, friendshipId: match.friendshipId, id: id);
+  }
+
+  GameMatch createMatch(GameKind kind, List<String> players, {bool sameDevice = false, String? friendshipId, String? id}) {
     if (players.length < kind.minPlayers || players.length > kind.maxPlayers) {
       throw ArgumentError('${kind.label} es para ${kind.minPlayers} a ${kind.maxPlayers} jugadores');
     }
     final now = _clock();
     final creator = currentMember?.id ?? players.first;
     final match = GameMatch(
-      id: _newId('g'),
+      id: id ?? _newId('g'),
       kind: kind,
       players: [...players],
       createdBy: creator,

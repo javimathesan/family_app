@@ -463,9 +463,7 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _rematch(BuildContext context, FamilyStore store, GameMatch match) {
-    // En la revancha empieza el que iba segundo.
-    final players = [...match.players.skip(1), match.players.first];
-    final next = store.createMatch(match.kind, players, sameDevice: match.sameDevice);
+    final next = store.rematch(match);
     Navigator.of(context).pushReplacementNamed(Routes.matchOf(next.id));
   }
 }

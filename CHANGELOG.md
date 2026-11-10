@@ -2,6 +2,11 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.25.1 — 2026-11-10 · Revancha sin partidas repetidas
+
+- Si los dos jugadores tocaban "Revancha" se creaban dos partidas: la revancha no pasaba por el control de "una partida a la vez". Ahora, si el otro ya la pidió, se abre esa misma, y si los dos la piden a la vez desde sus teléfonos escriben la misma partida.
+- La revancha de una partida con una familia amiga ahora también es con esa familia (antes quedaba solo en el hogar).
+
 ## 0.25.0 — 2026-11-09 · Los chicos piden para la lista de compras
 
 - **Pedir para comprar (chicos):** nueva tarjeta en Hoy. Eligen qué necesitan, cuántos, si es 🏫 Colegio, 🧴 Personal o 🏠 Casa, y para cuándo (opcional). Ven en qué quedó cada pedido: esperando, en la lista, comprado o "esta vez no", y pueden cancelarlo mientras nadie lo vio. La tarjeta se puede ocultar o reordenar como las demás.

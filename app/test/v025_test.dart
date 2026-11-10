@@ -38,6 +38,20 @@ void main() {
     expect(ida.category, 'colegio');
   });
 
+  test('revancha: si los dos la piden queda una sola partida', () {
+    final a = FamilyStore.demo(clock: () => DateTime(2026, 11, 10, 9));
+    final m = a.createMatch(GameKind.tateti, ['tomi', 'luli']);
+    final r1 = a.rematch(m);
+    final r2 = a.rematch(m);
+    expect(r2.id, r1.id, reason: 'el segundo pedido abre la misma');
+    expect(r1.players, ['luli', 'tomi'], reason: 'empieza el que iba segundo');
+    expect(a.matches.where((x) => x.kind == GameKind.tateti && !x.finished).length, 2,
+        reason: 'la original (sin terminar en esta prueba) y una sola revancha');
+    // Desde otro teléfono se calcula el mismo id: se escribe la misma partida.
+    final b = FamilyStore.demo(clock: () => DateTime(2026, 11, 10, 9));
+    expect(b.rematch(m).id, r1.id);
+  });
+
   testWidgets('el chico pide desde Hoy', (tester) async {
     tester.view.physicalSize = const Size(1170, 2532);
     tester.view.devicePixelRatio = 3;
