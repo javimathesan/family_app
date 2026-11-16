@@ -33,6 +33,12 @@ Que la app conecte a toda la casa, no solo a los chicos: herramientas útiles en
 - [x] Lista de compras con fecha probable y precios.
 - [ ] Ideas: gastos del hogar por mes, menú semanal, vencimientos (servicios, impuestos), turnos médicos de la familia, cumpleaños.
 
+## Control de pantallas (opcional, más adelante)
+Ideas anotadas, **no obligatorias por ahora**. La app no bloquea otras apps (TikTok, YouTube, Instagram): eso ya lo hace Google Family Link, gratis y sin que el chico lo pueda saltear.
+- [ ] Guía dentro de la app para que el jefe de familia configure Family Link paso a paso (no pide permisos nuevos).
+- [ ] Premios de tiempo de pantalla ("30 minutos de YouTube") que se canjean con puntos y el adulto habilita en Family Link.
+- [ ] "Modo concentración" opcional que bloquee apps hasta terminar la rutina. Evaluar recién con la app publicada: necesita permisos delicados (acceso al uso, accesibilidad), revisión especial de Google Play y cambios en la política de privacidad.
+
 ## Juegos nuevos
 Solo si suman a la misión: educativos (tablas, sopa de letras, memoria, rompecabezas) o para jugar entre familias (damas, batalla naval, dibujos). Siempre como premio, respetando "primero la rutina".
 
