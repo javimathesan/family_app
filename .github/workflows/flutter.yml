@@ -18,6 +18,8 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          # Fija la versión: Flutter 3.50 marca material.dart como obsoleto y el análisis falla.
+          flutter-version: 3.47.9
           cache: true
       - run: flutter pub get
       - name: flutter analyze
@@ -72,6 +74,8 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          # Fija la versión: Flutter 3.50 marca material.dart como obsoleto y el análisis falla.
+          flutter-version: 3.47.9
           cache: true
       - run: flutter pub get
 
