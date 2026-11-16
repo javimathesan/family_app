@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import '../data/app_session.dart';
 import '../data/family_store.dart';
 import '../models/models.dart';
+import '../services/app_version.dart';
 import '../theme/app_theme.dart';
 import 'common.dart';
+import 'version_sheet.dart';
 
 const _accentNames = ['Azul', 'Verde agua', 'Violeta', 'Naranja'];
 
@@ -249,6 +251,14 @@ Future<void> showAccentPicker(BuildContext context) {
                       ),
                     ),
                 ],
+                const SizedBox(height: 12),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: () => showVersionSheet(context),
+                    icon: const Icon(Icons.system_update, size: 18),
+                    label: Text('Versión ${AppVersion.name} · Buscar actualización'),
+                  ),
+                ),
               ],
             ),
           ),

@@ -2,6 +2,12 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.26.1 — 2026-11-16 · Versión a la vista y botón para actualizar
+
+- **Versión de la app:** en Ajustes → Información (adultos) y al final de "Personalizar mi app" (chicos) se ve qué versión tiene instalada ese teléfono.
+- **Buscar actualización:** un botón consulta la última versión publicada. Si hay una más nueva, ofrece descargarla; se instala encima sin perder datos. Cuando la app esté en Google Play, el mismo botón llevará a la ficha de Play.
+- Cada compilación publica también `version.json` (versión y número de compilación) junto al APK.
+
 ## 0.26.0 — 2026-11-16 · Revisión general: conexión, seguridad y solidez
 
 - **Aviso de conexión:** una franja arriba avisa "Sin conexión: lo que hagas se guarda y se envía cuando vuelva". Si a un teléfono lo quitaron del hogar, avisa que ya no tiene acceso (antes seguía mostrando datos viejos sin decir nada).

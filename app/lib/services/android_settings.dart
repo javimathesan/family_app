@@ -14,4 +14,14 @@ abstract final class AndroidSettings {
       return false;
     }
   }
+
+  /// Abre un enlace en el navegador (por ejemplo, la descarga de la app).
+  static Future<bool> openUrl(String url) async {
+    try {
+      return await _channel.invokeMethod<bool>('url', {'url': url}) ?? false;
+    } catch (error) {
+      debugPrint('No se pudo abrir el enlace: $error');
+      return false;
+    }
+  }
 }

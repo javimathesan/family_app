@@ -12,6 +12,16 @@ class MainActivity : FlutterActivity() {
         super.configureFlutterEngine(flutterEngine)
         // Abre pantallas de ajustes de Android (batería, voces, datos de la app).
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "familyapp/settings").setMethodCallHandler { call, result ->
+            if (call.method == "url") {
+                // Abre un enlace en el navegador (la descarga de la versión nueva).
+                try {
+                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(call.argument<String>("url") ?: "")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    result.success(true)
+                } catch (e: Exception) {
+                    result.success(false)
+                }
+                return@setMethodCallHandler
+            }
             if (call.method != "open") {
                 result.notImplemented()
                 return@setMethodCallHandler

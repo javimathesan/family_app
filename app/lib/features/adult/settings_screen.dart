@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../../app.dart';
 import '../../data/app_session.dart';
 import '../../data/family_store.dart';
+import '../../services/app_version.dart';
 import '../../widgets/accent_picker.dart';
+import '../../widgets/version_sheet.dart';
 import '../../widgets/avatar_view.dart';
 import '../../widgets/common.dart';
 import '../agenda/agenda_screen.dart';
@@ -131,6 +133,7 @@ class SettingsScreen extends StatelessWidget {
               tile(Icons.bar_chart, 'Resumen de la semana', () => nav.pushNamed(Routes.week)),
               tile(Icons.privacy_tip_outlined, 'Privacidad y datos', () => nav.pushNamed(Routes.privacy)),
               tile(Icons.gavel_outlined, 'Términos y condiciones', () => nav.push(MaterialPageRoute<void>(builder: (_) => const TermsScreen()))),
+              tile(Icons.system_update, 'Versión de la app', () => showVersionSheet(context), subtitle: AppVersion.label),
             ]),
             section('Sesión', [
               if (session.isDemo) ...[
