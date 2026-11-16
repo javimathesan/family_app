@@ -2,6 +2,16 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.26.0 — 2026-11-16 · Revisión general: conexión, seguridad y solidez
+
+- **Aviso de conexión:** una franja arriba avisa "Sin conexión: lo que hagas se guarda y se envía cuando vuelva". Si a un teléfono lo quitaron del hogar, avisa que ya no tiene acceso (antes seguía mostrando datos viejos sin decir nada).
+- **Versiones distintas en la misma familia:** si un teléfono con una versión más nueva guarda algo que otro no entiende (un perfil, un canje, una novedad, una partida), ese teléfono saltea solo ese dato y sigue mostrando el resto. Antes un solo dato raro podía dejar la lista entera sin actualizar.
+- **Errores a la vista del desarrollador:** lo que no se pudo guardar o leer de la nube se informa a Crashlytics como error no fatal (una vez por tipo), en lugar de perderse.
+- **Códigos de amistad más seguros:** pasan de 4 a 6 caracteres (`AMI-XXXXXX`) y se generan con azar seguro, igual que los códigos del QR. Nadie puede dar con el código de otra familia probando. Los códigos ya entregados siguen sirviendo hasta que vencen.
+- **Borrar el hogar** ahora borra también los pedidos de compras de los chicos (quedaban guardados).
+- **Hogares con años de uso:** los canjes se cargan de a los últimos 200, no todos.
+- Documentación: README al día (sin "ánimo", con lista de compras) y hoja de ruta con el pase a Flutter 3.50.
+
 ## 0.25.3 — 2026-11-15 · Juegos: revancha, "¡Última!" y títulos
 
 - Revancha: si igual quedaban dos partidas iguales abiertas (por ejemplo, un teléfono con una versión anterior), la app deja una sola: la que ya se empezó a jugar o, si ninguna, la más vieja. Nunca borra una partida con jugadas, y quien tenía abierta la repetida pasa a la que quedó.

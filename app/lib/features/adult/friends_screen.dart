@@ -119,7 +119,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
           content: TextField(
             controller: controller,
             textCapitalization: TextCapitalization.characters,
-            decoration: const InputDecoration(hintText: 'AMI-XXXX', border: OutlineInputBorder()),
+            decoration: const InputDecoration(hintText: 'AMI-XXXXXX', border: OutlineInputBorder()),
           ),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),

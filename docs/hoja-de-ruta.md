@@ -7,6 +7,8 @@ Misión: que los más chicos tomen conciencia de sus tareas y responsabilidades,
 - [ ] Simplificar el inicio del adulto: lo esencial a la vista, lo secundario en Ajustes.
 - [ ] Validar los puntos en el servidor (Cloud Functions) para evitar trampas.
 - [ ] Probar en un celular de gama baja.
+- [ ] Pasar a Flutter 3.50: cambiar `package:flutter/material.dart` por `package:material_ui` en toda la app y quitar la versión fija (3.47.9) del armado en GitHub.
+- [ ] Activar la exigencia de App Check en la consola de Firebase cuando la app esté en Play (frena a quien intente leer la base sin la app original).
 - [ ] Limpiar el campo `mood` (ánimo) del modelo: la app ya no lo registra ni lo muestra.
 - [ ] Prueba cerrada en Play (12 personas, 14 días) y ajustes con lo que digan.
 

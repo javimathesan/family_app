@@ -1,20 +1,21 @@
 # Family App
 
-App móvil familiar que convierte la rutina diaria de los hijos en hábitos y responsabilidades. Cada tarea cumplida suma puntos que se canjean por premios, y los adultos siguen el progreso, la salud básica, la agenda y el ánimo del día desde su propio panel.
+App móvil familiar que convierte la rutina diaria de los hijos en hábitos y responsabilidades. Cada tarea cumplida suma puntos que se canjean por premios, y los adultos siguen el progreso, los hábitos, la agenda y la lista de compras desde su propio panel.
 
 - **Paquete:** `com.javimathesan.familyapp` (Android; iOS más adelante).
-- **Versión actual:** 0.21 (prueba). [Registro de cambios](CHANGELOG.md).
+- **Versión actual:** 0.26 (prueba). [Registro de cambios](CHANGELOG.md).
 - **Versión de prueba:** cada cambio en `main` publica el APK firmado en [la versión `prueba`](https://github.com/javimathesan/family_app/releases/tag/prueba).
 
-## Qué tiene hoy (v0.21)
+## Qué tiene hoy (v0.26)
 
 | Área | Qué hace |
 | --- | --- |
-| **Hogar y teléfonos** | Crear hogar, invitar por QR (código de un solo uso, vence en 15 min), aprobar altas, roles P1/P2/conviviente/hijo, hijo sin celular, PIN del modo adulto, **teléfono nuevo de alguien** (vuelve con su perfil) y desvincular. Sincronización en vivo con Firebase. |
+| **Hogar y teléfonos** | Crear hogar, invitar por QR (código de un solo uso, vence en 15 min), aprobar altas, roles P1/P2/conviviente/hijo, hijo sin celular, PIN del modo adulto, **teléfono nuevo de alguien** (vuelve con su perfil) y desvincular. Sincronización en vivo con Firebase, con aviso en pantalla si no hay conexión o si el teléfono perdió el acceso. |
 | **Rutina y puntos** | **Rutina de cada hijo**: cada tarea existe una vez y cada hijo tiene su horario (hora, otra hora el finde, días y puntos). Lista sugerida por edad, copiar la rutina a un hermano y validación (sola, foto o adulto). Puntos completos a tiempo, mitad fuera de horario. Un hogar nuevo arranca vacío. |
 | **Premios** | **Por hijo y con costo propio**. Tienda con pedido y aprobación, puntos devueltos si se rechaza, alcancía mensual. |
-| **Salud y ánimo** | **Mis hábitos** que el adulto prende o apaga por hijo: agua (meta 8 vasos), popó/pipí con alerta a los 2 días, ánimo del día, calendario de caritas. |
-| **Panel del adulto** | Barra con Inicio, Agenda, Juegos y Ajustes. Primeros pasos, Mi día (metas del adulto), Para aprobar, Novedades con campanita, **resumen de la semana**, **reto de la semana**, **escudo de la familia** y guía para que los avisos lleguen siempre. |
+| **Hábitos** | **Mis hábitos** opcionales, que el adulto prende o apaga por hijo: agua (meta 8 vasos) y popó/pipí con alerta a los 2 días. |
+| **Lista de compras** | Herramienta opcional del hogar: secciones Casa, Colegio y Personal, cantidades y precios con total, fecha de compra y **pedidos de los chicos** que el adulto aprueba. |
+| **Panel del adulto** | Barra con Inicio, Agenda, Juegos y Ajustes. Primeros pasos, Mi día (metas propias del adulto, editables), Para aprobar, Novedades con campanita, **resumen de la semana**, **reto de la semana**, **escudo de la familia** y guía para que los avisos lleguen siempre. |
 | **Para los chicos** | Hoy ordenable, festejos al completar, **Mi cuarto** decorable con **mascota** que crece con la rutina, **medallas**, tareas con dibujito y modo peques con voz. |
 | **Tablet familiar** | Todos los chicos en una pantalla para la tablet de la casa; salida con PIN. |
 | **Avisos** | Novedades agrupadas por día e hijo; avisos del sistema con la app abierta o minimizada; preferencia por teléfono (importante / todo / nada); avisos a los chicos cuando les aprueban algo. |

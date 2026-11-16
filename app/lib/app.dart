@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'data/app_session.dart';
+import 'data/family_cloud.dart' show SyncProblem;
 import 'data/family_store.dart';
 import 'features/adult/crest_screen.dart';
 import 'features/adult/friends_screen.dart';
@@ -175,16 +176,70 @@ class _FamilyAppState extends State<FamilyApp> {
               localizationsDelegates: GlobalMaterialLocalizations.delegates,
               onGenerateRoute: FamilyApp.onGenerateRoute,
               // En tablets el contenido queda centrado y no se estira de lado a lado.
-              builder: (context, child) => LayoutBuilder(
-                builder: (context, box) => box.maxWidth <= 900
-                    ? child!
-                    : ColoredBox(
-                        color: Theme.of(context).scaffoldBackgroundColor,
-                        child: Center(child: SizedBox(width: 900, child: child)),
-                      ),
-              ),
+              builder: (context, child) {
+                final framed = LayoutBuilder(
+                  builder: (context, box) => box.maxWidth <= 900
+                      ? child!
+                      : ColoredBox(
+                          color: Theme.of(context).scaffoldBackgroundColor,
+                          child: Center(child: SizedBox(width: 900, child: child)),
+                        ),
+                );
+                // Franja de aviso si no hay conexión o el hogar ya no deja entrar.
+                final problem = widget.session.cloud?.problem;
+                if (problem == null) return framed;
+                return ValueListenableBuilder<SyncProblem?>(
+                  valueListenable: problem,
+                  builder: (context, p, _) => p == null || !widget.session.isCloud
+                      ? framed
+                      : Column(
+                          children: [
+                            SyncBanner(problem: p),
+                            Expanded(child: MediaQuery.removePadding(context: context, removeTop: true, child: framed)),
+                          ],
+                        ),
+                );
+              },
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+/// Franja fina arriba de todo: avisa que no hay conexión (lo hecho se guarda y
+/// se envía al volver) o que este teléfono ya no tiene acceso al hogar.
+class SyncBanner extends StatelessWidget {
+  const SyncBanner({super.key, required this.problem});
+
+  final SyncProblem problem;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final denied = problem == SyncProblem.denied;
+    final fg = denied ? scheme.onErrorContainer : scheme.onSecondaryContainer;
+    return Material(
+      color: denied ? scheme.errorContainer : scheme.secondaryContainer,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          child: Row(
+            children: [
+              Icon(denied ? Icons.lock_outline : Icons.cloud_off_outlined, size: 18, color: fg),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  denied
+                      ? 'Este teléfono ya no tiene acceso al hogar. Pedile a un adulto una invitación nueva.'
+                      : 'Sin conexión: lo que hagas se guarda y se envía cuando vuelva.',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: fg),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

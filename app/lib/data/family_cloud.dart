@@ -21,6 +21,15 @@ class JoinException implements Exception {
   String toString() => message;
 }
 
+/// Problema de conexión que se le muestra a la persona en una franja.
+enum SyncProblem {
+  /// Sin internet: se trabaja con lo guardado y se envía al volver.
+  offline,
+
+  /// El hogar ya no deja leer a este teléfono (lo quitaron del hogar).
+  denied,
+}
+
 /// Hogar compartido en Cloud Firestore.
 ///
 /// Estructura:
@@ -39,6 +48,55 @@ class FamilyCloud implements FamilySync {
   final String uid;
   final DateTime Function() _clock;
   final _random = Random();
+
+  /// Para los códigos de invitación: que no se puedan adivinar.
+  final _codes = Random.secure();
+
+  /// Lo que la pantalla tiene que avisar (sin conexión o sin acceso).
+  final ValueNotifier<SyncProblem?> problem = ValueNotifier(null);
+  Timer? _offlineTimer;
+
+  /// A dónde van los errores de sincronización (en la app instalada,
+  /// Crashlytics como error no fatal). Así se ven aunque nadie los reporte.
+  static void Function(Object error, StackTrace? stack, String where)? errorSink;
+  final Set<String> _reported = {};
+
+  void _report(String where, Object error, [StackTrace? stack]) {
+    debugPrint('Family App · $where: $error');
+    // Cada problema se informa una sola vez por sesión.
+    if (!_reported.add('$where|${error.runtimeType}')) return;
+    try {
+      errorSink?.call(error, stack, where);
+    } catch (_) {}
+  }
+
+  /// Convierte cada documento por separado: si uno viene con un dato que esta
+  /// versión no entiende (por ejemplo, lo escribió una versión más nueva), se
+  /// saltea ese y el resto se sigue viendo.
+  List<T> _each<D, T>(Iterable<D> docs, T? Function(D doc) parse, String where) {
+    final out = <T>[];
+    for (final d in docs) {
+      try {
+        final v = parse(d);
+        if (v != null) out.add(v);
+      } catch (error, stack) {
+        _report('leer $where', error, stack);
+      }
+    }
+    return out;
+  }
+
+  void _setOffline(bool offline) {
+    if (problem.value == SyncProblem.denied) return;
+    _offlineTimer?.cancel();
+    _offlineTimer = null;
+    if (!offline) {
+      problem.value = null;
+    } else if (problem.value == null) {
+      // Al abrir, lo primero llega de lo guardado: se espera antes de avisar.
+      _offlineTimer = Timer(const Duration(seconds: 6), () => problem.value = SyncProblem.offline);
+    }
+  }
 
   String? _homeId;
   FamilyStore? _store;
@@ -81,6 +139,8 @@ class FamilyCloud implements FamilySync {
       // Solo en la app instalada: en pruebas y depuración no se mandan informes.
       await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(kReleaseMode);
       final previous = FlutterError.onError;
+      errorSink = (error, stack, where) =>
+          FirebaseCrashlytics.instance.recordError(error, stack, reason: where, fatal: false);
       FlutterError.onError = (details) {
         FirebaseCrashlytics.instance.recordFlutterFatalError(details);
         previous?.call(details);
@@ -173,7 +233,7 @@ class FamilyCloud implements FamilySync {
       });
     }
     for (var attempt = 0; attempt < 5; attempt++) {
-      final code = Invitation.randomCode(_random);
+      final code = Invitation.randomCode(_codes);
       final ref = db.collection('invites').doc(code);
       if ((await ref.get()).exists) continue;
       final expiresAt = _clock().add(Invitation.lifetime);
@@ -279,9 +339,15 @@ class FamilyCloud implements FamilySync {
     _store = store;
     store.sync = this;
 
-    void onError(Object error) => debugPrint('Error de sincronización: $error');
+    void onError(Object error, [StackTrace? stack]) => _report('escuchar el hogar', error, stack);
+    problem.value = null;
 
-    _subs.add(_homeRef(homeId).snapshots().listen((snap) {
+    _subs.add(_homeRef(homeId).snapshots(includeMetadataChanges: true).listen((snap) {
+      var cached = false;
+      try {
+        cached = snap.metadata.isFromCache;
+      } catch (_) {}
+      _setOffline(cached);
       final data = snap.data();
       if (data == null) {
         if (!snap.exists && !snap.metadata.isFromCache && store.homeName.isNotEmpty) onHomeDeleted?.call();
@@ -298,10 +364,10 @@ class FamilyCloud implements FamilySync {
             if (e.value is Map) ShoppingItem.fromJson(e.key as String, (e.value as Map).cast<String, dynamic>()),
         ],
         templates: templates is List
-            ? [for (final t in templates) FamilyStore.templateFromJson((t as Map).cast<String, dynamic>())]
+            ? _each(templates, (t) => FamilyStore.templateFromJson((t as Map).cast<String, dynamic>()), 'una tarea')
             : null,
         rewards: rewards is List
-            ? [for (final r in rewards) FamilyStore.rewardFromJson((r as Map).cast<String, dynamic>())]
+            ? _each(rewards, (r) => FamilyStore.rewardFromJson((r as Map).cast<String, dynamic>()), 'un premio')
             : null,
         gamesRule: GamesRule.values.asNameMap()[data['gamesRule']],
         gamesMinutes: (data['gamesMinutes'] as num?)?.toInt(),
@@ -311,7 +377,14 @@ class FamilyCloud implements FamilySync {
         crest: FamilyCrest.fromJson(data['crest']),
         languages: data['languages'] is List ? (data['languages'] as List).cast<String>() : null,
       );
-    }, onError: onError));
+    }, onError: (Object error, StackTrace stack) {
+      onError(error, stack);
+      // Sin permiso para leer el hogar: a este teléfono lo quitaron.
+      if (error is FirebaseException && error.code == 'permission-denied') {
+        _offlineTimer?.cancel();
+        problem.value = SyncProblem.denied;
+      }
+    }));
 
     _subs.add(_members(homeId).snapshots().listen((snap) {
       final members = <Member>[];
@@ -321,7 +394,12 @@ class FamilyCloud implements FamilySync {
       final piggy = <String, int>{};
       for (final doc in snap.docs) {
         final data = doc.data();
-        members.add(FamilyStore.memberFromJson({...data, 'id': doc.id}));
+        try {
+          members.add(FamilyStore.memberFromJson({...data, 'id': doc.id}));
+        } catch (error, stack) {
+          _report('leer un perfil', error, stack);
+          continue;
+        }
         if (data['pending'] == true) pending.add(doc.id);
         if (data['pending'] == true && data['relink'] == true) relinking.add(doc.id);
         balances[doc.id] = (data['balance'] as num?)?.toInt() ?? 0;
@@ -342,14 +420,18 @@ class FamilyCloud implements FamilySync {
         final memberId = data['memberId'] as String?;
         final day = data['day'] as String?;
         if (memberId == null || day == null) continue;
-        final completions = _completionsFrom(data['completions']);
-        final log = _healthFrom(data['health']);
-        if (day == todayKey) {
-          if (data['gameSeconds'] is num) gameSeconds[memberId] = (data['gameSeconds'] as num).toInt();
-          today[memberId] = completions;
-          if (log != null) health[memberId] = log;
-        } else {
-          history.putIfAbsent(memberId, () => []).add(store.summarizeDay(DateTime.parse(day), completions, log, memberId: memberId));
+        try {
+          final completions = _completionsFrom(data['completions']);
+          final log = _healthFrom(data['health']);
+          if (day == todayKey) {
+            if (data['gameSeconds'] is num) gameSeconds[memberId] = (data['gameSeconds'] as num).toInt();
+            today[memberId] = completions;
+            if (log != null) health[memberId] = log;
+          } else {
+            history.putIfAbsent(memberId, () => []).add(store.summarizeDay(DateTime.parse(day), completions, log, memberId: memberId));
+          }
+        } catch (error, stack) {
+          _report('leer un día', error, stack);
         }
       }
       for (final list in history.values) {
@@ -358,48 +440,54 @@ class FamilyCloud implements FamilySync {
       store.applyRemote(today: today, health: health, history: history, gameSeconds: gameSeconds);
     }, onError: onError));
 
-    _subs.add(_redemptions(homeId).snapshots().listen((snap) {
-      store.applyRemote(redemptions: [
-        for (final doc in snap.docs)
-          Redemption(
+    // Canjes: los últimos 200 (un hogar con años de uso no los baja todos).
+    _subs.add(_redemptions(homeId).orderBy('requestedAt', descending: true).limit(200).snapshots().listen((snap) {
+      store.applyRemote(
+        redemptions: _each(
+          snap.docs,
+          (doc) => Redemption(
             id: doc.id,
             memberId: doc.data()['memberId'] as String,
             rewardId: doc.data()['rewardId'] as String,
             requestedAt: (doc.data()['requestedAt'] as Timestamp).toDate(),
             status: RedemptionStatus.values.byName(doc.data()['status'] as String),
           ),
-      ]);
+          'un canje',
+        ),
+      );
     }, onError: onError));
 
     _subs.add(_notices(homeId).orderBy('time', descending: true).limit(150).snapshots().listen((snap) {
-      store.applyRemote(notices: [
-        for (final doc in snap.docs)
-          FamilyStore.noticeFromJson(doc.data(), time: (doc.data()['time'] as Timestamp).toDate()),
-      ]);
+      store.applyRemote(
+        notices: _each(
+          snap.docs,
+          (doc) => FamilyStore.noticeFromJson(doc.data(), time: (doc.data()['time'] as Timestamp).toDate()),
+          'una novedad',
+        ),
+      );
     }, onError: onError));
 
     // Agenda: desde hace 30 días en adelante.
     final agendaSince = _clock().subtract(const Duration(days: 30)).millisecondsSinceEpoch;
     _subs.add(_events(homeId).where('at', isGreaterThanOrEqualTo: agendaSince).snapshots().listen((snap) {
-      store.applyRemote(events: [
-        for (final doc in snap.docs) FamilyStore.eventFromJson({...doc.data(), 'id': doc.id}),
-      ]);
+      store.applyRemote(
+        events: _each(snap.docs, (doc) => FamilyStore.eventFromJson({...doc.data(), 'id': doc.id}), 'la agenda'),
+      );
     }, onError: onError));
 
     // Pedidos de los chicos para la lista de compras (los últimos 60).
     _subs.add(_requests(homeId).orderBy('at', descending: true).limit(60).snapshots().listen((snap) {
-      store.applyRemote(shoppingRequests: [
-        for (final doc in snap.docs) ShoppingRequest.fromJson(doc.id, doc.data()),
-      ]);
+      store.applyRemote(
+        shoppingRequests: _each(snap.docs, (doc) => ShoppingRequest.fromJson(doc.id, doc.data()), 'un pedido'),
+      );
     }, onError: onError));
 
     _attachFriends(store, homeId, onError);
 
     _subs.add(_games(homeId).orderBy('updatedAt', descending: true).limit(30).snapshots().listen((snap) {
-      store.applyRemote(matches: [
-        for (final doc in snap.docs)
-          if (FamilyStore.matchFromJson({...doc.data(), 'id': doc.id}) case final match?) match,
-      ]);
+      store.applyRemote(
+        matches: _each(snap.docs, (doc) => FamilyStore.matchFromJson({...doc.data(), 'id': doc.id}), 'una partida'),
+      );
     }, onError: onError));
   }
 
@@ -409,6 +497,9 @@ class FamilyCloud implements FamilySync {
       s.cancel();
     }
     _subs.clear();
+    _offlineTimer?.cancel();
+    _offlineTimer = null;
+    problem.value = null;
     if (_store?.sync == this) _store!.sync = null;
     _store = null;
     _homeId = null;
@@ -444,7 +535,7 @@ class FamilyCloud implements FamilySync {
   void _write(Future<void> Function(String homeId) action) {
     final home = _homeId;
     if (home == null) return;
-    action(home).catchError((Object error) => debugPrint('No se pudo guardar en la nube: $error'));
+    action(home).catchError((Object error, StackTrace stack) => _report('guardar en la nube', error, stack));
   }
 
   @override
@@ -686,10 +777,9 @@ class FamilyCloud implements FamilySync {
         for (final doc in snap.docs) {
           _sharedDocs[doc.id] = doc.data();
         }
-        store.applyRemote(sharedMatches: [
-          for (final e in _sharedDocs.entries)
-            if (FamilyStore.matchFromJson({...e.value, 'id': e.key}) case final m?) m,
-        ]);
+        store.applyRemote(
+          sharedMatches: _each(_sharedDocs.entries, (e) => FamilyStore.matchFromJson({...e.value, 'id': e.key}), 'una partida con amigos'),
+        );
       }, onError: onError));
     }
   }
@@ -698,7 +788,8 @@ class FamilyCloud implements FamilySync {
   /// son los de este hogar que van a poder jugar con ellos.
   Future<String> createFriendInvite({required String homeId, required String homeName, required List<FriendKid> kids}) async {
     for (var attempt = 0; attempt < 5; attempt++) {
-      final code = 'AMI-${List.generate(4, (_) => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[_random.nextInt(32)]).join()}';
+      // 6 letras o números al azar: nadie puede dar con el código probando.
+      final code = 'AMI-${List.generate(6, (_) => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[_codes.nextInt(32)]).join()}';
       final ref = db.collection('friendInvites').doc(code);
       if ((await ref.get()).exists) continue;
       await ref.set({
@@ -732,7 +823,8 @@ class FamilyCloud implements FamilySync {
     final home = _homeId;
     if (home == null) return;
     final c = code.trim().toUpperCase();
-    final invite = (await db.collection('friendInvites').doc(c).get()).data()!;
+    final invite = (await db.collection('friendInvites').doc(c).get()).data();
+    if (invite == null) throw const JoinException('Ese código no existe. Revisá que esté bien escrito.');
     final ref = _friendships.doc();
     final batch = db.batch()
       ..update(db.collection('friendInvites').doc(c), {'usedBy': uid})
@@ -788,7 +880,7 @@ class FamilyCloud implements FamilySync {
       }
     }
 
-    for (final sub in ['days', 'redemptions', 'notices', 'games', 'events']) {
+    for (final sub in ['days', 'redemptions', 'notices', 'games', 'events', 'shoppingRequests']) {
       await wipe(_homeRef(homeId).collection(sub));
     }
     for (final side in ['A', 'B']) {
