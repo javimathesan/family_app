@@ -256,7 +256,7 @@ Future<void> showAccentPicker(BuildContext context) {
                   child: TextButton.icon(
                     onPressed: () => showVersionSheet(context),
                     icon: const Icon(Icons.system_update, size: 18),
-                    label: Text('Versión ${AppVersion.name} · Buscar actualización'),
+                    label: const Text('Versión ${AppVersion.name} · Buscar actualización'),
                   ),
                 ),
               ],
