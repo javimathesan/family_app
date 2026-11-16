@@ -226,7 +226,8 @@ class _ColorinViewState extends State<ColorinView> {
                       spacing: 8,
                       alignment: WrapAlignment.center,
                       children: [
-                        if (myTurn && state.hand(seat).length == 2)
+                        // Se dice al tirar la anteúltima: solo si hay una carta para tirar.
+                        if (myTurn && state.hand(seat).length == 2 && playable.isNotEmpty)
                           FilterChip(
                             avatar: const Text('📣'),
                             label: const Text('¡Última!'),

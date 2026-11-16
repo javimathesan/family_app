@@ -2,6 +2,12 @@
 
 Formato: fecha · qué se hizo. Lo más nuevo arriba.
 
+## 0.25.3 — 2026-11-15 · Juegos: revancha, "¡Última!" y títulos
+
+- Revancha: si igual quedaban dos partidas iguales abiertas (por ejemplo, un teléfono con una versión anterior), la app deja una sola: la que ya se empezó a jugar o, si ninguna, la más vieja. Nunca borra una partida con jugadas, y quien tenía abierta la repetida pasa a la que quedó.
+- Colorín: el botón "¡Última!" aparece solo cuando tenés dos cartas y una para tirar (se dice al tirar la anteúltima). Antes salía también cuando había que robar.
+- Juegos: el título "Nuevo juego" pasa a "Elegí un juego". La etiqueta "Nuevo" queda reservada para los juegos que se sumen más adelante y se ve solo unas semanas.
+
 ## 0.25.2 — 2026-11-10 · Parches y preparación para Google Play
 
 - Avatares: la cinta del parche iba por encima del otro ojo. Ahora va hacia la oreja del mismo lado y por la frente, sin tapar el ojo sano.

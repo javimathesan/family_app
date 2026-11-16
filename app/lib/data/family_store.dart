@@ -74,6 +74,9 @@ class FamilyStore extends ChangeNotifier {
   /// Familias amigas y partidas con ellas (solo en la nube).
   final List<Friendship> _friendships = [];
   final List<GameMatch> _sharedMatches = [];
+
+  /// Partidas repetidas que se borraron → la que quedó (para el que la tenía abierta).
+  final Map<String, String> _twinOf = {};
   GamesRule _gamesRule = GamesRule.half;
 
   /// Minutos de juego por día para los chicos (0 = sin límite).
@@ -929,6 +932,7 @@ class FamilyStore extends ChangeNotifier {
         ..clear()
         ..addAll(notices);
     }
+    if (matches != null || sharedMatches != null) _dropTwinMatches();
     notifyListeners();
   }
 

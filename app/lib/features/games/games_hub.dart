@@ -102,7 +102,7 @@ class GamesHub extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 20),
-        Text('Nuevo juego', style: sectionTitle(context)),
+        Text('Elegí un juego', style: sectionTitle(context)),
         const SizedBox(height: 8),
         GridView.count(
           // Teléfono: 2 por fila; tablet: 3 o 4.
@@ -118,6 +118,7 @@ class GamesHub extends StatelessWidget {
                 kind: kind,
                 enabled: !locked,
                 favorite: store.isFavoriteGame(me.id, kind),
+                isNew: kind.isNewOn(store.now),
                 onFavorite: () => store.toggleFavoriteGame(me.id, kind),
                 onTap: () => _newGame(context, kind),
               ),
@@ -298,13 +299,14 @@ class _QuickCard extends StatelessWidget {
 }
 
 class _GameCard extends StatelessWidget {
-  const _GameCard({required this.kind, required this.enabled, required this.onTap, required this.favorite, required this.onFavorite});
+  const _GameCard({required this.kind, required this.enabled, required this.onTap, required this.favorite, required this.onFavorite, this.isNew = false});
 
   final GameKind kind;
   final bool enabled;
   final VoidCallback onTap;
   final bool favorite;
   final VoidCallback onFavorite;
+  final bool isNew;
 
   static const _colors = {
     GameKind.tateti: Color(0xFFFFE0B2),
@@ -334,6 +336,13 @@ class _GameCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Icon(kind.icon, size: 30, color: Colors.black87),
+                    if (isNew)
+                      Container(
+                        margin: const EdgeInsets.only(left: 6, top: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(color: Colors.black87, borderRadius: BorderRadius.circular(10)),
+                        child: const Text('Nuevo', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
+                      ),
                     const Spacer(),
                     IconButton(
                       key: ValueKey('fav_${kind.name}'),

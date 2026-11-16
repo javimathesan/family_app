@@ -930,7 +930,18 @@ enum GameKind {
   final IconData icon;
   final int minPlayers;
   final int maxPlayers;
+
+  /// Muestra la etiqueta "Nuevo" durante unas semanas desde que se agregó.
+  bool isNewOn(DateTime now) {
+    final added = gameAddedOn[this];
+    return added != null && !now.isBefore(added) && now.difference(added).inDays < newGameDays;
+  }
 }
+
+/// Fecha en que se suma cada juego nuevo. Los que vienen de entrada no están:
+/// al agregar uno, poné acá su fecha y lleva la etiqueta "Nuevo" unas semanas.
+const gameAddedOn = <GameKind, DateTime>{};
+const newGameDays = 21;
 
 /// Identificador de Robi, la compu, como jugador.
 const botPlayerId = 'robi';

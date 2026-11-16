@@ -9,6 +9,9 @@ extension FamilyGames on FamilyStore {
     for (final m in [..._matches, ..._sharedMatches]) {
       if (m.id == id) return m;
     }
+    // Una partida repetida que se borró lleva a la que quedó.
+    final twin = _twinOf[id];
+    if (twin != null && twin != id) return matchById(twin);
     return null;
   }
 
@@ -189,6 +192,37 @@ extension FamilyGames on FamilyStore {
     final open = activeMatchWith(match.kind, players);
     if (open != null && open.id != match.id) return open;
     return createMatch(match.kind, players, sameDevice: match.sameDevice, friendshipId: match.friendshipId, id: id);
+  }
+
+  /// Si dos teléfonos abrieron a la vez la misma partida (mismo juego y mismos
+  /// jugadores, por ejemplo una revancha), queda una sola. Se borra solo la que
+  /// todavía no tiene jugadas, y todos los teléfonos eligen la misma: la que ya
+  /// se empezó a jugar o, si ninguna, la más vieja.
+  void _dropTwinMatches() {
+    final groups = <String, List<GameMatch>>{};
+    for (final m in [..._matches, ..._sharedMatches]) {
+      if (m.finished) continue;
+      final key = '${m.kind.name}|${m.friendshipId ?? ''}|${([...m.players]..sort()).join(',')}';
+      groups.putIfAbsent(key, () => []).add(m);
+    }
+    for (final twins in groups.values) {
+      if (twins.length < 2) continue;
+      twins.sort((a, b) {
+        final played = (a.lastBy == null ? 1 : 0) - (b.lastBy == null ? 1 : 0);
+        if (played != 0) return played;
+        final age = a.createdAt.compareTo(b.createdAt);
+        return age != 0 ? age : a.id.compareTo(b.id);
+      });
+      for (final m in twins.skip(1)) {
+        if (m.lastBy != null) continue;
+        _twinOf[m.id] = twins.first.id;
+        if (_sharedMatches.remove(m)) {
+          sync?.sharedMatchRemoved(m.id);
+        } else if (_matches.remove(m)) {
+          sync?.matchRemoved(m.id);
+        }
+      }
+    }
   }
 
   GameMatch createMatch(GameKind kind, List<String> players, {bool sameDevice = false, String? friendshipId, String? id}) {
